@@ -3,6 +3,7 @@ package odin
 import (
 	"github.com/smartwalle/going/xid"
 	"github.com/smartwalle/dbr"
+	"errors"
 )
 
 const (
@@ -28,10 +29,18 @@ func GetGroupList(gType string) (results []*Group, err error) {
 		return nil, err
 	}
 	for _, id := range groupIds {
-		var group Group
-		if err := s.HGETALL(getGroupKey(id)).ScanStruct(&group); err != nil {
+		var r = s.HGETALL(getGroupKey(id))
+		if r.Error != nil {
 			return nil, err
 		}
+		if len(r.MustValues()) == 0 {
+			continue
+		}
+		var group Group
+		if err = r.ScanStruct(&group); err != nil {
+			return nil, err
+		}
+
 		results = append(results, &group)
 	}
 	return results, err
@@ -49,11 +58,19 @@ func GetGroupWithId(id string) (results *Group, err error) {
 	var s = getSession()
 	defer s.Close()
 
-	var key = getGroupKey(id)
-	var group Group
-	if err = s.HGETALL(key).ScanStruct(&group); err != nil {
+	var r = s.HGETALL(getGroupKey(id))
+	if r.Error != nil {
 		return nil, err
 	}
+	if len(r.MustValues()) == 0 {
+		return nil, errors.New("Group not exists.")
+	}
+
+	var group Group
+	if err = r.ScanStruct(&group); err != nil {
+		return nil, err
+	}
+
 	results = &group
 	return results, err
 }
@@ -82,4 +99,18 @@ func NewGroup(gType, name string) (id string, err error) {
 	}
 	id = group.Id
 	return id, err
+}
+
+func UpdateGroup(id, name string) (err error) {
+	var s = getSession()
+	defer s.Close()
+
+	if _, err = GetGroupWithId(id); err != nil {
+		return err
+	}
+
+	if r := s.HMSET(getGroupKey(id), "name", name); r.Error != nil {
+		return r.Error
+	}
+	return nil
 }
