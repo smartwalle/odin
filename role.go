@@ -66,6 +66,94 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+func AddPermissionsToRole(id string, permissionIds ...string) (err error) {
+	var s = getSession()
+	defer s.Close()
+
+	if r := s.Send("MULTI"); r.Error != nil {
+		return r.Error
+	}
+
+	var params []interface{}
+	params = append(params, getRolePermissionListKey(id))
+	for _, id := range permissionIds {
+		params = append(params, id)
+	}
+	if r := s.Send("SADD", params...); r.Error != nil {
+		return r.Error
+	}
+	if r := s.Do("EXEC"); r.Error != nil {
+		return r.Error
+	}
+	return err
+}
+
+func AddPermissionToRole(id string, identifiers ...string) (err error) {
+	var s = getSession()
+	defer s.Close()
+
+	if r := s.Send("MULTI"); r.Error != nil {
+		return r.Error
+	}
+
+	var params []interface{}
+	params = append(params, getRolePermissionListKey(id))
+	params = append(params, MD5String(strings.Join(identifiers, "-")))
+
+	if r := s.Send("SADD", params...); r.Error != nil {
+		return r.Error
+	}
+	if r := s.Do("EXEC"); r.Error != nil {
+		return r.Error
+	}
+	return err
+}
+
+////////////////////////////////////////////////////////////////////////////////
+func RemovePermissionsFromRole(id string, permissionIds ...string) (err error) {
+	var s = getSession()
+	defer s.Close()
+
+	if r := s.Send("MULTI"); r.Error != nil {
+		return r.Error
+	}
+
+	var params []interface{}
+	params = append(params, getRolePermissionListKey(id))
+	for _, id := range permissionIds {
+		params = append(params, id)
+	}
+	if r := s.Send("SREM", params...); r.Error != nil {
+		return r.Error
+	}
+	if r := s.Do("EXEC"); r.Error != nil {
+		return r.Error
+	}
+	return err
+}
+
+func RemovePermissionFromRole(id string, identifiers ...string) (err error) {
+	var s = getSession()
+	defer s.Close()
+
+	if r := s.Send("MULTI"); r.Error != nil {
+		return r.Error
+	}
+
+	var params []interface{}
+	params = append(params, getRolePermissionListKey(id))
+	params = append(params, MD5String(strings.Join(identifiers, "-")))
+
+	if r := s.Send("SREM", params...); r.Error != nil {
+		return r.Error
+	}
+	if r := s.Do("EXEC"); r.Error != nil {
+		return r.Error
+	}
+	return err
+}
+
+////////////////////////////////////////////////////////////////////////////////
 func GetRoleList() (results []*Role, err error) {
 	var s = getSession()
 	defer s.Close()
@@ -188,6 +276,19 @@ func CancelGrant(destinationId string, roleIds ...string) (err error) {
 		return r.Error
 	}
 	return err
+}
+
+func GetGrantPermissionList(destinationId string) (results []string, err error) {
+	var s = getSession()
+	defer s.Close()
+
+	var roleIds = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
+	for _, roleId := range roleIds {
+		var pIdList = s.SMEMBERS(getRolePermissionListKey(roleId)).MustStrings()
+		results = append(results, pIdList...)
+	}
+
+	return results, err
 }
 
 func Check(destinationId string, identifiers ...string) (bool) {
