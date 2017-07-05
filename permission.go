@@ -16,7 +16,7 @@ func getPermissionKey(id string) string {
 
 ////////////////////////////////////////////////////////////////////////////////
 func NewPermission(group, name string, identifiers ...string) (id string, err error) {
-	var s = getSession()
+	var s = getRedisSession()
 	defer s.Close()
 
 	if r := s.Send("MULTI"); r.Error != nil {
@@ -27,7 +27,7 @@ func NewPermission(group, name string, identifiers ...string) (id string, err er
 	p.Identifier = strings.Join(identifiers, "-")
 	p.Name = name
 	p.Group = group
-	p.Id = MD5String(p.Identifier)
+	p.Id = md5String(p.Identifier)
 
 	if r := s.Send("HMSET", dbr.StructToArgs(getPermissionKey(p.Id), p)...); r.Error != nil {
 		return "", r.Error
@@ -43,8 +43,50 @@ func NewPermission(group, name string, identifiers ...string) (id string, err er
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+func UpdatePermission(id, group, name string, identifiers ...string) (string, error) {
+	var s = getRedisSession()
+	defer s.Close()
+
+	if r := s.Send("MULTI"); r.Error != nil {
+		return "", r.Error
+	}
+
+	var p = &Permission{}
+	p.Identifier = strings.Join(identifiers, "-")
+	p.Name = name
+	p.Group = group
+	p.Id = md5String(p.Identifier)
+
+	if r := s.Send("HMSET", dbr.StructToArgs(getPermissionKey(p.Id), p)...); r.Error != nil {
+		return "", r.Error
+	}
+	if r := s.Send("SADD", k_ODIN_PERMISSION_LIST, p.Id); r.Error != nil {
+		return "", r.Error
+	}
+	if id != p.Id {
+		s.Send("DEL", getPermissionKey(id))
+	}
+	if r := s.Do("EXEC"); r.Error != nil {
+		return "", r.Error
+	}
+
+	roleIds := s.SMEMBERS(k_ODIN_ROLE_LIST).MustStrings()
+	for _, rId := range roleIds {
+		var key = getRolePermissionListKey(rId)
+		if s.SISMEMBER(key, id).MustBool() {
+			s.SREM(key, id)
+			s.SADD(key, p.Id)
+		}
+	}
+
+	id = p.Id
+
+	return id, nil
+}
+
+////////////////////////////////////////////////////////////////////////////////
 func GetPermissionList() (results []*Permission, err error) {
-	var s = getSession()
+	var s = getRedisSession()
 	defer s.Close()
 
 	groupIds, err := s.SMEMBERS(k_ODIN_PERMISSION_LIST).Strings()
@@ -79,22 +121,22 @@ func getPermission(s *dbr.Session, id string) (results *Permission, err error) {
 }
 
 func GetPermissionWithId(id string) (results *Permission, err error) {
-	var s = getSession()
+	var s = getRedisSession()
 	defer s.Close()
 	return getPermission(s, id)
 }
 
 func GetPermission(identifiers ...string) (results *Permission, err error) {
-	var s = getSession()
+	var s = getRedisSession()
 	defer s.Close()
 
-	var id = MD5String(strings.Join(identifiers, "-"))
+	var id = md5String(strings.Join(identifiers, "-"))
 	return getPermission(s, id)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 func RemovePermissionWithId(id string) (err error) {
-	var s = getSession()
+	var s = getRedisSession()
 	defer s.Close()
 
 	if r := s.Send("MULTI"); r.Error != nil {
@@ -114,6 +156,6 @@ func RemovePermissionWithId(id string) (err error) {
 }
 
 func RemovePermission(identifier ...string) (err error) {
-	var id = MD5String(strings.Join(identifier, "-"))
+	var id = md5String(strings.Join(identifier, "-"))
 	return RemovePermissionWithId(id)
 }

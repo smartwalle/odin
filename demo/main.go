@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
+	odin.Init("localhost:6379", "", 2, 10, 2)
+
 	fmt.Println(odin.NewPermission("产品", "添加产品", "POST", "/api/product"))
 	fmt.Println(odin.NewPermission("产品", "修改产品", "PUT", "/api/product"))
 
