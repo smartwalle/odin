@@ -111,6 +111,21 @@ func CancelGrant(destinationId string, roleIds ...string) (err error) {
 	return err
 }
 
+func CancelAllGrant(destinationId string) (err error) {
+	var s = getRedisSession()
+	defer s.Close()
+
+	var key = getGrantKey(destinationId)
+	s.Send("DEL", key)
+
+	s.Send("ZREM", k_ODIN_GRANT_LIST, destinationId)
+
+	if r := s.Do("EXEC"); r.Error != nil {
+		return r.Error
+	}
+	return err
+}
+
 func GetGrantPermissionList(destinationId string) (results []string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
