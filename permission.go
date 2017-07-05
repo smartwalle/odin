@@ -16,6 +16,8 @@ func getPermissionKey(id string) string {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// NewPermission 创建新的权限信息.
+// 权限的 id 是由 identifiers 决定的，所以不能添加重复的 identifiers.
 func NewPermission(group, name string, identifiers ...string) (id string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -44,6 +46,9 @@ func NewPermission(group, name string, identifiers ...string) (id string, err er
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// UpdatePermission 更新指定权限的信息，由于权限的 id 是由 identifiers 决定的，所以当权限的 identifiers 发生改变之后，其 id 也会改变。
+// 如果权限的 id 有发生变化，将会对角色的权限列表进行更新，把老的权限 id 从相关的角色中删除，将新的权限 id 添加到相关的角色中.
+// 通常情况，不建议使用本方法.
 func UpdatePermission(id, group, name string, identifiers ...string) (string, error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -71,19 +76,23 @@ func UpdatePermission(id, group, name string, identifiers ...string) (string, er
 		return "", r.Error
 	}
 
-	roleIds := s.ZRANGE(k_ODIN_ROLE_LIST, 0, -1).MustStrings()
-	for _, rId := range roleIds {
-		var key = getRolePermissionListKey(rId)
-		if s.SISMEMBER(key, id).MustBool() {
-			s.SREM(key, id)
-			s.SADD(key, p.Id)
+	if id != p.Id {
+		roleIds := s.ZRANGE(k_ODIN_ROLE_LIST, 0, -1).MustStrings()
+		for _, rId := range roleIds {
+			var key = getRolePermissionListKey(rId)
+			if s.SISMEMBER(key, id).MustBool() {
+				s.SREM(key, id)
+				s.SADD(key, p.Id)
+			}
 		}
 	}
+
 	id = p.Id
 	return id, nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// GetPermissionList 获取所有的权限列表.
 func GetPermissionList() (results []*Permission, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -119,12 +128,14 @@ func getPermission(s *dbr.Session, id string) (results *Permission, err error) {
 	return results, err
 }
 
+// GetPermissionWithId 获取指定的权限信息.
 func GetPermissionWithId(id string) (results *Permission, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 	return getPermission(s, id)
 }
 
+// GetPermission 获取指定的权限信息.
 func GetPermission(identifiers ...string) (results *Permission, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -134,6 +145,7 @@ func GetPermission(identifiers ...string) (results *Permission, err error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// RemovePermissionWithId 移除指定的权限信息.
 func RemovePermissionWithId(id string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -154,11 +166,13 @@ func RemovePermissionWithId(id string) (err error) {
 	return err
 }
 
+// RemovePermission 移除指定的权限信息.
 func RemovePermission(identifier ...string) (err error) {
 	var id = md5String(strings.Join(identifier, "-"))
 	return RemovePermissionWithId(id)
 }
 
+// RemoveAllPermission 移除所有的权限信息.
 func RemoveAllPermission() (error){
 	var s = getRedisSession()
 	defer s.Close()

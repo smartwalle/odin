@@ -22,6 +22,7 @@ func getRolePermissionListKey(id string) string {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// NewRole 添加新的角色信息, 添加成功将会返回新角色的 id.
 func NewRole(group, name string, permissionIds ...string) (id string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -63,6 +64,7 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// UpdateRole 更新角色信息，如果角色信息不存在，则会根据信息创建新的角色信息。
 func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -105,6 +107,7 @@ func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// AddPermissionsToRole 向角色添加指定的权限信息。
 func AddPermissionsToRole(id string, permissionIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -127,6 +130,7 @@ func AddPermissionsToRole(id string, permissionIds ...string) (err error) {
 	return err
 }
 
+// AddPermissionToRole 向角色添加指定的权限信息。
 func AddPermissionToRole(id string, identifiers ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -149,6 +153,7 @@ func AddPermissionToRole(id string, identifiers ...string) (err error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// RemovePermissionsFromRole 移除指定角色的指令权限.
 func RemovePermissionsFromRole(id string, permissionIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -171,6 +176,7 @@ func RemovePermissionsFromRole(id string, permissionIds ...string) (err error) {
 	return err
 }
 
+// RemovePermissionFromRole 移除指定角色的指令权限.
 func RemovePermissionFromRole(id string, identifiers ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -193,6 +199,7 @@ func RemovePermissionFromRole(id string, identifiers ...string) (err error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// GetRoleList 获取所有的角色列表.
 func GetRoleList() (results []*Role, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -238,6 +245,7 @@ func getRole(s *dbr.Session, id string) (results *Role, err error) {
 	return results, err
 }
 
+// GetRoleWithId 获取指定的角色信息.
 func GetRoleWithId(id string) (results *Role, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -245,6 +253,7 @@ func GetRoleWithId(id string) (results *Role, err error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// RemoveRoleWithId 移除指定的角色信息.
 func RemoveRoleWithId(id string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -268,6 +277,7 @@ func RemoveRoleWithId(id string) (err error) {
 	return err
 }
 
+// RemoveAllRole 移除所有角色信息.
 func RemoveAllRole() (error){
 	var s = getRedisSession()
 	defer s.Close()

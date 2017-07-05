@@ -152,7 +152,6 @@ func GetGrantRoleList(destinationId string) (results []string, err error) {
 }
 
 // Check 验证 destinationId 是否有访问指定信息权限.
-// 如果验证一项不存在的权限信息，那么将返回 true.
 func Check(destinationId string, identifiers ...string) (bool) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -166,6 +165,7 @@ func Check(destinationId string, identifiers ...string) (bool) {
 		}
 	}
 
+	// 如果验证一项不存在的权限信息，那么将返回 true.
 	if s.ZSCORE(k_ODIN_PERMISSION_LIST, pId).Data == nil {
 		return true
 	}
