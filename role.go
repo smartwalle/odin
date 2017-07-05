@@ -42,8 +42,8 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 	if len(permissionIds) > 0 {
 		var params []interface{}
 		params = append(params, getRolePermissionListKey(r.Id))
-		for _, id := range permissionIds {
-			params = append(params, id)
+		for _, pId := range permissionIds {
+			params = append(params, pId)
 		}
 		if r := s.Send("SADD", params...); r.Error != nil {
 			return "", r.Error
@@ -85,8 +85,8 @@ func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
 	if len(permissionIds) > 0 {
 		var params []interface{}
 		params = append(params, getRolePermissionListKey(r.Id))
-		for _, id := range permissionIds {
-			params = append(params, id)
+		for _, pId := range permissionIds {
+			params = append(params, pId)
 		}
 		if r := s.Send("SADD", params...); r.Error != nil {
 			return r.Error
@@ -115,8 +115,8 @@ func AddPermissionsToRole(id string, permissionIds ...string) (err error) {
 
 	var params []interface{}
 	params = append(params, getRolePermissionListKey(id))
-	for _, id := range permissionIds {
-		params = append(params, id)
+	for _, pId := range permissionIds {
+		params = append(params, pId)
 	}
 	if r := s.Send("SADD", params...); r.Error != nil {
 		return r.Error
@@ -159,8 +159,8 @@ func RemovePermissionsFromRole(id string, permissionIds ...string) (err error) {
 
 	var params []interface{}
 	params = append(params, getRolePermissionListKey(id))
-	for _, id := range permissionIds {
-		params = append(params, id)
+	for _, pId := range permissionIds {
+		params = append(params, pId)
 	}
 	if r := s.Send("SREM", params...); r.Error != nil {
 		return r.Error
@@ -197,16 +197,16 @@ func GetRoleList() (results []*Role, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	roleIds, err := s.ZREVRANGE(k_ODIN_ROLE_LIST, 0, -1).Strings()
+	rIdList, err := s.ZREVRANGE(k_ODIN_ROLE_LIST, 0, -1).Strings()
 	if err != nil {
 		return nil, err
 	}
-	for _, id := range roleIds {
-		var r = s.HGETALL(getRoleKey(id))
+	for _, rId := range rIdList {
+		var r = s.HGETALL(getRoleKey(rId))
 		if r.Error != nil {
 			return nil, err
 		}
-		role, err := getRole(s, id)
+		role, err := getRole(s, rId)
 		if err != nil {
 			return nil, err
 		}

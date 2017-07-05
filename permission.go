@@ -79,9 +79,7 @@ func UpdatePermission(id, group, name string, identifiers ...string) (string, er
 			s.SADD(key, p.Id)
 		}
 	}
-
 	id = p.Id
-
 	return id, nil
 }
 
@@ -90,11 +88,11 @@ func GetPermissionList() (results []*Permission, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	groupIds, err := s.ZREVRANGE(k_ODIN_PERMISSION_LIST, 0, -1).Strings()
+	pIdList, err := s.ZREVRANGE(k_ODIN_PERMISSION_LIST, 0, -1).Strings()
 	if err != nil {
 		return nil, err
 	}
-	for _, id := range groupIds {
+	for _, id := range pIdList {
 		p, err := getPermission(s, id)
 		if err != nil {
 			return nil, err

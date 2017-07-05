@@ -18,7 +18,7 @@ func RemoveAllGrant() (error){
 	var s = getRedisSession()
 	defer s.Close()
 
-	gList, err := s.ZREVRANGE(k_ODIN_GRANT_LIST, 0, -1).Strings()
+	gIdList, err := s.ZREVRANGE(k_ODIN_GRANT_LIST, 0, -1).Strings()
 	if err != nil {
 		return err
 	}
@@ -26,8 +26,8 @@ func RemoveAllGrant() (error){
 	if r := s.Send("MULTI"); r.Error != nil {
 		return r.Error
 	}
-	for _, g := range gList {
-		s.Send("DEL", getGrantKey(g))
+	for _, gId := range gIdList {
+		s.Send("DEL", getGrantKey(gId))
 	}
 	s.Send("DEL", k_ODIN_GRANT_LIST)
 
@@ -42,17 +42,15 @@ func GetGrantList() (results []*GrantInfo, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	gList, err := s.ZREVRANGE(k_ODIN_GRANT_LIST, 0, -1).Strings()
+	gIdList, err := s.ZREVRANGE(k_ODIN_GRANT_LIST, 0, -1).Strings()
 	if err != nil {
 		return nil, err
 	}
 
-	for _, gId := range gList {
+	for _, gId := range gIdList {
 		var gInfo = &GrantInfo{}
 		gInfo.DestinationId = gId
-
 		gInfo.RoleIdList = s.SMEMBERS(getGrantKey(gId)).MustStrings()
-
 		results = append(results, gInfo)
 	}
 
@@ -99,8 +97,8 @@ func CancelGrant(destinationId string, roleIds ...string) (err error) {
 	var key = getGrantKey(destinationId)
 	var params []interface{}
 	params = append(params, key)
-	for _, id := range roleIds {
-		params = append(params, id)
+	for _, rId := range roleIds {
+		params = append(params, rId)
 	}
 
 	s.Send("SREM", params...)
@@ -130,9 +128,9 @@ func GetGrantPermissionList(destinationId string) (results []string, err error) 
 	var s = getRedisSession()
 	defer s.Close()
 
-	var roleIds = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
-	for _, roleId := range roleIds {
-		var pIdList = s.SMEMBERS(getRolePermissionListKey(roleId)).MustStrings()
+	var rIdList = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
+	for _, rId := range rIdList {
+		var pIdList = s.SMEMBERS(getRolePermissionListKey(rId)).MustStrings()
 		results = append(results, pIdList...)
 	}
 
@@ -151,16 +149,16 @@ func Check(destinationId string, identifiers ...string) (bool) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	var id = md5String(strings.Join(identifiers, "-"))
+	var pId = md5String(strings.Join(identifiers, "-"))
 
-	var roleIds = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
-	for _, roleId := range roleIds {
-		if s.SISMEMBER(getRolePermissionListKey(roleId), id).MustBool() {
+	var rIdList = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
+	for _, rId := range rIdList {
+		if s.SISMEMBER(getRolePermissionListKey(rId), pId).MustBool() {
 			return true
 		}
 	}
 
-	if s.SISMEMBER(k_ODIN_PERMISSION_LIST, id).MustBool() == false {
+	if s.SISMEMBER(k_ODIN_PERMISSION_LIST, pId).MustBool() == false {
 		return true
 	}
 

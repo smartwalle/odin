@@ -1,7 +1,5 @@
 package odin
 
-// Permission 用于存储权限信息
-// Key：odin_pn_[id]
 type Permission struct {
 	Id         string `json:"id"           redis:"id"`         // 将 identifier 进行 md5 编码
 	Identifier string `json:"identifier"   redis:"identifier"` // 权限标识
