@@ -10,8 +10,6 @@ const (
 	k_ODIN_ROLE_PREFIX                 = "odin_ro_"
 	k_ODIN_ROLE_LIST                   = "odin_ro_list"
 	k_ODIN_ROLE_PERMISSION_LIST_PREFIX = "odin_rp_"
-	k_ODIN_GRANT_PREFIX                = "odin_grant_"
-	k_ODIN_GRANT_LIST                  = "grant_list"
 )
 
 func getRoleKey(id string) string {
@@ -20,10 +18,6 @@ func getRoleKey(id string) string {
 
 func getRolePermissionListKey(id string) string {
 	return k_ODIN_ROLE_PERMISSION_LIST_PREFIX + id
-}
-
-func getGrantKey(id string) string {
-	return k_ODIN_GRANT_PREFIX + id
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,13 +38,15 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 		return "", r.Error
 	}
 
-	var params []interface{}
-	params = append(params, getRolePermissionListKey(r.Id))
-	for _, id := range permissionIds {
-		params = append(params, id)
-	}
-	if r := s.Send("SADD", params...); r.Error != nil {
-		return "", r.Error
+	if len(permissionIds) > 0 {
+		var params []interface{}
+		params = append(params, getRolePermissionListKey(r.Id))
+		for _, id := range permissionIds {
+			params = append(params, id)
+		}
+		if r := s.Send("SADD", params...); r.Error != nil {
+			return "", r.Error
+		}
 	}
 
 	if r := s.Send("SADD", k_ODIN_ROLE_LIST, r.Id); r.Error != nil {
@@ -63,6 +59,46 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 
 	id = r.Id
 	return id, err
+}
+
+////////////////////////////////////////////////////////////////////////////////
+func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
+	var s = getRedisSession()
+	defer s.Close()
+
+	if r := s.Send("MULTI"); r.Error != nil {
+		return r.Error
+	}
+
+	var r = &Role{}
+	r.Name = name
+	r.Group = group
+	r.Id = id
+
+	if r := s.Send("HMSET", dbr.StructToArgs(getRoleKey(r.Id), r)...); r.Error != nil {
+		return r.Error
+	}
+
+	if len(permissionIds) > 0 {
+		var params []interface{}
+		params = append(params, getRolePermissionListKey(r.Id))
+		for _, id := range permissionIds {
+			params = append(params, id)
+		}
+		if r := s.Send("SADD", params...); r.Error != nil {
+			return r.Error
+		}
+	}
+
+	if r := s.Send("SADD", k_ODIN_ROLE_LIST, r.Id); r.Error != nil {
+		return r.Error
+	}
+
+	if r := s.Do("EXEC"); r.Error != nil {
+		return r.Error
+	}
+
+	return err
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -227,4 +263,28 @@ func RemoveRoleWithId(id string) (err error) {
 		return r.Error
 	}
 	return err
+}
+
+func RemoveAllRole() (error){
+	var s = getRedisSession()
+	defer s.Close()
+
+	rIdList, err := s.SMEMBERS(k_ODIN_ROLE_LIST).Strings()
+	if err != nil {
+		return err
+	}
+
+	if r := s.Send("MULTI"); r.Error != nil {
+		return r.Error
+	}
+	for _, rId := range rIdList {
+		s.Send("DEL", getRoleKey(rId))
+		s.Send("DEL", getRolePermissionListKey(rId))
+	}
+	s.Send("DEL", k_ODIN_ROLE_LIST)
+
+	if r := s.Do("EXEC"); r.Error != nil {
+		return r.Error
+	}
+	return nil
 }

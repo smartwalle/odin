@@ -159,3 +159,26 @@ func RemovePermission(identifier ...string) (err error) {
 	var id = md5String(strings.Join(identifier, "-"))
 	return RemovePermissionWithId(id)
 }
+
+func RemoveAllPermission() (error){
+	var s = getRedisSession()
+	defer s.Close()
+
+	pIdList, err := s.SMEMBERS(k_ODIN_PERMISSION_LIST).Strings()
+	if err != nil {
+		return err
+	}
+
+	if r := s.Send("MULTI"); r.Error != nil {
+		return r.Error
+	}
+	for _, pId := range pIdList {
+		s.Send("DEL", getPermissionKey(pId))
+	}
+	s.Send("DEL", k_ODIN_PERMISSION_LIST)
+
+	if r := s.Do("EXEC"); r.Error != nil {
+		return r.Error
+	}
+	return nil
+}
