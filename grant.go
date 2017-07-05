@@ -14,6 +14,7 @@ func getGrantKey(id string) string {
 	return k_ODIN_GRANT_PREFIX + id
 }
 
+// RemoveAllGrant 清除所有的授权信息.
 func RemoveAllGrant() (error){
 	var s = getRedisSession()
 	defer s.Close()
@@ -38,6 +39,7 @@ func RemoveAllGrant() (error){
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// GetGrantList 获取所有的授权信息列表.
 func GetGrantList() (results []*GrantInfo, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -58,6 +60,7 @@ func GetGrantList() (results []*GrantInfo, err error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Grant 向 destinationId 授予角色信息.
 func Grant(destinationId string, roleIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -69,7 +72,6 @@ func Grant(destinationId string, roleIds ...string) (err error) {
 	s.Send("ZADD", k_ODIN_GRANT_LIST, time.Now().Unix(), destinationId)
 
 	var key = getGrantKey(destinationId)
-	s.Send("DEL", key)
 
 	if len(roleIds) > 0 {
 		var params []interface{}
@@ -86,6 +88,7 @@ func Grant(destinationId string, roleIds ...string) (err error) {
 	return err
 }
 
+// CancelGrant 取消对 destinationId 的指定角色授权.
 func CancelGrant(destinationId string, roleIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -109,6 +112,7 @@ func CancelGrant(destinationId string, roleIds ...string) (err error) {
 	return err
 }
 
+// CancelAllGrant 取消对 destinationId 所有角色授权.
 func CancelAllGrant(destinationId string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -124,6 +128,7 @@ func CancelAllGrant(destinationId string) (err error) {
 	return err
 }
 
+// GetGrantPermissionList 获取 destinationId 拥有的所有权限信息.
 func GetGrantPermissionList(destinationId string) (results []string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -137,6 +142,7 @@ func GetGrantPermissionList(destinationId string) (results []string, err error) 
 	return results, err
 }
 
+// GetGrantRoleList 获取 destinationId 拥有的所有角色信息.
 func GetGrantRoleList(destinationId string) (results []string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -145,6 +151,8 @@ func GetGrantRoleList(destinationId string) (results []string, err error) {
 	return results, err
 }
 
+// Check 验证 destinationId 是否有访问指定信息权限.
+// 如果验证一项不存在的权限信息，那么将返回 true.
 func Check(destinationId string, identifiers ...string) (bool) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -158,7 +166,7 @@ func Check(destinationId string, identifiers ...string) (bool) {
 		}
 	}
 
-	if s.SISMEMBER(k_ODIN_PERMISSION_LIST, pId).MustBool() == false {
+	if s.ZSCORE(k_ODIN_PERMISSION_LIST, pId).Data == nil {
 		return true
 	}
 

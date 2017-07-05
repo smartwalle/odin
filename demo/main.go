@@ -6,27 +6,78 @@ import (
 )
 
 func main() {
+	// 初始化数据库信息
 	odin.Init("localhost:6379", "", 2, 10, 2)
 
-	fmt.Println(odin.NewPermission("产品", "添加产品", "POST", "/api/product"))
-	fmt.Println(odin.NewPermission("产品", "修改产品", "PUT", "/api/product"))
+	fmt.Println("--------------------------------------------------")
+	// 创建权限信息
+	fmt.Println("初始化权限信息...")
+	var p11Id, _ = odin.NewPermission("产品", "添加产品", "POST", "/api/product")
+	var p12Id, _ = odin.NewPermission("产品", "修改产品", "PUT", "/api/product")
+
+	var p21Id, _ = odin.NewPermission("用户", "添加用户", "POST", "/api/user")
+	var p22Id, _ = odin.NewPermission("用户", "修改产品", "PUT", "/api/user")
+	fmt.Println("初始化权限信息完成...")
+
 
 	var pList, _ = odin.GetPermissionList()
+	fmt.Println("现有权限信息:")
 	for _, p := range pList {
-		fmt.Println("权限", p.Id, p.Identifier, p.Group, p.Name)
+		fmt.Println(p.Id, p.Identifier, p.Group, p.Name)
 	}
 
-	odin.AddPermissionsToRole("5b195208b07c", "3b6ebd50650d523009874b9128e33d31")
+	fmt.Println("--------------------------------------------------")
+	odin.RemoveAllRole()
+	// 创建角色信息
+	fmt.Println("初始化角色信息...")
+	var r1Id, _ = odin.NewRole("产品组", "产品管理员", p11Id, p12Id)
+	var r2Id, _ = odin.NewRole("用户组", "用户管理员", p21Id, p22Id)
+	fmt.Println("初始化角色信息完成...")
 
+	fmt.Println("现有角色信息:")
 	var rList, _ = odin.GetRoleList()
 	for _, r := range rList {
-		fmt.Println("角色", r.Id, r.Group, r.Name, r.PermissionIdList)
+		fmt.Println(r.Id, r.Name, r.Group, r.PermissionIdList)
 	}
 
-	fmt.Println(odin.Check("111", "PUT", "/api/product"))
-	fmt.Println(odin.Check("111", "POST", "/api/product"))
-	fmt.Println(odin.Check("111", "GET", "/api/product"))
+	fmt.Println("--------------------------------------------------")
+	// 为指定对象授权
+	var userId1 = "user_id_001"
+	var userId2 = "user_id_002"
+	var userId3 = "user_id_003"
 
-	fmt.Println(odin.GetGrantPermissionList("111"))
+	// 因为每次都创建了新的角色信息，原有角色信息会被清楚，所以先取消原有授权信息
+	odin.CancelAllGrant(userId1)
+	odin.CancelAllGrant(userId2)
+	odin.CancelAllGrant(userId3)
 
+	odin.Grant(userId1, r1Id)
+	odin.Grant(userId2, r2Id)
+	odin.Grant(userId3, r1Id, r2Id)
+
+	fmt.Println("授权信息:")
+	var gList, _ = odin.GetGrantList()
+	for _, g := range gList {
+		fmt.Println(g.DestinationId, g.RoleIdList)
+	}
+
+	fmt.Println("--------------------------------------------------")
+	fmt.Println(userId1, "POST", "/api/product", odin.Check(userId1, "POST", "/api/product"))
+	fmt.Println(userId1, "PUT", "/api/product", odin.Check(userId1, "PUT", "/api/product"))
+	fmt.Println(userId1, "POST", "/api/user", odin.Check(userId1, "POST", "/api/user"))
+	fmt.Println(userId1, "PUT", "/api/user", odin.Check(userId1, "PUT", "/api/user"))
+	fmt.Println("")
+	fmt.Println(userId2, "POST", "/api/product", odin.Check(userId2, "POST", "/api/product"))
+	fmt.Println(userId2, "PUT", "/api/product", odin.Check(userId2, "PUT", "/api/product"))
+	fmt.Println(userId2, "POST", "/api/user", odin.Check(userId2, "POST", "/api/user"))
+	fmt.Println(userId2, "PUT", "/api/user", odin.Check(userId2, "PUT", "/api/user"))
+	fmt.Println("")
+	fmt.Println(userId3, "POST", "/api/product", odin.Check(userId3, "POST", "/api/product"))
+	fmt.Println(userId3, "PUT", "/api/product", odin.Check(userId3, "PUT", "/api/product"))
+	fmt.Println(userId3, "POST", "/api/user", odin.Check(userId3, "POST", "/api/user"))
+	fmt.Println(userId3, "PUT", "/api/user", odin.Check(userId3, "PUT", "/api/user"))
+	fmt.Println("")
+	fmt.Println(userId1, "GET", "/api/users", odin.Check(userId1, "GET", "/api/users"))
+	fmt.Println(userId2, "GET", "/api/users", odin.Check(userId2, "GET", "/api/users"))
+	fmt.Println(userId3, "GET", "/api/users", odin.Check(userId3, "GET", "/api/users"))
 }
