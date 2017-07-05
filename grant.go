@@ -166,9 +166,9 @@ func Check(destinationId string, identifiers ...string) (bool) {
 	}
 
 	// 如果验证一项不存在的权限信息，那么将返回 true.
-	if s.ZSCORE(k_ODIN_PERMISSION_LIST, pId).Data == nil {
-		return true
-	}
+	//if s.ZSCORE(k_ODIN_PERMISSION_LIST, pId).Data == nil {
+	//	return true
+	//}
 
 	return false
 }
