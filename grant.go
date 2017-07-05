@@ -70,8 +70,10 @@ func Grant(destinationId string, roleIds ...string) (err error) {
 
 	s.Send("ZADD", k_ODIN_GRANT_LIST, time.Now().Unix(), destinationId)
 
+	var key = getGrantKey(destinationId)
+	s.Send("DEL", key)
+
 	if len(roleIds) > 0 {
-		var key = getGrantKey(destinationId)
 		var params []interface{}
 		params = append(params, key)
 		for _, id := range roleIds {
