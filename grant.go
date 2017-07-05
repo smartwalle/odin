@@ -2,6 +2,7 @@ package odin
 
 import (
 	"strings"
+	"time"
 )
 
 const (
@@ -17,7 +18,7 @@ func RemoveAllGrant() (error){
 	var s = getRedisSession()
 	defer s.Close()
 
-	gList, err := s.SMEMBERS(k_ODIN_GRANT_LIST).Strings()
+	gList, err := s.ZREVRANGE(k_ODIN_GRANT_LIST, 0, -1).Strings()
 	if err != nil {
 		return err
 	}
@@ -41,7 +42,7 @@ func GetGrantList() (results []*GrantInfo, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	gList, err := s.SMEMBERS(k_ODIN_GRANT_LIST).Strings()
+	gList, err := s.ZREVRANGE(k_ODIN_GRANT_LIST, 0, -1).Strings()
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func Grant(destinationId string, roleIds ...string) (err error) {
 		return r.Error
 	}
 
-	s.Send("SADD", k_ODIN_GRANT_LIST, destinationId)
+	s.Send("ZADD", k_ODIN_GRANT_LIST, time.Now().Unix(), destinationId)
 
 	if len(roleIds) > 0 {
 		var key = getGrantKey(destinationId)

@@ -3,6 +3,7 @@ package odin
 import (
 	"github.com/smartwalle/dbr"
 	"strings"
+	"time"
 )
 
 const (
@@ -32,7 +33,7 @@ func NewPermission(group, name string, identifiers ...string) (id string, err er
 	if r := s.Send("HMSET", dbr.StructToArgs(getPermissionKey(p.Id), p)...); r.Error != nil {
 		return "", r.Error
 	}
-	if r := s.Send("SADD", k_ODIN_PERMISSION_LIST, p.Id); r.Error != nil {
+	if r := s.Send("ZADD", k_ODIN_PERMISSION_LIST, time.Now().Unix(), p.Id); r.Error != nil {
 		return "", r.Error
 	}
 	if r := s.Do("EXEC"); r.Error != nil {
@@ -60,7 +61,7 @@ func UpdatePermission(id, group, name string, identifiers ...string) (string, er
 	if r := s.Send("HMSET", dbr.StructToArgs(getPermissionKey(p.Id), p)...); r.Error != nil {
 		return "", r.Error
 	}
-	if r := s.Send("SADD", k_ODIN_PERMISSION_LIST, p.Id); r.Error != nil {
+	if r := s.Send("ZADD", k_ODIN_PERMISSION_LIST, time.Now().Unix(), p.Id); r.Error != nil {
 		return "", r.Error
 	}
 	if id != p.Id {
@@ -70,7 +71,7 @@ func UpdatePermission(id, group, name string, identifiers ...string) (string, er
 		return "", r.Error
 	}
 
-	roleIds := s.SMEMBERS(k_ODIN_ROLE_LIST).MustStrings()
+	roleIds := s.ZRANGE(k_ODIN_ROLE_LIST, 0, -1).MustStrings()
 	for _, rId := range roleIds {
 		var key = getRolePermissionListKey(rId)
 		if s.SISMEMBER(key, id).MustBool() {
@@ -89,7 +90,7 @@ func GetPermissionList() (results []*Permission, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	groupIds, err := s.SMEMBERS(k_ODIN_PERMISSION_LIST).Strings()
+	groupIds, err := s.ZREVRANGE(k_ODIN_PERMISSION_LIST, 0, -1).Strings()
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +144,7 @@ func RemovePermissionWithId(id string) (err error) {
 		return r.Error
 	}
 
-	if r := s.Send("SREM", k_ODIN_PERMISSION_LIST, id); r.Error != nil {
+	if r := s.Send("ZREM", k_ODIN_PERMISSION_LIST, id); r.Error != nil {
 		return r.Error
 	}
 	if r := s.Send("DEL", getPermissionKey(id)); r.Error != nil {
@@ -164,7 +165,7 @@ func RemoveAllPermission() (error){
 	var s = getRedisSession()
 	defer s.Close()
 
-	pIdList, err := s.SMEMBERS(k_ODIN_PERMISSION_LIST).Strings()
+	pIdList, err := s.ZREVRANGE(k_ODIN_PERMISSION_LIST, 0, -1).Strings()
 	if err != nil {
 		return err
 	}

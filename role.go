@@ -4,6 +4,7 @@ import (
 	"github.com/smartwalle/dbr"
 	"github.com/smartwalle/going/xid"
 	"strings"
+	"time"
 )
 
 const (
@@ -49,7 +50,7 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 		}
 	}
 
-	if r := s.Send("SADD", k_ODIN_ROLE_LIST, r.Id); r.Error != nil {
+	if r := s.Send("ZADD", k_ODIN_ROLE_LIST, time.Now().Unix(), r.Id); r.Error != nil {
 		return "", r.Error
 	}
 
@@ -79,6 +80,8 @@ func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
 		return r.Error
 	}
 
+	s.Send("DEL", getRolePermissionListKey(r.Id))
+
 	if len(permissionIds) > 0 {
 		var params []interface{}
 		params = append(params, getRolePermissionListKey(r.Id))
@@ -90,7 +93,7 @@ func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
 		}
 	}
 
-	if r := s.Send("SADD", k_ODIN_ROLE_LIST, r.Id); r.Error != nil {
+	if r := s.Send("ZADD", k_ODIN_ROLE_LIST, time.Now().Unix(), r.Id); r.Error != nil {
 		return r.Error
 	}
 
@@ -194,7 +197,7 @@ func GetRoleList() (results []*Role, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	roleIds, err := s.SMEMBERS(k_ODIN_ROLE_LIST).Strings()
+	roleIds, err := s.ZREVRANGE(k_ODIN_ROLE_LIST, 0, -1).Strings()
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +253,7 @@ func RemoveRoleWithId(id string) (err error) {
 		return r.Error
 	}
 
-	if r := s.Send("SREM", k_ODIN_ROLE_LIST, id); r.Error != nil {
+	if r := s.Send("ZREM", k_ODIN_ROLE_LIST, id); r.Error != nil {
 		return r.Error
 	}
 	if r := s.Send("DEL", getRoleKey(id)); r.Error != nil {
@@ -269,7 +272,7 @@ func RemoveAllRole() (error){
 	var s = getRedisSession()
 	defer s.Close()
 
-	rIdList, err := s.SMEMBERS(k_ODIN_ROLE_LIST).Strings()
+	rIdList, err := s.ZREVRANGE(k_ODIN_ROLE_LIST, 0, -1).Strings()
 	if err != nil {
 		return err
 	}
