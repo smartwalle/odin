@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/smartwalle/odin"
 	"os"
-	"strings"
 	"io/ioutil"
+	"strings"
 )
 
 func main() {
@@ -112,7 +112,7 @@ func importOdin(path string, merge bool) {
 
 	if exportData != nil {
 		for _, p := range exportData.PermissionList {
-			if _, err = odin.UpdatePermission(p.Id, p.Group, p.Name, strings.Split(p.Identifier, "-")...); err != nil {
+			if _, err = odin.UpdatePermission(p.Id, p.Group, p.Name, p.Identifier); err != nil {
 				fmt.Println("UpdatePermission", err)
 			}
 		}

@@ -2,7 +2,6 @@ package odin
 
 import (
 	"github.com/smartwalle/dbr"
-	"strings"
 	"time"
 )
 
@@ -17,8 +16,8 @@ func getPermissionKey(id string) string {
 
 ////////////////////////////////////////////////////////////////////////////////
 // NewPermission 创建新的权限信息.
-// 权限的 id 是由 identifiers 决定的，所以不能添加重复的 identifiers.
-func NewPermission(group, name string, identifiers ...string) (id string, err error) {
+// 权限的 id 是由 identifier 决定的，所以不能添加重复的 identifier.
+func NewPermission(group, name, identifier string) (id string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -27,7 +26,7 @@ func NewPermission(group, name string, identifiers ...string) (id string, err er
 	}
 
 	var p = &Permission{}
-	p.Identifier = strings.Join(identifiers, "-")
+	p.Identifier = identifier
 	p.Name = name
 	p.Group = group
 	p.Id = md5String(p.Identifier)
@@ -46,10 +45,10 @@ func NewPermission(group, name string, identifiers ...string) (id string, err er
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// UpdatePermission 更新指定权限的信息，由于权限的 id 是由 identifiers 决定的，所以当权限的 identifiers 发生改变之后，其 id 也会改变。
+// UpdatePermission 更新指定权限的信息，由于权限的 id 是由 identifier 决定的，所以当权限的 identifier 发生改变之后，其 id 也会改变。
 // 如果权限的 id 有发生变化，将会对角色的权限列表进行更新，把老的权限 id 从相关的角色中删除，将新的权限 id 添加到相关的角色中.
 // 通常情况，不建议使用本方法.
-func UpdatePermission(id, group, name string, identifiers ...string) (string, error) {
+func UpdatePermission(id, group, name, identifier string) (string, error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -58,7 +57,7 @@ func UpdatePermission(id, group, name string, identifiers ...string) (string, er
 	}
 
 	var p = &Permission{}
-	p.Identifier = strings.Join(identifiers, "-")
+	p.Identifier = identifier
 	p.Name = name
 	p.Group = group
 	p.Id = md5String(p.Identifier)
@@ -136,11 +135,11 @@ func GetPermissionWithId(id string) (results *Permission, err error) {
 }
 
 // GetPermission 获取指定的权限信息.
-func GetPermission(identifiers ...string) (results *Permission, err error) {
+func GetPermission(identifier string) (results *Permission, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	var id = md5String(strings.Join(identifiers, "-"))
+	var id = md5String(identifier)
 	return getPermission(s, id)
 }
 
@@ -167,8 +166,8 @@ func RemovePermissionWithId(id string) (err error) {
 }
 
 // RemovePermission 移除指定的权限信息.
-func RemovePermission(identifier ...string) (err error) {
-	var id = md5String(strings.Join(identifier, "-"))
+func RemovePermission(identifier string) (err error) {
+	var id = md5String(identifier)
 	return RemovePermissionWithId(id)
 }
 

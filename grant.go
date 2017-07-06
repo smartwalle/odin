@@ -1,7 +1,6 @@
 package odin
 
 import (
-	"strings"
 	"time"
 )
 
@@ -151,12 +150,12 @@ func GetGrantRoleList(destinationId string) (results []string, err error) {
 	return results, err
 }
 
-// Check 验证 destinationId 是否有访问指定信息权限.
-func Check(destinationId string, identifiers ...string) (bool) {
+// Check 验证 destinationId 是否有访问指定信息的权限.
+func Check(destinationId, identifier string) (bool) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	var pId = md5String(strings.Join(identifiers, "-"))
+	var pId = md5String(identifier)
 
 	var rIdList = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
 	for _, rId := range rIdList {

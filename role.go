@@ -3,7 +3,6 @@ package odin
 import (
 	"github.com/smartwalle/dbr"
 	"github.com/smartwalle/going/xid"
-	"strings"
 	"time"
 )
 
@@ -141,7 +140,9 @@ func AddPermissionToRole(id string, identifiers ...string) (err error) {
 
 	var params []interface{}
 	params = append(params, getRolePermissionListKey(id))
-	params = append(params, md5String(strings.Join(identifiers, "-")))
+	for _, identifier := range identifiers {
+		params = append(params, md5String(identifier))
+	}
 
 	if r := s.Send("SADD", params...); r.Error != nil {
 		return r.Error
@@ -187,7 +188,9 @@ func RemovePermissionFromRole(id string, identifiers ...string) (err error) {
 
 	var params []interface{}
 	params = append(params, getRolePermissionListKey(id))
-	params = append(params, md5String(strings.Join(identifiers, "-")))
+	for _, identifier := range identifiers {
+		params = append(params, md5String(identifier))
+	}
 
 	if r := s.Send("SREM", params...); r.Error != nil {
 		return r.Error
