@@ -116,6 +116,10 @@ func CancelAllGrant(destinationId string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
+	if r := s.Send("MULTI"); r.Error != nil {
+		return r.Error
+	}
+
 	var key = getGrantKey(destinationId)
 	s.Send("DEL", key)
 
