@@ -171,3 +171,24 @@ func Check(destinationId, identifier string) (bool) {
 
 	return false
 }
+
+func CheckList(destinationId string, identifiers ...string) (results map[string]bool) {
+	var s = getRedisSession()
+	defer s.Close()
+
+	results = make(map[string]bool)
+
+	var rIdList = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
+	for _, identifier := range identifiers {
+		var pId = md5String(identifier)
+		results[identifier] = false
+
+		for _, rId := range rIdList {
+			if s.SISMEMBER(getRolePermissionListKey(rId), pId).MustBool() {
+				results[identifier] = true
+				break
+			}
+		}
+	}
+	return results
+}
