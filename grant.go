@@ -13,8 +13,8 @@ func getGrantKey(id string) string {
 	return k_ODIN_GRANT_PREFIX + id
 }
 
-// RemoveAllGrant 清除所有的授权信息.
-func RemoveAllGrant() (error){
+// RevokeAllGrant 清除所有的授权信息.
+func RevokeAllGrant() (error){
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -59,8 +59,8 @@ func GetGrantList() (results []*GrantInfo, err error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Grant 向 destinationId 授予角色信息.
-func Grant(destinationId string, roleIds ...string) (err error) {
+// GrantRole 向 destinationId 授予角色信息.
+func GrantRole(destinationId string, roleIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -87,8 +87,8 @@ func Grant(destinationId string, roleIds ...string) (err error) {
 	return err
 }
 
-// CancelGrant 取消对 destinationId 的指定角色授权.
-func CancelGrant(destinationId string, roleIds ...string) (err error) {
+// RevokeRole 取消对 destinationId 的指定角色授权.
+func RevokeRole(destinationId string, roleIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -111,8 +111,8 @@ func CancelGrant(destinationId string, roleIds ...string) (err error) {
 	return err
 }
 
-// CancelAllGrant 取消对 destinationId 所有角色授权.
-func CancelAllGrant(destinationId string) (err error) {
+// RevokeAllRole 取消对 destinationId 所有角色授权.
+func RevokeAllRole(destinationId string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
 

@@ -99,8 +99,8 @@ func importOdin(path string, merge bool) {
 	}
 
 	if merge == false {
-		if err = odin.RemoveAllGrant(); err != nil {
-			fmt.Println("Remove Grant", err)
+		if err = odin.RevokeAllGrant(); err != nil {
+			fmt.Println("Remove GrantRole", err)
 		}
 		if err = odin.RemoveAllPermission(); err != nil {
 			fmt.Println("Remove Permission", err)
@@ -122,8 +122,8 @@ func importOdin(path string, merge bool) {
 			}
 		}
 		for _, g := range exportData.GrantList {
-			if err = odin.Grant(g.DestinationId, g.RoleIdList...); err != nil {
-				fmt.Println("Grant",err)
+			if err = odin.GrantRole(g.DestinationId, g.RoleIdList...); err != nil {
+				fmt.Println("GrantRole",err)
 			}
 		}
 	}

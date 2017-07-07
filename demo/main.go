@@ -47,13 +47,13 @@ func main() {
 	var userId3 = "user_id_003"
 
 	// 因为每次都创建了新的角色信息，原有角色信息会被清楚，所以先取消原有授权信息
-	odin.CancelAllGrant(userId1)
-	odin.CancelAllGrant(userId2)
-	odin.CancelAllGrant(userId3)
+	odin.RevokeAllRole(userId1)
+	odin.RevokeAllRole(userId2)
+	odin.RevokeAllRole(userId3)
 
-	odin.Grant(userId1, r1Id)
-	odin.Grant(userId2, r2Id)
-	odin.Grant(userId3, r1Id, r2Id)
+	odin.GrantRole(userId1, r1Id)
+	odin.GrantRole(userId2, r2Id)
+	odin.GrantRole(userId3, r1Id, r2Id)
 
 	fmt.Println("授权信息:")
 	var gList, _ = odin.GetGrantList()
