@@ -5,18 +5,18 @@ import (
 )
 
 const (
-	k_ODIN_GRANT_PREFIX         = "odin_grant_"
-	k_ODIN_GRANT_LIST           = "odin_grant_list"
-	k_ODIN_GRANT_PRIVATE_PREFIX = "odin_grant_private_"
-	k_ODIN_GRANT_PRIVATE_LIST   = "odin_grant_private_list"
+	k_ODIN_GRANT_ROLE_PREFIX       = "odin_grant_"
+	k_ODIN_GRANT_LIST              = "odin_grant_list"
+	k_ODIN_GRANT_PERMISSION_PREFIX = "odin_grant_permission_"
+	k_ODIN_GRANT_PERMISSION_LIST   = "odin_grant_permission_list"
 )
 
-func getGrantKey(id string) string {
-	return k_ODIN_GRANT_PREFIX + id
+func getGrantRoleKey(id string) string {
+	return k_ODIN_GRANT_ROLE_PREFIX + id
 }
 
-func getGrantPrivateKey(id string) string {
-	return k_ODIN_GRANT_PRIVATE_PREFIX + id
+func getGrantPermissionKey(id string) string {
+	return k_ODIN_GRANT_PERMISSION_PREFIX + id
 }
 
 // RevokeAllGrant 清除所有的角色授权信息.
@@ -29,7 +29,7 @@ func RevokeAllGrant() error {
 		return err
 	}
 
-	pIdList, err := s.ZREVRANGE(k_ODIN_GRANT_PRIVATE_LIST, 0, -1).Strings()
+	pIdList, err := s.ZREVRANGE(k_ODIN_GRANT_PERMISSION_LIST, 0, -1).Strings()
 	if err != nil {
 		return err
 	}
@@ -39,14 +39,14 @@ func RevokeAllGrant() error {
 	}
 
 	for _, gId := range gIdList {
-		s.Send("DEL", getGrantKey(gId))
+		s.Send("DEL", getGrantRoleKey(gId))
 	}
 	s.Send("DEL", k_ODIN_GRANT_LIST)
 
 	for _, pId := range pIdList {
-		s.Send("DEL",  getGrantPrivateKey(pId))
+		s.Send("DEL",  getGrantPermissionKey(pId))
 	}
-	s.Send("DEL", k_ODIN_GRANT_PRIVATE_LIST)
+	s.Send("DEL", k_ODIN_GRANT_PERMISSION_LIST)
 
 	if r := s.Do("EXEC"); r.Error != nil {
 		return r.Error
@@ -55,7 +55,7 @@ func RevokeAllGrant() error {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// GetAllGrantRoleList 获取所有的角色授权信息列表.
+// GetAllGrantRoleList 获取所有的角色授权信息.
 func GetAllGrantRoleList() (results []*GrantInfo, err error) {
 	var s = getRedisSession()
 	defer s.Close()
@@ -68,10 +68,30 @@ func GetAllGrantRoleList() (results []*GrantInfo, err error) {
 	for _, gId := range gIdList {
 		var gInfo = &GrantInfo{}
 		gInfo.DestinationId = gId
-		gInfo.RoleIdList = s.SMEMBERS(getGrantKey(gId)).MustStrings()
+		gInfo.RoleIdList = s.SMEMBERS(getGrantRoleKey(gId)).MustStrings()
 		results = append(results, gInfo)
 	}
 
+	return results, err
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// GetAllGrantPermissionList 获取所有的权限授权信息.
+func GetAllGrantPermissionList() (results []*GrantInfo, err error) {
+	var s = getRedisSession()
+	defer s.Close()
+
+	gIdList, err := s.ZREVRANGE(k_ODIN_GRANT_PERMISSION_LIST, 0, -1).Strings()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, gId := range gIdList {
+		var gInfo = &GrantInfo{}
+		gInfo.DestinationId = gId
+		gInfo.PermissionList = s.SMEMBERS(getGrantPermissionKey(gId)).MustStrings()
+		results = append(results, gInfo)
+	}
 	return results, err
 }
 
@@ -81,7 +101,7 @@ func GrantRole(destinationId string, roleIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	var key = getGrantKey(destinationId)
+	var key = getGrantRoleKey(destinationId)
 
 	var params []interface{}
 	if len(roleIds) > 0 {
@@ -118,7 +138,7 @@ func GrantPermission(destinationId string, identifiers ...string) (err error) {
 	if r := s.Send("MULTI"); r.Error != nil {
 		return r.Error
 	}
-	var key = getGrantPrivateKey(destinationId)
+	var key = getGrantPermissionKey(destinationId)
 	if len(identifiers) > 0 {
 		var params []interface{}
 		params = append(params, key)
@@ -127,7 +147,7 @@ func GrantPermission(destinationId string, identifiers ...string) (err error) {
 		}
 		s.Send("SADD", params...)
 
-		s.Send("ZADD", k_ODIN_GRANT_PRIVATE_LIST, time.Now().Unix(), destinationId)
+		s.Send("ZADD", k_ODIN_GRANT_PERMISSION_LIST, time.Now().Unix(), destinationId)
 	}
 
 	if r := s.Do("EXEC"); r.Error != nil {
@@ -146,7 +166,7 @@ func RevokeRole(destinationId string, roleIds ...string) (err error) {
 	}
 
 	if len(roleIds) > 0 {
-		var key = getGrantKey(destinationId)
+		var key = getGrantRoleKey(destinationId)
 		var params []interface{}
 		params = append(params, key)
 		for _, rId := range roleIds {
@@ -171,7 +191,7 @@ func RevokePermission(destinationId string, identifiers ...string) (err error) {
 	}
 
 	if len(identifiers) > 0 {
-		var key = getGrantPrivateKey(destinationId)
+		var key = getGrantPermissionKey(destinationId)
 		var params []interface{}
 		params = append(params, key)
 		for _, identifier := range identifiers {
@@ -195,7 +215,7 @@ func RevokeAllRole(destinationId string) (err error) {
 		return r.Error
 	}
 
-	var key = getGrantKey(destinationId)
+	var key = getGrantRoleKey(destinationId)
 	s.Send("DEL", key)
 	s.Send("ZREM", k_ODIN_GRANT_LIST, destinationId)
 
@@ -214,9 +234,9 @@ func RevokeAllPermission(destinationId string) (err error) {
 		return r.Error
 	}
 
-	var key = getGrantKey(destinationId)
+	var key = getGrantRoleKey(destinationId)
 	s.Send("DEL", key)
-	s.Send("ZREM", k_ODIN_GRANT_PRIVATE_LIST, destinationId)
+	s.Send("ZREM", k_ODIN_GRANT_PERMISSION_LIST, destinationId)
 
 	if r := s.Do("EXEC"); r.Error != nil {
 		return r.Error
@@ -230,24 +250,31 @@ func GetGrantPermissions(destinationId string) (results []string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	var rIdList = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
-	for _, rId := range rIdList {
-		var pIdList = s.SMEMBERS(getRolePermissionListKey(rId)).MustStrings()
-		results = append(results, pIdList...)
-	}
+	//var rIdList = s.SMEMBERS(getGrantRoleKey(destinationId)).MustStrings()
+	//for _, rId := range rIdList {
+	//	var pIdList = s.SMEMBERS(getRolePermissionListKey(rId)).MustStrings()
+	//	results = append(results, pIdList...)
+	//}
 
-	var pList = s.SMEMBERS(getGrantPrivateKey(destinationId)).MustStrings()
+	var pList = s.SMEMBERS(getGrantPermissionKey(destinationId)).MustStrings()
 	results = append(results, pList...)
 
 	return results, err
 }
 
 // GetGrantRoles 获取 destinationId 拥有的所有角色信息.
-func GetGrantRoles(destinationId string) (results []string, err error) {
+func GetGrantRoles(destinationId string) (results []*Role, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
-	results = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
+	rIdList := s.SMEMBERS(getGrantRoleKey(destinationId)).MustStrings()
+	for _, rId := range rIdList {
+		var role, _ = GetRoleWithId(rId)
+		if role != nil {
+			results = append(results, role)
+		}
+	}
+
 	return results, err
 }
 
@@ -259,14 +286,14 @@ func Check(destinationId, identifier string) bool {
 
 	var pId = md5String(identifier)
 
-	var rIdList = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
+	var rIdList = s.SMEMBERS(getGrantRoleKey(destinationId)).MustStrings()
 	for _, rId := range rIdList {
 		if s.SISMEMBER(getRolePermissionListKey(rId), pId).MustBool() {
 			return true
 		}
 	}
 
-	if s.SISMEMBER(getGrantPrivateKey(destinationId), identifier).MustBool() {
+	if s.SISMEMBER(getGrantPermissionKey(destinationId), identifier).MustBool() {
 		return true
 	}
 
@@ -278,13 +305,22 @@ func Check(destinationId, identifier string) bool {
 	return false
 }
 
+// CheckRole 验证 destinationId 是否拥有指定角色.
+func CheckRole(destinationId, roleId string) bool {
+	var s = getRedisSession()
+	defer s.Close()
+
+	var key = getGrantRoleKey(destinationId)
+	return s.SISMEMBER(key, roleId).MustBool()
+}
+
 func CheckList(destinationId string, identifiers ...string) (results map[string]bool) {
 	var s = getRedisSession()
 	defer s.Close()
 
 	results = make(map[string]bool)
 
-	var rIdList = s.SMEMBERS(getGrantKey(destinationId)).MustStrings()
+	var rIdList = s.SMEMBERS(getGrantRoleKey(destinationId)).MustStrings()
 	for _, identifier := range identifiers {
 		var pId = md5String(identifier)
 		results[identifier] = false
@@ -296,7 +332,7 @@ func CheckList(destinationId string, identifiers ...string) (results map[string]
 			}
 		}
 
-		if s.SISMEMBER(getGrantPrivateKey(destinationId), identifier).MustBool() {
+		if s.SISMEMBER(getGrantPermissionKey(destinationId), identifier).MustBool() {
 			results[identifier] = true
 		}
 	}

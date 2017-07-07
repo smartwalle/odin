@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/smartwalle/odin"
-	"os"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -32,7 +32,7 @@ func main() {
 	odin.Init(url, password, dbIndex, 1, 1)
 
 	if in == 1 {
-		importOdin(path, merge==1)
+		importOdin(path, merge == 1)
 	} else {
 		exportOdin(path)
 	}
@@ -43,12 +43,15 @@ func exportOdin(path string) {
 
 	var roleList, _ = odin.GetRoleList()
 
-	var grantList, _ = odin.GetAllGrantRoleList()
+	var grantRoleList, _ = odin.GetAllGrantRoleList()
+
+	var grantPermissionList, _ = odin.GetAllGrantPermissionList()
 
 	var exportData = &exportData{}
 	exportData.PermissionList = permissionList
 	exportData.RoleList = roleList
-	exportData.GrantList = grantList
+	exportData.GrantRoleList = grantRoleList
+	exportData.GrantPermissionList = grantPermissionList
 
 	bs, err := json.Marshal(exportData)
 	if err != nil {
@@ -118,12 +121,18 @@ func importOdin(path string, merge bool) {
 		}
 		for _, r := range exportData.RoleList {
 			if err = odin.UpdateRole(r.Id, r.Group, r.Name, r.PermissionIdList...); err != nil {
-				fmt.Println("UpdateRole",err)
+				fmt.Println("UpdateRole", err)
 			}
 		}
-		for _, g := range exportData.GrantList {
+		for _, g := range exportData.GrantRoleList {
 			if err = odin.GrantRole(g.DestinationId, g.RoleIdList...); err != nil {
-				fmt.Println("GrantRole",err)
+				fmt.Println("GrantRole", err)
+			}
+		}
+
+		for _, p := range exportData.GrantPermissionList {
+			if err = odin.GrantPermission(p.DestinationId, p.PermissionList...); err != nil {
+				fmt.Println("GrantPermission", err)
 			}
 		}
 	}
@@ -132,7 +141,8 @@ func importOdin(path string, merge bool) {
 }
 
 type exportData struct {
-	PermissionList []*odin.Permission `json:"permission_list"`
-	RoleList       []*odin.Role       `json:"role_list"`
-	GrantList      []*odin.GrantInfo  `json:"grant_list"`
+	PermissionList      []*odin.Permission `json:"permission_list"`
+	RoleList            []*odin.Role       `json:"role_list"`
+	GrantRoleList       []*odin.GrantInfo  `json:"grant_role_list"`
+	GrantPermissionList []*odin.GrantInfo  `json:"grant_permission_list"`
 }

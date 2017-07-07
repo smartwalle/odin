@@ -80,4 +80,10 @@ func main() {
 	fmt.Println(userId1, "GET", "/api/users", odin.Check(userId1, "GET-/api/users"))
 	fmt.Println(userId2, "GET", "/api/users", odin.Check(userId2, "GET-/api/users"))
 	fmt.Println(userId3, "GET", "/api/users", odin.Check(userId3, "GET-/api/users"))
+
+	fmt.Println("--------------------------------------------------")
+	odin.GrantPermission(userId1, "user_1", "user_2")
+	fmt.Println(odin.Check(userId1, "user_1"))
+	fmt.Println(odin.Check(userId1, "user_2"))
+	fmt.Println(odin.Check(userId1, "user_3"))
 }

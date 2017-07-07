@@ -15,6 +15,7 @@ type Role struct {
 }
 
 type GrantInfo struct {
-	DestinationId string   `json:"destination_id"   redis:"destination_id"`
-	RoleIdList    []string `json:"role_id_list"     redis:"-"`
+	DestinationId  string   `json:"destination_id"             redis:"destination_id"`
+	RoleIdList     []string `json:"role_id_list,omitempty"     redis:"-"`
+	PermissionList []string `json:"permission_list,omitempty"  redis:"-"`
 }

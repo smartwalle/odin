@@ -212,10 +212,6 @@ func GetRoleList() (results []*Role, err error) {
 		return nil, err
 	}
 	for _, rId := range rIdList {
-		var r = s.HGETALL(getRoleKey(rId))
-		if r.Error != nil {
-			return nil, err
-		}
 		role, err := getRole(s, rId)
 		if err != nil {
 			return nil, err
