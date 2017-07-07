@@ -7,7 +7,7 @@ import (
 
 func main() {
 	// 初始化数据库信息
-	odin.Init("localhost:6379", "", 2, 10, 2)
+	odin.Init("localhost:6379", "", 5, 10, 2)
 
 	fmt.Println("--------------------------------------------------")
 	// 创建权限信息
@@ -56,7 +56,7 @@ func main() {
 	odin.GrantRole(userId3, r1Id, r2Id)
 
 	fmt.Println("授权信息:")
-	var gList, _ = odin.GetGrantRoleList()
+	var gList, _ = odin.GetAllGrantRoleList()
 	for _, g := range gList {
 		fmt.Println(g.DestinationId, g.RoleIdList)
 	}
