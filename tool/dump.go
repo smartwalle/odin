@@ -43,7 +43,7 @@ func exportOdin(path string) {
 
 	var roleList, _ = odin.GetRoleList()
 
-	var grantList, _ = odin.GetGrantList()
+	var grantList, _ = odin.GetGrantRoleList()
 
 	var exportData = &exportData{}
 	exportData.PermissionList = permissionList

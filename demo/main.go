@@ -56,7 +56,7 @@ func main() {
 	odin.GrantRole(userId3, r1Id, r2Id)
 
 	fmt.Println("授权信息:")
-	var gList, _ = odin.GetGrantList()
+	var gList, _ = odin.GetGrantRoleList()
 	for _, g := range gList {
 		fmt.Println(g.DestinationId, g.RoleIdList)
 	}

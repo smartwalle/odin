@@ -13,7 +13,7 @@ func getGrantKey(id string) string {
 	return k_ODIN_GRANT_PREFIX + id
 }
 
-// RevokeAllGrant 清除所有的授权信息.
+// RevokeAllGrant 清除所有的角色授权信息.
 func RevokeAllGrant() (error){
 	var s = getRedisSession()
 	defer s.Close()
@@ -38,8 +38,8 @@ func RevokeAllGrant() (error){
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// GetGrantList 获取所有的授权信息列表.
-func GetGrantList() (results []*GrantInfo, err error) {
+// GetGrantRoleList 获取所有的角色授权信息列表.
+func GetGrantRoleList() (results []*GrantInfo, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -131,8 +131,9 @@ func RevokeAllRole(destinationId string) (err error) {
 	return err
 }
 
-// GetGrantPermissionList 获取 destinationId 拥有的所有权限信息.
-func GetGrantPermissionList(destinationId string) (results []string, err error) {
+////////////////////////////////////////////////////////////////////////////////
+// GetPermissionListWithDestinationId 获取 destinationId 拥有的所有权限信息.
+func GetPermissionListWithDestinationId(destinationId string) (results []string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -145,8 +146,8 @@ func GetGrantPermissionList(destinationId string) (results []string, err error) 
 	return results, err
 }
 
-// GetGrantRoleList 获取 destinationId 拥有的所有角色信息.
-func GetGrantRoleList(destinationId string) (results []string, err error) {
+// GetRoleListWithDestinationId 获取 destinationId 拥有的所有角色信息.
+func GetRoleListWithDestinationId(destinationId string) (results []string, err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -154,6 +155,7 @@ func GetGrantRoleList(destinationId string) (results []string, err error) {
 	return results, err
 }
 
+////////////////////////////////////////////////////////////////////////////////
 // Check 验证 destinationId 是否有访问指定信息的权限.
 func Check(destinationId, identifier string) (bool) {
 	var s = getRedisSession()
