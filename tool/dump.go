@@ -43,9 +43,9 @@ func exportOdin(path string) {
 
 	var roleList, _ = odin.GetRoleList()
 
-	var grantRoleList, _ = odin.GetAllGrantRoleList()
+	var grantRoleList, _ = odin.GetGrantedRoleList()
 
-	var grantPermissionList, _ = odin.GetAllGrantPermissionList()
+	var grantPermissionList, _ = odin.GetGrantedStandalonePermissionList()
 
 	var exportData = &exportData{}
 	exportData.PermissionList = permissionList
@@ -131,8 +131,8 @@ func importOdin(path string, merge bool) {
 		}
 
 		for _, p := range exportData.GrantPermissionList {
-			if err = odin.GrantPermission(p.DestinationId, p.PermissionList...); err != nil {
-				fmt.Println("GrantPermission", err)
+			if err = odin.GrantStandalonePermission(p.DestinationId, p.PermissionList...); err != nil {
+				fmt.Println("GrantStandalonePermission", err)
 			}
 		}
 	}

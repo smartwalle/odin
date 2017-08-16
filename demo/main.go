@@ -56,7 +56,7 @@ func main() {
 	odin.GrantRole(userId3, r1Id, r2Id)
 
 	fmt.Println("授权信息:")
-	var gList, _ = odin.GetAllGrantRoleList()
+	var gList, _ = odin.GetGrantedRoleList()
 	for _, g := range gList {
 		fmt.Println(g.DestinationId, g.RoleIdList)
 	}
@@ -82,7 +82,7 @@ func main() {
 	fmt.Println(userId3, "GET", "/api/users", odin.Check(userId3, "GET-/api/users"))
 
 	fmt.Println("--------------------------------------------------")
-	odin.GrantPermission(userId1, "user_1", "user_2")
+	odin.GrantStandalonePermission(userId1, "user_1", "user_2")
 	fmt.Println(odin.Check(userId1, "user_1"))
 	fmt.Println(odin.Check(userId1, "user_2"))
 	fmt.Println(odin.Check(userId1, "user_3"))
