@@ -29,12 +29,13 @@ func NewPermission(group, name, identifier string) (id string, err error) {
 	p.Identifier = identifier
 	p.Name = name
 	p.Group = group
+	p.UpdateOn = time.Now().Unix()
 	p.Id = md5String(p.Identifier)
 
 	if r := s.Send("HMSET", dbr.StructToArgs(getPermissionKey(p.Id), p)...); r.Error != nil {
 		return "", r.Error
 	}
-	if r := s.Send("ZADD", k_ODIN_PERMISSION_LIST, time.Now().Unix(), p.Id); r.Error != nil {
+	if r := s.Send("ZADD", k_ODIN_PERMISSION_LIST, p.UpdateOn, p.Id); r.Error != nil {
 		return "", r.Error
 	}
 	if r := s.Do("EXEC"); r.Error != nil {
@@ -49,6 +50,10 @@ func NewPermission(group, name, identifier string) (id string, err error) {
 // 如果权限的 id 有发生变化，将会对角色的权限列表进行更新，把老的权限 id 从相关的角色中删除，将新的权限 id 添加到相关的角色中.
 // 通常情况，不建议使用本方法.
 func UpdatePermission(id, group, name, identifier string) (string, error) {
+	return ImportPermission(id, group, name, identifier, 0)
+}
+
+func ImportPermission(id, group, name, identifier string, updateOn int64) (string, error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -60,12 +65,16 @@ func UpdatePermission(id, group, name, identifier string) (string, error) {
 	p.Identifier = identifier
 	p.Name = name
 	p.Group = group
+	if updateOn <= 0 {
+		updateOn = time.Now().Unix()
+	}
+	p.UpdateOn = updateOn
 	p.Id = md5String(p.Identifier)
 
 	if r := s.Send("HMSET", dbr.StructToArgs(getPermissionKey(p.Id), p)...); r.Error != nil {
 		return "", r.Error
 	}
-	if r := s.Send("ZADD", k_ODIN_PERMISSION_LIST, time.Now().Unix(), p.Id); r.Error != nil {
+	if r := s.Send("ZADD", k_ODIN_PERMISSION_LIST, p.UpdateOn, p.Id); r.Error != nil {
 		return "", r.Error
 	}
 	if id != p.Id {

@@ -5,6 +5,7 @@ type Permission struct {
 	Identifier string `json:"identifier"   redis:"identifier"` // 权限标识
 	Name       string `json:"name"         redis:"name"`       // 权限名称
 	Group      string `json:"group"        redis:"group"`      // 组名
+	UpdateOn   int64  `json:"update_on"    redis:"update_on"`  // 最后更新时间
 }
 
 type Role struct {
@@ -12,6 +13,7 @@ type Role struct {
 	Name             string   `json:"name"                 redis:"name"`
 	Group            string   `json:"group"                redis:"group"` // 组名
 	PermissionIdList []string `json:"permission_id_list"   redis:"-"`
+	UpdateOn         int64    `json:"update_on"            redis:"update_on"`  // 最后更新时间
 }
 
 type GrantInfo struct {

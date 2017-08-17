@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/smartwalle/odin"
 	"fmt"
+	"time"
 )
 
 func main() {
@@ -13,12 +14,13 @@ func main() {
 	// 创建权限信息
 	fmt.Println("初始化权限信息...")
 	var p11Id, _ = odin.NewPermission("产品", "添加产品", "POST-/api/product")
+	time.Sleep(time.Second * 1)
 	var p12Id, _ = odin.NewPermission("产品", "修改产品", "PUT-/api/product")
-
+	time.Sleep(time.Second * 1)
 	var p21Id, _ = odin.NewPermission("用户", "添加用户", "POST-/api/user")
-	var p22Id, _ = odin.NewPermission("用户", "修改产品", "PUT-/api/user")
+	time.Sleep(time.Second * 1)
+	var p22Id, _ = odin.NewPermission("用户", "修改用户", "PUT-/api/user")
 	fmt.Println("初始化权限信息完成...")
-
 
 	var pList, _ = odin.GetPermissionList()
 	fmt.Println("现有权限信息:")

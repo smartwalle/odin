@@ -33,6 +33,7 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 	var r = &Role{}
 	r.Name = name
 	r.Group = group
+	r.UpdateOn = time.Now().Unix()
 	r.Id = xid.NewMID().Hex()
 
 	if r := s.Send("HMSET", dbr.StructToArgs(getRoleKey(r.Id), r)...); r.Error != nil {
@@ -50,7 +51,7 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 		}
 	}
 
-	if r := s.Send("ZADD", k_ODIN_ROLE_LIST, time.Now().Unix(), r.Id); r.Error != nil {
+	if r := s.Send("ZADD", k_ODIN_ROLE_LIST, r.UpdateOn, r.Id); r.Error != nil {
 		return "", r.Error
 	}
 
@@ -65,6 +66,10 @@ func NewRole(group, name string, permissionIds ...string) (id string, err error)
 ////////////////////////////////////////////////////////////////////////////////
 // UpdateRole 更新角色信息，如果角色信息不存在，则会根据信息创建新的角色信息。
 func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
+	return ImportRole(id, group, name, 0, permissionIds...)
+}
+
+func ImportRole(id, group, name string, updateOn int64, permissionIds ...string) (err error) {
 	var s = getRedisSession()
 	defer s.Close()
 
@@ -75,6 +80,10 @@ func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
 	var r = &Role{}
 	r.Name = name
 	r.Group = group
+	if updateOn <= 0 {
+		updateOn = time.Now().Unix()
+	}
+	r.UpdateOn = updateOn
 	r.Id = id
 
 	if r := s.Send("HMSET", dbr.StructToArgs(getRoleKey(r.Id), r)...); r.Error != nil {
@@ -94,7 +103,7 @@ func UpdateRole(id, group, name string, permissionIds ...string) (err error) {
 		}
 	}
 
-	if r := s.Send("ZADD", k_ODIN_ROLE_LIST, time.Now().Unix(), r.Id); r.Error != nil {
+	if r := s.Send("ZADD", k_ODIN_ROLE_LIST, r.UpdateOn, r.Id); r.Error != nil {
 		return r.Error
 	}
 

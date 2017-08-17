@@ -115,12 +115,12 @@ func importOdin(path string, merge bool) {
 
 	if exportData != nil {
 		for _, p := range exportData.PermissionList {
-			if _, err = odin.UpdatePermission(p.Id, p.Group, p.Name, p.Identifier); err != nil {
+			if _, err = odin.ImportPermission(p.Id, p.Group, p.Name, p.Identifier, p.UpdateOn); err != nil {
 				fmt.Println("UpdatePermission", err)
 			}
 		}
 		for _, r := range exportData.RoleList {
-			if err = odin.UpdateRole(r.Id, r.Group, r.Name, r.PermissionIdList...); err != nil {
+			if err = odin.ImportRole(r.Id, r.Group, r.Name, r.UpdateOn, r.PermissionIdList...); err != nil {
 				fmt.Println("UpdateRole", err)
 			}
 		}
