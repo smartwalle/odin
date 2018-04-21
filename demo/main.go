@@ -15,6 +15,7 @@ func main() {
 
 	fmt.Println(s.GetPermissionList(0, 0, ""))
 
+	fmt.Println(s.GetRoleList(0, 0, ""))
 
 	//fmt.Println(s.addGroup(odin.K_GROUP_TYPE_ROLE, "ttt", odin.K_STATUS_ENABLE))
 }

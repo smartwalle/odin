@@ -12,6 +12,7 @@ func NewService(db dbs.DB) *Service {
 	m.db = db
 	m.groupTable = "odin_group"
 	m.permissionTable = "odin_permission"
+	m.roleTable = "odin_role"
 	s.m = m
 	return s
 }
@@ -26,7 +27,15 @@ func (this *Service) GetGroupWithId(id int64) (result *Group, err error) {
 }
 
 func (this *Service) GetGroupWithName(name string) (result *Group, err error) {
-	return this.m.getGroupWithName(name)
+	return this.m.getGroupWithName(0, name)
+}
+
+func (this *Service) GetRoleGroupWithName(name string) (result *Group, err error) {
+	return this.m.getGroupWithName(K_GROUP_TYPE_ROLE, name)
+}
+
+func (this *Service) GetPermissionGroupWithName(name string) (result *Group, err error) {
+	return this.m.getGroupWithName(K_GROUP_TYPE_PERMISSION, name)
 }
 
 func (this *Service) AddRoleGroup(name string, status int) (result *Group, err error) {
@@ -77,3 +86,30 @@ func (this *Service) UpdatePermission(id, groupId int64, name, identifier string
 func (this *Service) UpdatePermissionStatus(id int64, status int) (err error) {
 	return this.m.updatePermissionStatus(id, status)
 }
+
+// --------------------------------------------------------------------------------
+func (this *Service) GetRoleList(groupId int64, status int, keyword string) (result []*Role, err error) {
+	return this.m.getRoleList(groupId, status, keyword)
+}
+
+func (this *Service) GetRoleWithId(id int64) (result *Role, err error) {
+	return this.m.getRoleWithId(id)
+}
+
+func (this *Service) GetRoleWithName(name string) (result *Role, err error) {
+	return this.m.getRoleWithName(name)
+}
+
+func (this *Service) AddRole(groupId int64, name string, status int) (result *Role, err error) {
+	return this.m.addRole(groupId, name, status)
+}
+
+func (this *Service) UpdateRole(id, groupId int64, name string, status int) (err error) {
+	return this.m.updateRole(id, groupId, name, status)
+}
+
+func (this *Service) UpdateRoleStatus(id int64, status int) (err error) {
+	return this.m.updateRoleStatus(id, status)
+}
+
+// --------------------------------------------------------------------------------

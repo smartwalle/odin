@@ -29,7 +29,7 @@ func (this *manager) getGroupList(gType, status int, name string) (result []*Gro
 
 func (this *manager) getGroupWithId(id int64) (result *Group, err error) {
 	var tx = dbs.MustTx(this.db)
-	if result, err = this.getGroup(tx, id, ""); err != nil {
+	if result, err = this.getGroup(tx, id, 0, ""); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -38,9 +38,9 @@ func (this *manager) getGroupWithId(id int64) (result *Group, err error) {
 	return result, err
 }
 
-func (this *manager) getGroupWithName(name string) (result *Group, err error) {
+func (this *manager) getGroupWithName(gType int, name string) (result *Group, err error) {
 	var tx = dbs.MustTx(this.db)
-	if result, err = this.getGroup(tx, 0, name); err != nil {
+	if result, err = this.getGroup(tx, 0, gType, name); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -55,7 +55,7 @@ func (this *manager) addGroup(gType int, name string, status int) (result *Group
 	if newGroupId, err = this.insertGroup(tx, gType, status, name); err != nil {
 		return nil, err
 	}
-	if result, err = this.getGroup(tx, newGroupId, ""); err != nil {
+	if result, err = this.getGroup(tx, newGroupId, 0, ""); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -98,12 +98,15 @@ func (this *manager) updateGroupStatus(id int64, status int) (err error) {
 	return err
 }
 
-func (this *manager) getGroup(tx *dbs.Tx, id int64, name string) (result *Group, err error) {
+func (this *manager) getGroup(tx *dbs.Tx, id int64, gType int, name string) (result *Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.type", "g.status", "g.name", "g.created_on")
 	sb.From(this.groupTable, "AS g")
 	if id > 0 {
 		sb.Where("g.id = ?", id)
+	}
+	if gType > 0 {
+		sb.Where("g.type = ?", gType)
 	}
 	if name != "" {
 		sb.Where("g.name = ?", name)

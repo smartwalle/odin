@@ -7,4 +7,5 @@ type manager struct {
 
 	groupTable      string
 	permissionTable string
+	roleTable       string
 }
