@@ -10,10 +10,10 @@ func (this *manager) getGroupList(gType, status int, name string) (result []*Gro
 	sb.Selects("g.id", "g.type", "g.name", "g.status", "g.created_on")
 	sb.From(this.groupTable, "AS g")
 	if gType > 0 {
-		sb.Where("g.type=?", gType)
+		sb.Where("g.type = ?", gType)
 	}
 	if status > 0 {
-		sb.Where("g.status=?", status)
+		sb.Where("g.status = ?", status)
 	}
 	if name != "" {
 		var keyword = "%" + name + "%"
