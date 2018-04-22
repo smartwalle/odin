@@ -208,6 +208,10 @@ func (this *Service) GrantPermission(roleId int64, permissionIdList ...int64) (e
 	return this.m.grantPermission(roleId, nIdList)
 }
 
+func (this *Service) RevokePermission(roleId int64, permissionIdList ...int64) (err error) {
+	return this.m.revokePermission(roleId, permissionIdList)
+}
+
 func (this *Service) GrantRole(objectId string, roleIdList ...int64) (err error) {
 	if len(roleIdList) == 0 {
 		return ErrRoleNotExists
@@ -234,6 +238,10 @@ func (this *Service) GrantRole(objectId string, roleIdList ...int64) (err error)
 	return err
 }
 
+func (this *Service) RevokeRole(roleId string, roleIdList ...int64) (err error) {
+	return this.m.revokeRole(roleId, roleIdList)
+}
+
 func (this *Service) Check(objectId, identifier string) (result bool) {
-	return this.m.Check(objectId, identifier)
+	return this.m.check(objectId, identifier)
 }

@@ -226,6 +226,17 @@ func (this *manager) grantPermission(roleId int64, permissionIdList []int64) (er
 	return nil
 }
 
+func (this *manager) revokePermission(roleId int64, permissionIdList []int64) (err error) {
+	var rb = dbs.NewDeleteBuilder()
+	rb.Table(this.rolePermissionTable)
+	rb.Where("role_id = ?", roleId)
+	rb.Where(dbs.IN("permission_id", permissionIdList))
+	if _, err = rb.Exec(this.db); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (this *manager) grantRole(objectId string, roleIdList []int64) (err error) {
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
@@ -241,7 +252,18 @@ func (this *manager) grantRole(objectId string, roleIdList []int64) (err error) 
 	return nil
 }
 
-func (this *manager) Check(objectId, identifier string) (result bool) {
+func (this *manager) revokeRole(objectId string, roleIdList []int64) (err error) {
+	var rb = dbs.NewDeleteBuilder()
+	rb.Table(this.roleGrantTable)
+	rb.Where("object_id = ?", objectId)
+	rb.Where(dbs.IN("role_id", roleIdList))
+	if _, err = rb.Exec(this.db); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (this *manager) check(objectId, identifier string) (result bool) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("rg.object_id", "rg.role_id", "rp.permission_id", "p.identifier")
 	sb.From(this.roleGrantTable, "AS rg")
