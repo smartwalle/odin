@@ -20,13 +20,15 @@ func NewService(db dbs.DB) *Service {
 }
 
 // GetPermissionTree 获取权限组列表，会返回该组包含的权限列表
-func (this *Service) GetPermissionTree(status int, name string) (result []*Group, err error) {
-	return this.m.getPermissionTree(status, name)
+// 如果 roleId 大于 0，则会返回各权限是否有授权给该角色
+func (this *Service) GetPermissionTree(roleId int64, status int, name string) (result []*Group, err error) {
+	return this.m.getPermissionTree(roleId, status, name)
 }
 
 // GetRoleTree 获取角色组列表，会返回该组包含的角色列表
-func (this *Service) GetRoleTree(status int, name string) (result []*Group, err error) {
-	return this.m.getRoleTree(status, name)
+// 如果 objectId 不为空字符串，则会返回各角色是否有授权给该对象
+func (this *Service) GetRoleTree(objectId string, status int, name string) (result []*Group, err error) {
+	return this.m.getRoleTree(objectId, status, name)
 }
 
 // --------------------------------------------------------------------------------

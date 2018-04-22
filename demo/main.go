@@ -13,31 +13,31 @@ func main() {
 	var s = odin.NewService(db)
 
 	fmt.Println("----- 获取权限组列表 -----")
-	var gl, _ = s.GetPermissionTree(0, "")
+	var gl, _ = s.GetPermissionTree(2, 0, "")
 	for _, g := range gl {
 		fmt.Println(g.Name)
 		for _, p := range g.PermissionList {
-			fmt.Println("-", p.Name, p.Identifier)
+			fmt.Println("-", p.Name, p.Identifier, p.GrantToRole)
 		}
 	}
 
 	fmt.Println("----- 获取角色组列表 -----")
-	gl, _ = s.GetRoleTree(0, "")
+	gl, _ = s.GetRoleTree("1", 0, "")
 	for _, g := range gl {
 		fmt.Println(g.Name)
 		for _, r := range g.RoleList {
-			fmt.Println("-", r.Name)
+			fmt.Println("-", r.Name, r.GrantToObject)
 			pl, _ := s.GetPermissionListWithRole(r.Id)
 			for _, p := range pl {
-				fmt.Println("--", p.Name, p.Identifier)
+				fmt.Println("--", p.Name, p.Identifier, p.GrantToRole)
 			}
 		}
 	}
 
-	fmt.Println(s.Check("1", "pp1"))
-	fmt.Println(s.Check("1", "pp2"))
-	fmt.Println(s.Check("1", "pp3"))
-	fmt.Println(s.Check("1", "pp4"))
-	fmt.Println(s.Check("1", "pp5"))
-	fmt.Println(s.Check("2", "pp1"))
+	//fmt.Println(s.Check("1", "pp1"))
+	//fmt.Println(s.Check("1", "pp2"))
+	//fmt.Println(s.Check("1", "pp3"))
+	//fmt.Println(s.Check("1", "pp4"))
+	//fmt.Println(s.Check("1", "pp5"))
+	//fmt.Println(s.Check("2", "pp1"))
 }

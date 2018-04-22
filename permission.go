@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (this *manager) getPermissionTree(status int, name string) (result []*Group, err error) {
+func (this *manager) getPermissionTree(roleId int64, status int, name string) (result []*Group, err error) {
 	var tx = dbs.MustTx(this.db)
 
 	if result, err = this.getGroupList(tx, K_GROUP_TYPE_PERMISSION, status, name); err != nil {
@@ -19,7 +19,7 @@ func (this *manager) getPermissionTree(status int, name string) (result []*Group
 		gIdList = append(gIdList, group.Id)
 	}
 
-	pList, err := this.getPermissionListWithGroupIdList(tx, gIdList, status, "")
+	pList, err := this.getPermissionListWithGroupIdList(tx, roleId, gIdList, status, "")
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (this *manager) getPermissionTree(status int, name string) (result []*Group
 
 func (this *manager) getPermissionList(groupIdList []int64, status int, keyword string) (result []*Permission, err error) {
 	var tx = dbs.MustTx(this.db)
-	if result, err = this.getPermissionListWithGroupIdList(tx, groupIdList, status, keyword); err != nil {
+	if result, err = this.getPermissionListWithGroupIdList(tx, 0, groupIdList, status, keyword); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -48,10 +48,15 @@ func (this *manager) getPermissionList(groupIdList []int64, status int, keyword 
 	return result, nil
 }
 
-func (this *manager) getPermissionListWithGroupIdList(tx *dbs.Tx, groupIdList []int64, status int, keyword string) (result []*Permission, err error) {
+func (this *manager) getPermissionListWithGroupIdList(tx *dbs.Tx, roleId int64, groupIdList []int64, status int, keyword string) (result []*Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
 	sb.From(this.permissionTable, "AS p")
+	if roleId > 0 {
+		sb.Selects("IF(rp.role_id IS NULL, false , true) AS grant_to_role")
+		sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id AND rp.role_id = ?", roleId)
+	}
+
 	if len(groupIdList) > 0 {
 		sb.Where(dbs.IN("p.group_id", groupIdList))
 	}

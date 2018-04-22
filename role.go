@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (this *manager) getRoleTree(status int, name string) (result []*Group, err error) {
+func (this *manager) getRoleTree(objectId string, status int, name string) (result []*Group, err error) {
 	var tx = dbs.MustTx(this.db)
 
 	if result, err = this.getGroupList(tx, K_GROUP_TYPE_ROLE, status, name); err != nil {
@@ -19,7 +19,7 @@ func (this *manager) getRoleTree(status int, name string) (result []*Group, err 
 		gIdList = append(gIdList, group.Id)
 	}
 
-	rList, err := this.getRoleListWithGroupIdList(tx, gIdList, status, "")
+	rList, err := this.getRoleListWithGroupIdList(tx, objectId, gIdList, status, "")
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (this *manager) getRoleList(groupId int64, status int, keyword string) (res
 	if groupId > 0 {
 		groupIdList = append(groupIdList, groupId)
 	}
-	if result, err = this.getRoleListWithGroupIdList(tx, groupIdList, status, keyword); err != nil {
+	if result, err = this.getRoleListWithGroupIdList(tx, "", groupIdList, status, keyword); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -52,10 +52,14 @@ func (this *manager) getRoleList(groupId int64, status int, keyword string) (res
 	return result, nil
 }
 
-func (this *manager) getRoleListWithGroupIdList(tx *dbs.Tx, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
+func (this *manager) getRoleListWithGroupIdList(tx *dbs.Tx, objectId string, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
 	sb.From(this.roleTable, "AS r")
+	if objectId != "" {
+		sb.Selects("IF(rg.object_id IS NULL, false, true) AS grant_to_object")
+		sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = r.id AND rg.object_id = ?", objectId)
+	}
 	if len(groupIdList) > 0 {
 		sb.Where(dbs.IN("r.group_id", groupIdList))
 	}
@@ -202,6 +206,7 @@ func (this *manager) getPermissionListWithRoleId(roleId int64) (result []*Permis
 func (this *manager) getPermissionListWithRole(tx *dbs.Tx, roleId int64) (result []*Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
+	sb.Selects("IF(rp.role_id IS NULL, false, true) AS grant_to_role")
 	sb.From(this.permissionTable, "AS p")
 	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
 	sb.Where("rp.role_id = ?", roleId)
