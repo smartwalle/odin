@@ -247,3 +247,11 @@ func (this *Service) RevokeRole(roleId string, roleIdList ...int64) (err error) 
 func (this *Service) Check(objectId, identifier string) (result bool) {
 	return this.m.check(objectId, identifier)
 }
+
+func (this *Service) GetGrantedRoleList(objectId string) (result []*Role, err error) {
+	return this.m.getGrantedRoleList(objectId)
+}
+
+func (this *Service) GetGrantedPermissionList(objectId string) (result []*Permission, err error) {
+	return this.m.getGrantedPermissionList(objectId)
+}

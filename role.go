@@ -19,7 +19,7 @@ func (this *manager) getRoleTree(objectId string, status int, name string) (resu
 		gIdList = append(gIdList, group.Id)
 	}
 
-	rList, err := this.getRoleListWithGroupIdList(tx, objectId, gIdList, status, "")
+	rList, err := this.getRoles(tx, objectId, gIdList, status, "")
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (this *manager) getRoleList(groupId int64, status int, keyword string) (res
 	if groupId > 0 {
 		groupIdList = append(groupIdList, groupId)
 	}
-	if result, err = this.getRoleListWithGroupIdList(tx, "", groupIdList, status, keyword); err != nil {
+	if result, err = this.getRoles(tx, "", groupIdList, status, keyword); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -52,12 +52,12 @@ func (this *manager) getRoleList(groupId int64, status int, keyword string) (res
 	return result, nil
 }
 
-func (this *manager) getRoleListWithGroupIdList(tx *dbs.Tx, objectId string, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
+func (this *manager) getRoles(tx *dbs.Tx, objectId string, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
 	sb.From(this.roleTable, "AS r")
 	if objectId != "" {
-		sb.Selects("IF(rg.object_id IS NULL, false, true) AS grant_to_object")
+		sb.Selects("IF(rg.object_id IS NULL, false, true) AS granted")
 		sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = r.id AND rg.object_id = ?", objectId)
 	}
 	if len(groupIdList) > 0 {
@@ -192,30 +192,6 @@ func (this *manager) getRoleWithIdList(idList []int64) (result []*Role, err erro
 	return result, nil
 }
 
-func (this *manager) getPermissionListWithRoleId(roleId int64) (result []*Permission, err error) {
-	var tx = dbs.MustTx(this.db)
-	if result, err = this.getPermissionListWithRole(tx, roleId); err != nil {
-		return nil, err
-	}
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-func (this *manager) getPermissionListWithRole(tx *dbs.Tx, roleId int64) (result []*Permission, err error) {
-	var sb = dbs.NewSelectBuilder()
-	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
-	sb.Selects("IF(rp.role_id IS NULL, false, true) AS grant_to_role")
-	sb.From(this.permissionTable, "AS p")
-	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
-	sb.Where("rp.role_id = ?", roleId)
-	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
 func (this *manager) grantPermission(roleId int64, permissionIdList []int64) (err error) {
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
@@ -285,4 +261,16 @@ func (this *manager) check(objectId, identifier string) (result bool) {
 		return true
 	}
 	return false
+}
+
+func (this *manager) getGrantedRoleList(objectId string) (result []*Role, err error) {
+	var tx = dbs.MustTx(this.db)
+	var groupIdList []int64
+	if result, err = this.getRoles(tx, objectId, groupIdList, K_STATUS_ENABLE, ""); err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

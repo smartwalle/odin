@@ -53,7 +53,7 @@ func (this *manager) getPermissionListWithGroupIdList(tx *dbs.Tx, roleId int64, 
 	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
 	sb.From(this.permissionTable, "AS p")
 	if roleId > 0 {
-		sb.Selects("IF(rp.role_id IS NULL, false , true) AS grant_to_role")
+		sb.Selects("IF(rp.role_id IS NULL, false , true) AS granted")
 		sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id AND rp.role_id = ?", roleId)
 	}
 
@@ -192,4 +192,42 @@ func (this *manager) getPermission(tx *dbs.Tx, id int64, name, identifier string
 		return nil, err
 	}
 	return result, nil
+}
+
+func (this *manager) getPermissionListWithRoleId(roleId int64) (result []*Permission, err error) {
+	var tx = dbs.MustTx(this.db)
+	if result, err = this.getPermissionListWithRole(tx, roleId); err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+func (this *manager) getPermissionListWithRole(tx *dbs.Tx, roleId int64) (result []*Permission, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
+	sb.Selects("IF(rp.role_id IS NULL, false, true) AS granted")
+	sb.From(this.permissionTable, "AS p")
+	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
+	sb.Where("rp.role_id = ?", roleId)
+	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+func (this *manager) getGrantedPermissionList(objectId string) (result []*Permission, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
+	sb.Selects("IF(rp.role_id IS NULL, false, true) AS granted")
+	sb.From(this.permissionTable, "AS p")
+	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
+	sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = rp.role_id")
+	sb.Where("rg.object_id = ?", objectId)
+	if err := sb.Scan(this.db, &result); err != nil {
+		return nil, err
+	}
+	return result, err
 }

@@ -17,19 +17,21 @@ func main() {
 	for _, g := range gl {
 		fmt.Println(g.Name)
 		for _, p := range g.PermissionList {
-			fmt.Println("-", p.Name, p.Identifier, p.GrantToRole)
+			fmt.Println("-", p.Name, p.Identifier, p.Granted)
 		}
 	}
+
+	s.GrantRole("1", 2)
 
 	fmt.Println("----- 获取角色组列表 -----")
 	gl, _ = s.GetRoleTree("1", 0, "")
 	for _, g := range gl {
 		fmt.Println(g.Name)
 		for _, r := range g.RoleList {
-			fmt.Println("-", r.Name, r.GrantToObject)
+			fmt.Println("-", r.Name, r.Granted)
 			pl, _ := s.GetPermissionListWithRole(r.Id)
 			for _, p := range pl {
-				fmt.Println("--", p.Name, p.Identifier, p.GrantToRole)
+				fmt.Println("--", p.Name, p.Identifier, p.Granted)
 			}
 		}
 	}
