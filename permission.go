@@ -5,12 +5,55 @@ import (
 	"time"
 )
 
-func (this *manager) getPermissionList(groupId int64, status int, keyword string) (result []*Permission, err error) {
+func (this *manager) getPermissionTree(status int, name string) (result []*Group, err error) {
+	var tx = dbs.MustTx(this.db)
+
+	if result, err = this.getGroupList(tx, K_GROUP_TYPE_PERMISSION, status, name); err != nil {
+		return nil, err
+	}
+
+	var gMap = make(map[int64]*Group)
+	var gIdList []int64
+	for _, group := range result {
+		gMap[group.Id] = group
+		gIdList = append(gIdList, group.Id)
+	}
+
+	pList, err := this.getPermissionListWithGroupIdList(tx, gIdList, status, "")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range pList {
+		var group = gMap[p.GroupId]
+		if group != nil {
+			group.PermissionList = append(group.PermissionList, p)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (this *manager) getPermissionList(groupIdList []int64, status int, keyword string) (result []*Permission, err error) {
+	var tx = dbs.MustTx(this.db)
+	if result, err = this.getPermissionListWithGroupIdList(tx, groupIdList, status, keyword); err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (this *manager) getPermissionListWithGroupIdList(tx *dbs.Tx, groupIdList []int64, status int, keyword string) (result []*Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
 	sb.From(this.permissionTable, "AS p")
-	if groupId > 0 {
-		sb.Where("p.group_id = ?", groupId)
+	if len(groupIdList) > 0 {
+		sb.Where(dbs.IN("p.group_id", groupIdList))
 	}
 	if status > 0 {
 		sb.Where("p.status = ?", status)
@@ -20,6 +63,21 @@ func (this *manager) getPermissionList(groupId int64, status int, keyword string
 		sb.Where("(p.name LIKE ? OR p.identifier LIKE ?)", k, k)
 	}
 	sb.OrderBy("p.id")
+
+	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (this *manager) getPermissionWithIdList(idList []int64) (result []*Permission, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
+	sb.From(this.permissionTable, "AS p")
+	if len(idList) > 0 {
+		sb.Where(dbs.IN("r.id", idList))
+	}
+	sb.Limit(uint64(len(idList)))
 
 	if err = sb.Scan(this.db, &result); err != nil {
 		return nil, err

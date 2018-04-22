@@ -5,7 +5,18 @@ import (
 	"time"
 )
 
-func (this *manager) getGroupList(gType, status int, name string) (result []*Group, err error) {
+func (this *manager) getGroupListWithType(gType, status int, name string) (result []*Group, err error) {
+	var tx = dbs.MustTx(this.db)
+	if result, err = this.getGroupList(tx, gType, status, name); err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+func (this *manager) getGroupList(tx *dbs.Tx, gType, status int, name string) (result []*Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.type", "g.name", "g.status", "g.created_on")
 	sb.From(this.groupTable, "AS g")
@@ -21,7 +32,7 @@ func (this *manager) getGroupList(gType, status int, name string) (result []*Gro
 	}
 	sb.OrderBy("g.id")
 
-	if err = sb.Scan(this.db, &result); err != nil {
+	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
 		return nil, err
 	}
 	return result, nil

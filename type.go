@@ -8,8 +8,8 @@ const (
 )
 
 const (
-	K_GROUP_TYPE_ROLE       = 1000 // role
-	K_GROUP_TYPE_PERMISSION = 2000 // permission
+	K_GROUP_TYPE_PERMISSION = 1001 // permission
+	K_GROUP_TYPE_ROLE       = 1002 // role
 )
 
 type Group struct {
@@ -47,7 +47,8 @@ type RolePermission struct {
 }
 
 type Grant struct {
-	ObjectId  string     `json:"object_id"     sql:"object_id"`
-	RoleId    int64      `json:"role_id"       sql:"role_id"`
-	CreatedOn *time.Time `json:"created_on"    sql:"created_on"`
+	ObjectId     string `json:"object_id"     sql:"object_id"`
+	RoleId       int64  `json:"role_id"       sql:"role_id"`
+	PermissionId int64  `json:"permission_id" sql:"permission_id"`
+	Identifier   string `json:"identifier"    sql:"identifier"`
 }
