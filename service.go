@@ -13,6 +13,8 @@ func NewService(db dbs.DB) *Service {
 	m.groupTable = "odin_group"
 	m.permissionTable = "odin_permission"
 	m.roleTable = "odin_role"
+	m.rolePermissionTable = "odin_role_permission"
+	m.roleGrantTable = "odin_grant"
 	s.m = m
 	return s
 }
@@ -92,12 +94,24 @@ func (this *Service) GetRoleList(groupId int64, status int, keyword string) (res
 	return this.m.getRoleList(groupId, status, keyword)
 }
 
+func (this *Service) GetPermissionListWithRole(roleId int64) (result []*Permission, err error) {
+	return this.m.getPermissionListWithRoleId(roleId)
+}
+
 func (this *Service) GetRoleWithId(id int64) (result *Role, err error) {
-	return this.m.getRoleWithId(id)
+	return this.m.getRoleWithId(id, true)
 }
 
 func (this *Service) GetRoleWithName(name string) (result *Role, err error) {
-	return this.m.getRoleWithName(name)
+	return this.m.getRoleWithName(name, true)
+}
+
+func (this *Service) CheckRoleNameIsExists(name string) (result bool) {
+	role, err := this.m.getRoleWithName(name, false)
+	if role != nil || err != nil {
+		return true
+	}
+	return false
 }
 
 func (this *Service) AddRole(groupId int64, name string, status int) (result *Role, err error) {

@@ -27,10 +27,15 @@ func (this *manager) getRoleList(groupId int64, status int, keyword string) (res
 	return result, nil
 }
 
-func (this *manager) getRoleWithId(id int64) (result *Role, err error) {
+func (this *manager) getRoleWithId(id int64, withPermissionList bool) (result *Role, err error) {
 	var tx = dbs.MustTx(this.db)
 	if result, err = this.getRole(tx, id, ""); err != nil {
 		return nil, err
+	}
+	if withPermissionList {
+		if result.PermissionList, err = this.getPermissionListWithRole(tx, result.Id); err != nil {
+			return nil, err
+		}
 	}
 	if err = tx.Commit(); err != nil {
 		return nil, err
@@ -38,10 +43,15 @@ func (this *manager) getRoleWithId(id int64) (result *Role, err error) {
 	return result, err
 }
 
-func (this *manager) getRoleWithName(name string) (result *Role, err error) {
+func (this *manager) getRoleWithName(name string, withPermissionList bool) (result *Role, err error) {
 	var tx = dbs.MustTx(this.db)
 	if result, err = this.getRole(tx, 0, name); err != nil {
 		return nil, err
+	}
+	if withPermissionList {
+		if result.PermissionList, err = this.getPermissionListWithRole(tx, result.Id); err != nil {
+			return nil, err
+		}
 	}
 	if err = tx.Commit(); err != nil {
 		return nil, err
@@ -114,4 +124,27 @@ func (this *manager) getRole(tx *dbs.Tx, id int64, name string) (result *Role, e
 		return nil, err
 	}
 	return result, nil
+}
+
+func (this *manager) getPermissionListWithRoleId(roleId int64) (result []*Permission, err error) {
+	var tx = dbs.MustTx(this.db)
+	if result, err = this.getPermissionListWithRole(tx, roleId); err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+func (this *manager) getPermissionListWithRole(tx *dbs.Tx, roleId int64) (result []*Permission, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
+	sb.From(this.permissionTable, "AS p")
+	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
+	sb.Where("rp.role_id = ?", roleId)
+	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+		return nil, err
+	}
+	return result, err
 }

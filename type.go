@@ -13,11 +13,13 @@ const (
 )
 
 type Group struct {
-	Id        int64      `json:"id"            sql:"id"`
-	Type      int        `json:"type"          sql:"type"`
-	Name      string     `json:"name"          sql:"name"`
-	Status    int        `json:"status"        sql:"status"`
-	CreatedOn *time.Time `json:"created_on"    sql:"created_on"`
+	Id             int64         `json:"id"                          sql:"id"`
+	Type           int           `json:"type"                        sql:"type"`
+	Name           string        `json:"name"                        sql:"name"`
+	Status         int           `json:"status"                      sql:"status"`
+	CreatedOn      *time.Time    `json:"created_on"                  sql:"created_on"`
+	PermissionList []*Permission `json:"permission_list,omitempty"   sql:"-"`
+	RoleList       []*Role       `json:"role_list,omitempty"         sql:"-"`
 }
 
 type Permission struct {
@@ -30,11 +32,12 @@ type Permission struct {
 }
 
 type Role struct {
-	Id        int64      `json:"id"            sql:"id"`
-	GroupId   int64      `json:"group_id"      sql:"group_id"`
-	Name      string     `json:"name"          sql:"name"`
-	Status    int        `json:"status"        sql:"status"`
-	CreatedOn *time.Time `json:"created_on"    sql:"created_on"`
+	Id             int64         `json:"id"                          sql:"id"`
+	GroupId        int64         `json:"group_id"                    sql:"group_id"`
+	Name           string        `json:"name"                        sql:"name"`
+	Status         int           `json:"status"                      sql:"status"`
+	CreatedOn      *time.Time    `json:"created_on"                  sql:"created_on"`
+	PermissionList []*Permission `json:"permission_list,omitempty"   sql:"-"`
 }
 
 type RolePermission struct {
