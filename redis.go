@@ -9,7 +9,7 @@ type redisManager struct {
 }
 
 func (this *redisManager) buildKey(objectId string) (result string) {
-	return "odin_grant_" + objectId
+	return "odin_g_" + objectId
 }
 
 func (this *redisManager) exists(objectId string) (result bool) {
