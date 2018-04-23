@@ -38,9 +38,9 @@ func (this *manager) getGroupList(tx *dbs.Tx, gType, status int, name string) (r
 	return result, nil
 }
 
-func (this *manager) getGroupWithId(id int64) (result *Group, err error) {
+func (this *manager) getGroupWithId(id int64, gType int) (result *Group, err error) {
 	var tx = dbs.MustTx(this.db)
-	if result, err = this.getGroup(tx, id, 0, ""); err != nil {
+	if result, err = this.getGroup(tx, id, gType, ""); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -49,7 +49,7 @@ func (this *manager) getGroupWithId(id int64) (result *Group, err error) {
 	return result, err
 }
 
-func (this *manager) getGroupWithName(gType int, name string) (result *Group, err error) {
+func (this *manager) getGroupWithName(name string, gType int) (result *Group, err error) {
 	var tx = dbs.MustTx(this.db)
 	if result, err = this.getGroup(tx, 0, gType, name); err != nil {
 		return nil, err
@@ -106,6 +106,15 @@ func (this *manager) updateGroupStatus(id int64, status int) (err error) {
 	ub.Where("id = ?", id)
 	ub.Limit(1)
 	_, err = ub.Exec(this.db)
+	return err
+}
+
+func (this *manager) removeGroup(id int64) (err error) {
+	var rb = dbs.NewDeleteBuilder()
+	rb.Table(this.groupTable)
+	rb.Where("id = ?", id)
+	rb.Limit(1)
+	_, err = rb.Exec(this.db)
 	return err
 }
 

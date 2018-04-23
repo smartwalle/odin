@@ -42,19 +42,24 @@ func (this *Service) GetRoleGroupList(status int, name string) (result []*Group,
 	return this.m.getGroupListWithType(K_GROUP_TYPE_ROLE, status, name)
 }
 
-// GetGroupWithId 获取组详情，包含权限列表或者角色列表
-func (this *Service) GetGroupWithId(id int64) (result *Group, err error) {
-	return this.m.getGroupWithId(id)
+// GetPermissionGroupWithId 获取权限组详情，包含权限列表或者角色列表
+func (this *Service) GetPermissionGroupWithId(id int64) (result *Group, err error) {
+	return this.m.getGroupWithId(id, K_GROUP_TYPE_PERMISSION)
+}
+
+// GetRoleGroupWithId 获取角色组详情，包含权限列表或者角色列表
+func (this *Service) GetRoleGroupWithId(id int64) (result *Group, err error) {
+	return this.m.getGroupWithId(id, K_GROUP_TYPE_ROLE)
 }
 
 // GetPermissionGroupWithName 根据组名称查询权限组信息（精确匹配），返回数据不包含该组的权限列表
 func (this *Service) GetPermissionGroupWithName(name string) (result *Group, err error) {
-	return this.m.getGroupWithName(K_GROUP_TYPE_PERMISSION, name)
+	return this.m.getGroupWithName(name, K_GROUP_TYPE_PERMISSION)
 }
 
 // GetRoleGroupWithName 根据组名称查询角色组信息（精确匹配），返回数据不包含该组的角色列表
 func (this *Service) GetRoleGroupWithName(name string) (result *Group, err error) {
-	return this.m.getGroupWithName(K_GROUP_TYPE_ROLE, name)
+	return this.m.getGroupWithName(name, K_GROUP_TYPE_ROLE)
 }
 
 // AddPermissionGroup 添加权限组
@@ -73,8 +78,39 @@ func (this *Service) UpdateGroup(id int64, name string, status int) (err error) 
 }
 
 // UpdateGroupStatus 更新组的状态信息
-func (this *Service) UpdateGroupStatus(id int64, name string, status int) (err error) {
+func (this *Service) UpdateGroupStatus(id int64, status int) (err error) {
 	return this.m.updateGroupStatus(id, status)
+}
+
+// RemoveGroup 删除组信息
+func (this *Service) RemoveGroup(id int64) (err error) {
+	group, err := this.m.getGroupWithId(id, 0)
+	if err != nil {
+		return err
+	}
+	if group == nil {
+		return nil
+	}
+
+	// 如果 group 下还有内容，则不能删除
+	if group.Type == K_GROUP_TYPE_PERMISSION {
+		pList, err := this.m.getPermissionList([]int64{id}, 0, "")
+		if err != nil {
+			return err
+		}
+		if len(pList) > 0 {
+			return ErrRemoveGroupNotAllowed
+		}
+	} else if group.Type == K_GROUP_TYPE_ROLE {
+		rList, err := this.m.getRoleList(id, 0, "")
+		if err != nil {
+			return err
+		}
+		if len(rList) > 0 {
+			return ErrRemoveGroupNotAllowed
+		}
+	}
+	return this.m.removeGroup(id)
 }
 
 // --------------------------------------------------------------------------------
@@ -107,6 +143,13 @@ func (this *Service) AddPermission(groupId int64, name, identifier string, statu
 	if this.CheckPermissionIsExists(identifier) == true {
 		return nil, ErrPermissionIdentifierExists
 	}
+	group, err := this.m.getGroupWithId(groupId, K_GROUP_TYPE_PERMISSION)
+	if err != nil {
+		return nil, err
+	}
+	if group == nil {
+		return nil, ErrGroupNotExists
+	}
 	return this.m.addPermission(groupId, name, identifier, status)
 }
 
@@ -118,6 +161,13 @@ func (this *Service) UpdatePermission(id, groupId int64, name, identifier string
 	}
 	if p != nil && p.Id != id {
 		return ErrPermissionIdentifierExists
+	}
+	group, err := this.m.getGroupWithId(groupId, K_GROUP_TYPE_PERMISSION)
+	if err != nil {
+		return err
+	}
+	if group == nil {
+		return ErrGroupNotExists
 	}
 	return this.m.updatePermission(id, groupId, name, identifier, status)
 }
@@ -167,11 +217,25 @@ func (this *Service) CheckRoleNameIsExists(name string) (result bool) {
 
 // AddRole 添加角色
 func (this *Service) AddRole(groupId int64, name string, status int) (result *Role, err error) {
+	group, err := this.m.getGroupWithId(groupId, K_GROUP_TYPE_ROLE)
+	if err != nil {
+		return nil, err
+	}
+	if group == nil {
+		return nil, ErrGroupNotExists
+	}
 	return this.m.addRole(groupId, name, status)
 }
 
 // UpdateRole 更新角色信息
 func (this *Service) UpdateRole(id, groupId int64, name string, status int) (err error) {
+	group, err := this.m.getGroupWithId(groupId, K_GROUP_TYPE_ROLE)
+	if err != nil {
+		return err
+	}
+	if group == nil {
+		return ErrGroupNotExists
+	}
 	return this.m.updateRole(id, groupId, name, status)
 }
 

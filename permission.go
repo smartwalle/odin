@@ -80,7 +80,7 @@ func (this *manager) getPermissionWithIdList(idList []int64) (result []*Permissi
 	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
 	sb.From(this.permissionTable, "AS p")
 	if len(idList) > 0 {
-		sb.Where(dbs.IN("r.id", idList))
+		sb.Where(dbs.IN("p.id", idList))
 	}
 	sb.Limit(uint64(len(idList)))
 
@@ -225,7 +225,8 @@ func (this *manager) getGrantedPermissionList(objectId string) (result []*Permis
 	sb.From(this.permissionTable, "AS p")
 	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
 	sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = rp.role_id")
-	sb.Where("rg.object_id = ?", objectId)
+	sb.Where("rg.object_id = ? AND p.status = ?", objectId, K_STATUS_ENABLE)
+	sb.GroupBy("p.id")
 	if err := sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}

@@ -250,7 +250,9 @@ func (this *manager) check(objectId, identifier string) (result bool) {
 	sb.From(this.roleGrantTable, "AS rg")
 	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.role_id = rg.role_id")
 	sb.LeftJoin(this.permissionTable, "AS p ON p.id = rp.permission_id")
-	sb.Where("rg.object_id = ? AND p.identifier = ?", objectId, identifier)
+	sb.LeftJoin(this.roleTable, "AS r ON r.id = rg.role_id")
+	sb.Where("rg.object_id = ? AND p.identifier = ? AND p.status = ? AND r.status = ?", objectId, identifier, K_STATUS_ENABLE, K_STATUS_ENABLE)
+	sb.OrderBy("r.status", "p.status")
 	sb.Limit(1)
 
 	var grant *Grant
@@ -264,13 +266,15 @@ func (this *manager) check(objectId, identifier string) (result bool) {
 }
 
 func (this *manager) getGrantedRoleList(objectId string) (result []*Role, err error) {
-	var tx = dbs.MustTx(this.db)
-	var groupIdList []int64
-	if result, err = this.getRoles(tx, objectId, groupIdList, K_STATUS_ENABLE, ""); err != nil {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
+	sb.From(this.roleTable, "AS r")
+	sb.Selects("IF(rg.object_id IS NULL, false, true) AS granted")
+	sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = r.id")
+	sb.Where("rg.object_id = ? AND r.status = ?", objectId, K_STATUS_ENABLE)
+
+	if err := sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
