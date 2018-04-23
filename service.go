@@ -1,12 +1,16 @@
 package odin
 
-import "github.com/smartwalle/dbs"
+import (
+	"github.com/smartwalle/dbr"
+	"github.com/smartwalle/dbs"
+)
 
 type Service struct {
 	m *manager
+	r *redisManager
 }
 
-func NewService(db dbs.DB) *Service {
+func NewService(db dbs.DB, redis *dbr.Pool) *Service {
 	var s = &Service{}
 	var m = &manager{}
 	m.db = db
@@ -16,6 +20,12 @@ func NewService(db dbs.DB) *Service {
 	m.rolePermissionTable = "odin_role_permission"
 	m.roleGrantTable = "odin_grant"
 	s.m = m
+
+	if redis != nil {
+		var r = &redisManager{}
+		r.r = redis
+		s.r = r
+	}
 	return s
 }
 
@@ -309,6 +319,23 @@ func (this *Service) RevokeRole(roleId string, roleIdList ...int64) (err error) 
 }
 
 func (this *Service) Check(objectId, identifier string) (result bool) {
+	if this.r != nil {
+		result = this.r.check(objectId, identifier)
+		if result == false {
+			if this.r.exists(objectId) == false {
+				pList, _ := this.m.getGrantedPermissionList(objectId)
+				var identifierList []interface{}
+				for _, p := range pList {
+					if p.Identifier == identifier {
+						result = true
+					}
+					identifierList = append(identifierList, p.Identifier)
+				}
+				this.r.grantPermissions(objectId, identifierList)
+			}
+		}
+		return result
+	}
 	return this.m.check(objectId, identifier)
 }
 
@@ -318,4 +345,10 @@ func (this *Service) GetGrantedRoleList(objectId string) (result []*Role, err er
 
 func (this *Service) GetGrantedPermissionList(objectId string) (result []*Permission, err error) {
 	return this.m.getGrantedPermissionList(objectId)
+}
+
+func (this *Service) ClearCache() {
+	if this.r != nil {
+		this.r.clear()
+	}
 }

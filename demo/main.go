@@ -4,13 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/smartwalle/dbr"
 	"github.com/smartwalle/odin"
 )
 
 func main() {
 	var db, _ = sql.Open("mysql", "root:smok2015@(192.168.192.250:3306)/sm?parseTime=true")
+	var r = dbr.NewRedis("127.0.0.1:6379", "", 1, 30, 10)
 
-	var s = odin.NewService(db)
+	var s = odin.NewService(db, r)
 	//fmt.Println("----- 添加权限组 -----")
 	//fmt.Println(s.AddPermissionGroup("用户管理", odin.K_STATUS_ENABLE))
 	//fmt.Println(s.AddPermissionGroup("商品管理", odin.K_STATUS_ENABLE))
