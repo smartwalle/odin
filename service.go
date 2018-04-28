@@ -339,6 +339,14 @@ func (this *Service) Check(objectId, identifier string) (result bool) {
 	return this.m.check(objectId, identifier)
 }
 
+func (this *Service) CheckList(objectId string, identifiers ...string) (result map[string]bool) {
+	if this.r != nil {
+		return this.r.checkList(objectId, identifiers...)
+	}
+	return this.m.checkList(objectId, identifiers...)
+}
+
+
 func (this *Service) GetGrantedRoleList(objectId string) (result []*Role, err error) {
 	return this.m.getGrantedRoleList(objectId)
 }

@@ -24,6 +24,18 @@ func (this *redisManager) check(objectId, identifier string) (result bool) {
 	return s.SISMEMBER(this.buildKey(objectId), identifier).MustBool()
 }
 
+func (this *redisManager) checkList(objectId string, identifiers ...string) (result map[string]bool) {
+	var s = this.r.GetSession()
+	defer s.Close()
+
+	result = make(map[string]bool)
+	key := this.buildKey(objectId)
+	for _, identifier := range identifiers {
+		result[identifier] = s.SISMEMBER(key, identifier).MustBool()
+	}
+	return result
+}
+
 func (this *redisManager) grantPermissions(objectId string, identifier []interface{}) {
 	var s = this.r.GetSession()
 	defer s.Close()

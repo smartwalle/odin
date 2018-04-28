@@ -265,6 +265,43 @@ func (this *manager) check(objectId, identifier string) (result bool) {
 	return false
 }
 
+func (this *manager) checkList(objectId string, identifiers ...string) (result map[string]bool) {
+	result = make(map[string]bool)
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("rg.object_id", "rg.role_id", "rp.permission_id", "p.identifier")
+	sb.From(this.roleGrantTable, "AS rg")
+	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.role_id = rg.role_id")
+	sb.LeftJoin(this.permissionTable, "AS p ON p.id = rp.permission_id")
+	sb.LeftJoin(this.roleTable, "AS r ON r.id = rg.role_id")
+
+	var where = dbs.AND()
+	where.Append("rg.object_id = ?", objectId)
+	if len(identifiers) > 0 {
+		var or = dbs.OR()
+		for _, identifier := range identifiers {
+			or.Append("p.identifier = ?", identifier)
+			result[identifier] = false
+		}
+		where.Appends(or)
+	}
+	where.Append("p.status = ?", K_STATUS_ENABLE)
+	where.Append("r.status = ?", K_STATUS_ENABLE)
+
+	sb.Where(where)
+	sb.GroupBy("p.id")
+	sb.OrderBy("r.status", "p.status")
+	sb.Limit(uint64(len(identifiers)))
+
+	var grantList []*Grant
+	if err := sb.Scan(this.db, &grantList); err != nil || grantList == nil {
+		return result
+	}
+	for _, grant := range grantList {
+		result[grant.Identifier] = true
+	}
+	return result
+}
+
 func (this *manager) getGrantedRoleList(objectId string) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
