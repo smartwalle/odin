@@ -274,20 +274,19 @@ func (this *manager) checkList(objectId string, identifiers ...string) (result m
 	sb.LeftJoin(this.permissionTable, "AS p ON p.id = rp.permission_id")
 	sb.LeftJoin(this.roleTable, "AS r ON r.id = rg.role_id")
 
-	var where = dbs.AND()
-	where.Append("rg.object_id = ?", objectId)
+
+	sb.Where("rg.object_id = ?", objectId)
 	if len(identifiers) > 0 {
 		var or = dbs.OR()
 		for _, identifier := range identifiers {
 			or.Append("p.identifier = ?", identifier)
 			result[identifier] = false
 		}
-		where.Appends(or)
+		sb.Where(or)
 	}
-	where.Append("p.status = ?", K_STATUS_ENABLE)
-	where.Append("r.status = ?", K_STATUS_ENABLE)
+	sb.Where("p.status = ?", K_STATUS_ENABLE)
+	sb.Where("r.status = ?", K_STATUS_ENABLE)
 
-	sb.Where(where)
 	sb.GroupBy("p.id")
 	sb.OrderBy("r.status", "p.status")
 	sb.Limit(uint64(len(identifiers)))

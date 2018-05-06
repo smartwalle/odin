@@ -92,5 +92,5 @@ func main() {
 		fmt.Println(p.Id, p.Name, p.Granted)
 	}
 
-	fmt.Println(s.Check("1", "update_product"))
+	fmt.Println(s.CheckList("1", "update_product", "ssss"))
 }
