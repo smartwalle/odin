@@ -5,11 +5,12 @@ import (
 )
 
 type redisManager struct {
-	r *dbr.Pool
+	r       *dbr.Pool
+	tPrefix string
 }
 
 func (this *redisManager) buildKey(objectId string) (result string) {
-	return "odin_g_" + objectId
+	return this.tPrefix + "_odin_g_" + objectId
 }
 
 func (this *redisManager) exists(objectId string) (result bool) {
@@ -65,7 +66,7 @@ func (this *redisManager) clear() {
 	var s = this.r.GetSession()
 	defer s.Close()
 
-	var keys = s.KEYS("odin_*").MustStrings()
+	var keys = s.KEYS(this.tPrefix + "_odin_g_*").MustStrings()
 
 	if r := s.Send("MULTI"); r.Error != nil {
 		return

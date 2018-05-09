@@ -31,6 +31,7 @@ func NewService(db dbs.DB, redis *dbr.Pool, tablePrefix string) *Service {
 	if redis != nil {
 		var r = &redisManager{}
 		r.r = redis
+		r.tPrefix = tablePrefix
 		s.r = r
 	}
 	return s
