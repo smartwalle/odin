@@ -3,6 +3,7 @@ package odin
 import (
 	"github.com/smartwalle/dbr"
 	"github.com/smartwalle/dbs"
+	"strings"
 )
 
 type Service struct {
@@ -10,15 +11,21 @@ type Service struct {
 	r *redisManager
 }
 
-func NewService(db dbs.DB, redis *dbr.Pool) *Service {
+func NewService(db dbs.DB, redis *dbr.Pool, tablePrefix string) *Service {
 	var s = &Service{}
 	var m = &manager{}
+
+	tablePrefix = strings.TrimSpace(tablePrefix)
+	if tablePrefix == "" {
+		tablePrefix = "odin"
+	}
+
 	m.db = db
-	m.groupTable = "odin_group"
-	m.permissionTable = "odin_permission"
-	m.roleTable = "odin_role"
-	m.rolePermissionTable = "odin_role_permission"
-	m.roleGrantTable = "odin_grant"
+	m.groupTable = tablePrefix + "_group"
+	m.permissionTable = tablePrefix + "_permission"
+	m.roleTable = tablePrefix + "_role"
+	m.rolePermissionTable = tablePrefix + "_role_permission"
+	m.roleGrantTable = tablePrefix + "_grant"
 	s.m = m
 
 	if redis != nil {
@@ -345,7 +352,6 @@ func (this *Service) CheckList(objectId string, identifiers ...string) (result m
 	}
 	return this.m.checkList(objectId, identifiers...)
 }
-
 
 func (this *Service) GetGrantedRoleList(objectId string) (result []*Role, err error) {
 	return this.m.getGrantedRoleList(objectId)
