@@ -48,7 +48,7 @@ func (this *manager) getPermissionList(groupIdList []int64, status int, keyword 
 	return result, nil
 }
 
-func (this *manager) getPermissionListWithGroupIdList(tx *dbs.Tx, roleId int64, groupIdList []int64, status int, keyword string) (result []*Permission, err error) {
+func (this *manager) getPermissionListWithGroupIdList(tx dbs.TX, roleId int64, groupIdList []int64, status int, keyword string) (result []*Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
 	sb.From(this.permissionTable, "AS p")
@@ -69,7 +69,10 @@ func (this *manager) getPermissionListWithGroupIdList(tx *dbs.Tx, roleId int64, 
 	}
 	sb.OrderBy("p.id")
 
-	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//	return nil, err
+	//}
+	if err = sb.ScanTx(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -138,12 +141,17 @@ func (this *manager) addPermission(groupId int64, name, identifier string, statu
 	return result, err
 }
 
-func (this *manager) insertPermission(tx *dbs.Tx, groupId int64, status int, name, identifier string) (id int64, err error) {
+func (this *manager) insertPermission(tx dbs.TX, groupId int64, status int, name, identifier string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.permissionTable)
 	ib.Columns("group_id", "status", "name", "identifier", "created_on")
 	ib.Values(groupId, status, name, identifier, time.Now())
-	if result, err := tx.ExecInsertBuilder(ib); err != nil {
+	//if result, err := tx.ExecInsertBuilder(ib); err != nil {
+	//	return 0, err
+	//} else {
+	//	id, _ = result.LastInsertId()
+	//}
+	if result, err := ib.ExecTx(tx); err != nil {
 		return 0, err
 	} else {
 		id, _ = result.LastInsertId()
@@ -174,7 +182,7 @@ func (this *manager) updatePermissionStatus(id int64, status int) (err error) {
 	return err
 }
 
-func (this *manager) getPermission(tx *dbs.Tx, id int64, name, identifier string) (result *Permission, err error) {
+func (this *manager) getPermission(tx dbs.TX, id int64, name, identifier string) (result *Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
 	sb.From(this.permissionTable, "AS p")
@@ -188,7 +196,10 @@ func (this *manager) getPermission(tx *dbs.Tx, id int64, name, identifier string
 		sb.Where("p.identifier = ?", identifier)
 	}
 	sb.Limit(1)
-	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//	return nil, err
+	//}
+	if err = sb.ScanTx(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -205,14 +216,17 @@ func (this *manager) getPermissionListWithRoleId(roleId int64) (result []*Permis
 	return result, err
 }
 
-func (this *manager) getPermissionListWithRole(tx *dbs.Tx, roleId int64) (result []*Permission, err error) {
+func (this *manager) getPermissionListWithRole(tx dbs.TX, roleId int64) (result []*Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
 	sb.Selects("IF(rp.role_id IS NULL, false, true) AS granted")
 	sb.From(this.permissionTable, "AS p")
 	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
 	sb.Where("rp.role_id = ?", roleId)
-	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//	return nil, err
+	//}
+	if err = sb.ScanTx(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, err

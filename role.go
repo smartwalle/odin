@@ -52,7 +52,7 @@ func (this *manager) getRoleList(groupId int64, status int, keyword string) (res
 	return result, nil
 }
 
-func (this *manager) getRoles(tx *dbs.Tx, objectId string, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
+func (this *manager) getRoles(tx dbs.TX, objectId string, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
 	sb.From(this.roleTable, "AS r")
@@ -72,7 +72,10 @@ func (this *manager) getRoles(tx *dbs.Tx, objectId string, groupIdList []int64, 
 	}
 	sb.OrderBy("r.id")
 
-	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//	return nil, err
+	//}
+	if err = sb.ScanTx(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -125,12 +128,17 @@ func (this *manager) addRole(groupId int64, name string, status int) (result *Ro
 	return result, err
 }
 
-func (this *manager) insertRole(tx *dbs.Tx, groupId int64, status int, name string) (id int64, err error) {
+func (this *manager) insertRole(tx dbs.TX, groupId int64, status int, name string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.roleTable)
 	ib.Columns("group_id", "status", "name", "created_on")
 	ib.Values(groupId, status, name, time.Now())
-	if result, err := tx.ExecInsertBuilder(ib); err != nil {
+	//if result, err := tx.ExecInsertBuilder(ib); err != nil {
+	//	return 0, err
+	//} else {
+	//	id, _ = result.LastInsertId()
+	//}
+	if result, err := ib.ExecTx(tx); err != nil {
 		return 0, err
 	} else {
 		id, _ = result.LastInsertId()
@@ -160,7 +168,7 @@ func (this *manager) updateRoleStatus(id int64, status int) (err error) {
 	return err
 }
 
-func (this *manager) getRole(tx *dbs.Tx, id int64, name string) (result *Role, err error) {
+func (this *manager) getRole(tx dbs.TX, id int64, name string) (result *Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
 	sb.From(this.roleTable, "AS r")
@@ -171,7 +179,10 @@ func (this *manager) getRole(tx *dbs.Tx, id int64, name string) (result *Role, e
 		sb.Where("r.name = ?", name)
 	}
 	sb.Limit(1)
-	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//	return nil, err
+	//}
+	if err = sb.ScanTx(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil

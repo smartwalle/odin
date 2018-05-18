@@ -16,7 +16,7 @@ func (this *manager) getGroupListWithType(gType, status int, name string) (resul
 	return result, err
 }
 
-func (this *manager) getGroupList(tx *dbs.Tx, gType, status int, name string) (result []*Group, err error) {
+func (this *manager) getGroupList(tx dbs.TX, gType, status int, name string) (result []*Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.type", "g.name", "g.status", "g.created_on")
 	sb.From(this.groupTable, "AS g")
@@ -32,7 +32,10 @@ func (this *manager) getGroupList(tx *dbs.Tx, gType, status int, name string) (r
 	}
 	sb.OrderBy("g.id")
 
-	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//	return nil, err
+	//}
+	if err = sb.ScanTx(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -75,12 +78,17 @@ func (this *manager) addGroup(gType int, name string, status int) (result *Group
 	return result, err
 }
 
-func (this *manager) insertGroup(tx *dbs.Tx, gType, status int, name string) (id int64, err error) {
+func (this *manager) insertGroup(tx dbs.TX, gType, status int, name string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.groupTable)
 	ib.Columns("type", "status", "name", "created_on")
 	ib.Values(gType, status, name, time.Now())
-	if result, err := tx.ExecInsertBuilder(ib); err != nil {
+	//if result, err := tx.ExecInsertBuilder(ib); err != nil {
+	//	return 0, err
+	//} else {
+	//	id, _ = result.LastInsertId()
+	//}
+	if result, err := ib.ExecTx(tx); err != nil {
 		return 0, err
 	} else {
 		id, _ = result.LastInsertId()
@@ -118,7 +126,7 @@ func (this *manager) removeGroup(id int64) (err error) {
 	return err
 }
 
-func (this *manager) getGroup(tx *dbs.Tx, id int64, gType int, name string) (result *Group, err error) {
+func (this *manager) getGroup(tx dbs.TX, id int64, gType int, name string) (result *Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.type", "g.status", "g.name", "g.created_on")
 	sb.From(this.groupTable, "AS g")
@@ -132,7 +140,10 @@ func (this *manager) getGroup(tx *dbs.Tx, id int64, gType int, name string) (res
 		sb.Where("g.name = ?", name)
 	}
 	sb.Limit(1)
-	if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//if err = tx.ExecSelectBuilder(sb, &result); err != nil {
+	//	return nil, err
+	//}
+	if err = sb.ScanTx(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
