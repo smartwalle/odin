@@ -204,7 +204,7 @@ func (this *Service) UpdatePermissionStatus(id int64, status int) (err error) {
 }
 
 // --------------------------------------------------------------------------------
-// GetRoleList 获取指定组的角色组列表
+// GetRoleList 获取指定组的角色列表
 func (this *Service) GetRoleList(groupId int64, status int, keyword string) (result []*Role, err error) {
 	return this.m.getRoleList(groupId, status, keyword)
 }
