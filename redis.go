@@ -1,6 +1,7 @@
 package odin
 
 import (
+	"fmt"
 	"github.com/smartwalle/dbr"
 )
 
@@ -9,39 +10,39 @@ type redisManager struct {
 	tPrefix string
 }
 
-func (this *redisManager) buildKey(objectId string) (result string) {
-	return this.tPrefix + "_odin_g_" + objectId
+func (this *redisManager) buildKey(ctxId int64, objectId string) (result string) {
+	return fmt.Sprintf("%s_odin_g_%d_%s", this.tPrefix, ctxId, objectId)
 }
 
-func (this *redisManager) exists(objectId string) (result bool) {
+func (this *redisManager) exists(ctxId int64, objectId string) (result bool) {
 	var s = this.r.GetSession()
 	defer s.Close()
-	return s.EXISTS(this.buildKey(objectId)).MustBool()
+	return s.EXISTS(this.buildKey(ctxId, objectId)).MustBool()
 }
 
-func (this *redisManager) check(objectId, identifier string) (result bool) {
+func (this *redisManager) check(ctxId int64, objectId, identifier string) (result bool) {
 	var s = this.r.GetSession()
 	defer s.Close()
-	return s.SISMEMBER(this.buildKey(objectId), identifier).MustBool()
+	return s.SISMEMBER(this.buildKey(ctxId, objectId), identifier).MustBool()
 }
 
-func (this *redisManager) checkList(objectId string, identifiers ...string) (result map[string]bool) {
+func (this *redisManager) checkList(ctxId int64, objectId string, identifiers ...string) (result map[string]bool) {
 	var s = this.r.GetSession()
 	defer s.Close()
 
 	result = make(map[string]bool)
-	key := this.buildKey(objectId)
+	key := this.buildKey(ctxId, objectId)
 	for _, identifier := range identifiers {
 		result[identifier] = s.SISMEMBER(key, identifier).MustBool()
 	}
 	return result
 }
 
-func (this *redisManager) grantPermissions(objectId string, identifier []interface{}) {
+func (this *redisManager) grantPermissions(ctxId int64, objectId string, identifier []interface{}) {
 	var s = this.r.GetSession()
 	defer s.Close()
 
-	var key = this.buildKey(objectId)
+	var key = this.buildKey(ctxId, objectId)
 
 	if len(identifier) == 0 {
 		s.DEL(key)
