@@ -20,6 +20,7 @@ CREATE TABLE `odin_group` (
   `name` varchar(128) DEFAULT NULL,
   `status` int(11) DEFAULT '0',
   `created_on` datetime DEFAULT NULL,
+  `updated_on` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `odin_role_group_id_uindex` (`id`),
   KEY `odin_group_type_index` (`type`)
@@ -32,8 +33,9 @@ CREATE TABLE `odin_permission` (
   `group_id` int(11) DEFAULT NULL,
   `name` varchar(128) DEFAULT NULL,
   `identifier` varchar(128) DEFAULT NULL,
-  `status` int(11) DEFAULT '0',
+  `status` int(11) DEFAULT 0,
   `created_on` datetime DEFAULT NULL,
+  `updated_on` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `odin_permission_id_uindex` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8
@@ -45,8 +47,9 @@ CREATE TABLE `odin_role` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `group_id` int(11) DEFAULT NULL,
   `name` varchar(128) DEFAULT NULL,
-  `status` int(11) DEFAULT '0',
+  `status` int(11) DEFAULT 0,
   `created_on` datetime DEFAULT NULL,
+  `updated_on` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `odin_role_id_uindex` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8

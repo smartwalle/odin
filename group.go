@@ -18,7 +18,7 @@ func (this *manager) getGroupListWithType(gType, status int, name string) (resul
 
 func (this *manager) getGroupList(tx dbs.TX, gType, status int, name string) (result []*Group, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("g.id", "g.type", "g.name", "g.status", "g.created_on")
+	sb.Selects("g.id", "g.type", "g.name", "g.status", "g.created_on", "g.updated_on")
 	sb.From(this.groupTable, "AS g")
 	if gType > 0 {
 		sb.Where("g.type = ?", gType)
@@ -81,8 +81,8 @@ func (this *manager) addGroup(gType int, name string, status int) (result *Group
 func (this *manager) insertGroup(tx dbs.TX, gType, status int, name string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.groupTable)
-	ib.Columns("type", "status", "name", "created_on")
-	ib.Values(gType, status, name, time.Now())
+	ib.Columns("type", "status", "name", "created_on", "updated_on")
+	ib.Values(gType, status, name, time.Now(), time.Now())
 	//if result, err := tx.ExecInsertBuilder(ib); err != nil {
 	//	return 0, err
 	//} else {
@@ -101,6 +101,7 @@ func (this *manager) updateGroup(id int64, name string, status int) (err error) 
 	ub.Table(this.groupTable)
 	ub.SET("name", name)
 	ub.SET("status", status)
+	ub.SET("updated_on", time.Now())
 	ub.Where("id = ?", id)
 	ub.Limit(1)
 	_, err = ub.Exec(this.db)
@@ -111,6 +112,7 @@ func (this *manager) updateGroupStatus(id int64, status int) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.groupTable)
 	ub.SET("status", status)
+	ub.SET("updated_on", time.Now())
 	ub.Where("id = ?", id)
 	ub.Limit(1)
 	_, err = ub.Exec(this.db)
@@ -128,7 +130,7 @@ func (this *manager) removeGroup(id int64) (err error) {
 
 func (this *manager) getGroup(tx dbs.TX, id int64, gType int, name string) (result *Group, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("g.id", "g.type", "g.status", "g.name", "g.created_on")
+	sb.Selects("g.id", "g.type", "g.status", "g.name", "g.created_on", "g.updated_on")
 	sb.From(this.groupTable, "AS g")
 	if id > 0 {
 		sb.Where("g.id = ?", id)

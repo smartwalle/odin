@@ -54,7 +54,7 @@ func (this *manager) getRoleList(groupId int64, status int, keyword string) (res
 
 func (this *manager) getRoles(tx dbs.TX, objectId string, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
+	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.roleTable, "AS r")
 	if objectId != "" {
 		sb.Selects("IF(rg.object_id IS NULL, false, true) AS granted")
@@ -131,8 +131,8 @@ func (this *manager) addRole(groupId int64, name string, status int) (result *Ro
 func (this *manager) insertRole(tx dbs.TX, groupId int64, status int, name string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.roleTable)
-	ib.Columns("group_id", "status", "name", "created_on")
-	ib.Values(groupId, status, name, time.Now())
+	ib.Columns("group_id", "status", "name", "created_on", "updated_on")
+	ib.Values(groupId, status, name, time.Now(), time.Now())
 	//if result, err := tx.ExecInsertBuilder(ib); err != nil {
 	//	return 0, err
 	//} else {
@@ -152,6 +152,7 @@ func (this *manager) updateRole(id, groupId int64, name string, status int) (err
 	ub.SET("group_id", groupId)
 	ub.SET("name", name)
 	ub.SET("status", status)
+	ub.SET("updated_on", time.Now())
 	ub.Where("id = ?", id)
 	ub.Limit(1)
 	_, err = ub.Exec(this.db)
@@ -162,6 +163,7 @@ func (this *manager) updateRoleStatus(id int64, status int) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.roleTable)
 	ub.SET("status", status)
+	ub.SET("updated_on", time.Now())
 	ub.Where("id = ?", id)
 	ub.Limit(1)
 	_, err = ub.Exec(this.db)
@@ -170,7 +172,7 @@ func (this *manager) updateRoleStatus(id int64, status int) (err error) {
 
 func (this *manager) getRole(tx dbs.TX, id int64, name string) (result *Role, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
+	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.roleTable, "AS r")
 	if id > 0 {
 		sb.Where("r.id = ?", id)
@@ -190,7 +192,7 @@ func (this *manager) getRole(tx dbs.TX, id int64, name string) (result *Role, er
 
 func (this *manager) getRoleWithIdList(idList []int64) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
+	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.roleTable, "AS r")
 	if len(idList) > 0 {
 		sb.Where(dbs.IN("r.id", idList))
@@ -314,7 +316,7 @@ func (this *manager) checkList(objectId string, identifiers ...string) (result m
 
 func (this *manager) getGrantedRoleList(objectId string) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on")
+	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.roleTable, "AS r")
 	sb.Selects("IF(rg.object_id IS NULL, false, true) AS granted")
 	sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = r.id")
