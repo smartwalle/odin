@@ -200,6 +200,10 @@ func (this *Service) AddPermission(ctxId, groupId int64, name, identifier string
 		return nil, ErrPermissionNameExists
 	}
 
+	if groupId <= 0 {
+		return nil, ErrGroupNotExist
+	}
+
 	group, err := this.m.getGroupWithId(ctxId, groupId, K_GROUP_TYPE_PERMISSION)
 	if err != nil {
 		return nil, err
@@ -226,6 +230,10 @@ func (this *Service) UpdatePermission(ctxId, id, groupId int64, name, identifier
 	}
 	if p != nil && p.Id != id {
 		return ErrPermissionNameExists
+	}
+
+	if groupId <= 0 {
+		return ErrGroupNotExist
 	}
 
 	group, err := this.m.getGroupWithId(ctxId, groupId, K_GROUP_TYPE_PERMISSION)
@@ -297,6 +305,10 @@ func (this *Service) AddRole(ctxId, groupId int64, name string, status int) (res
 		return nil, ErrRoleNameExists
 	}
 
+	if groupId <= 0 {
+		return nil, ErrGroupNotExist
+	}
+
 	group, err := this.m.getGroupWithId(ctxId, groupId, K_GROUP_TYPE_ROLE)
 	if err != nil {
 		return nil, err
@@ -315,6 +327,10 @@ func (this *Service) UpdateRole(ctxId, id, groupId int64, name string, status in
 	}
 	if role != nil && role.Id != id {
 		return ErrRoleNameExists
+	}
+
+	if groupId <= 0 {
+		return ErrGroupNotExist
 	}
 
 	group, err := this.m.getGroupWithId(ctxId, groupId, K_GROUP_TYPE_ROLE)
