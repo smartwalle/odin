@@ -405,9 +405,6 @@ func (this *Service) ReGrantPermission(ctx, roleId int64, permissionIdList ...in
 			nIdList = append(nIdList, p.Id)
 		}
 	}
-	if len(nIdList) == 0 {
-		return ErrGrantFailed
-	}
 	return this.m.reGrantPermission(ctx, roleId, nIdList)
 }
 
@@ -460,9 +457,6 @@ func (this *Service) ReGrantRole(ctx int64, objectId string, roleIdList ...int64
 		if role.Status == K_STATUS_ENABLE {
 			nIdList = append(nIdList, role.Id)
 		}
-	}
-	if len(nIdList) == 0 {
-		return ErrGrantFailed
 	}
 
 	err = this.m.reGrantRole(ctx, objectId, nIdList)
