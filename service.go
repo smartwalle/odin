@@ -382,6 +382,36 @@ func (this *Service) RevokePermission(ctx, roleId int64, permissionIdList ...int
 	return this.m.revokePermission(ctx, roleId, permissionIdList)
 }
 
+// ReGrantPermission 移除之前已经授予的权限，添加新的权限
+func (this *Service) ReGrantPermission(ctx, roleId int64, permissionIdList ...int64) (err error) {
+	role, err := this.m.getRoleWithId(ctx, roleId, false)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+	if role.Status != K_STATUS_ENABLE {
+		return ErrRoleNotExist
+	}
+
+	pList, err := this.m.getPermissionWithIdList(ctx, permissionIdList)
+	if err != nil {
+		return err
+	}
+	var nIdList []int64
+	for _, p := range pList {
+		if p.Status == K_STATUS_ENABLE {
+			nIdList = append(nIdList, p.Id)
+		}
+	}
+	if len(nIdList) == 0 {
+		return ErrGrantFailed
+	}
+	return this.m.reGrantPermission(ctx, roleId, nIdList)
+}
+
+// GrantRole 为目前对象添加角色信息
 func (this *Service) GrantRole(ctx int64, objectId string, roleIdList ...int64) (err error) {
 	if len(roleIdList) == 0 {
 		return ErrRoleNotExist
@@ -410,6 +440,33 @@ func (this *Service) GrantRole(ctx int64, objectId string, roleIdList ...int64) 
 
 func (this *Service) RevokeRole(ctx int64, objectId string, roleIdList ...int64) (err error) {
 	return this.m.revokeRole(ctx, objectId, roleIdList)
+}
+
+// ReGrantRole 移除之前已经授予的角色，添加新的角色
+func (this *Service) ReGrantRole(ctx int64, objectId string, roleIdList ...int64) (err error) {
+	if len(roleIdList) == 0 {
+		return ErrRoleNotExist
+	}
+	if objectId == "" {
+		return ErrObjectNotAllowed
+	}
+	roleList, err := this.m.getRoleWithIdList(ctx, roleIdList)
+	if err != nil {
+		return err
+	}
+
+	var nIdList []int64
+	for _, role := range roleList {
+		if role.Status == K_STATUS_ENABLE {
+			nIdList = append(nIdList, role.Id)
+		}
+	}
+	if len(nIdList) == 0 {
+		return ErrGrantFailed
+	}
+
+	err = this.m.reGrantRole(ctx, objectId, nIdList)
+	return err
 }
 
 func (this *Service) Check(ctx int64, objectId, identifier string) (result bool) {

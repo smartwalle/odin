@@ -80,14 +80,14 @@ func main() {
 	//fmt.Println(s.Check("2", "update_user"))
 	//fmt.Println(s.Check("2", "delete_user"))
 
-	//fmt.Println("----- 获取权限组列表 -----")
-	//var gl, _ = s.GetPermissionTree(1, 7, 0, "")
-	//for _, g := range gl {
-	//	fmt.Println(g.Name)
-	//	for _, p := range g.PermissionList {
-	//		fmt.Println("-", p.Name, p.Identifier, p.Granted)
-	//	}
-	//}
+	fmt.Println("----- 获取权限组列表 -----")
+	var gl, _ = s.GetPermissionTree(1, 7, 0, "")
+	for _, g := range gl {
+		fmt.Println(g.Name)
+		for _, p := range g.PermissionList {
+			fmt.Println("-", p.Name, p.Identifier, p.Granted)
+		}
+	}
 
 	//pl, _ := s.GetGrantedPermissionList(1, "111")
 	//for _, p := range pl {
@@ -116,9 +116,9 @@ func main() {
 
 	//fmt.Println(s.CheckList("1", "update_product", "ssss"))
 
-	fmt.Println("----- 获取已授权权限列表 -----")
-	var pl, _ = s.GetGrantedPermissionList(1, "111")
-	for _, p := range pl {
-		fmt.Println(p.Id, p.Name, p.Identifier, p.Granted)
-	}
+	//fmt.Println("----- 获取已授权权限列表 -----")
+	//var pl, _ = s.GetGrantedPermissionList(1, "111")
+	//for _, p := range pl {
+	//	fmt.Println(p.Id, p.Name, p.Identifier, p.Granted)
+	//}
 }

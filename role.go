@@ -199,16 +199,18 @@ func (this *manager) getRoleWithIdList(ctx int64, idList []int64) (result []*Rol
 }
 
 func (this *manager) grantPermission(ctx, roleId int64, permissionIdList []int64) (err error) {
-	var now = time.Now()
-	var ib = dbs.NewInsertBuilder()
-	ib.Table(this.rolePermissionTable)
-	ib.Options("IGNORE")
-	ib.Columns("ctx", "role_id", "permission_id", "created_on")
-	for _, pId := range permissionIdList {
-		ib.Values(ctx, roleId, pId, now)
-	}
-	if _, err = ib.Exec(this.db); err != nil {
-		return err
+	if len(permissionIdList) > 0 {
+		var now = time.Now()
+		var ib = dbs.NewInsertBuilder()
+		ib.Table(this.rolePermissionTable)
+		ib.Options("IGNORE")
+		ib.Columns("ctx", "role_id", "permission_id", "created_on")
+		for _, pId := range permissionIdList {
+			ib.Values(ctx, roleId, pId, now)
+		}
+		if _, err = ib.Exec(this.db); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -222,6 +224,33 @@ func (this *manager) revokePermission(ctx, roleId int64, permissionIdList []int6
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (this *manager) reGrantPermission(ctx, roleId int64, permissionIdList []int64) (err error) {
+	var tx = dbs.MustTx(this.db)
+	var now = time.Now()
+
+	var rb = dbs.NewDeleteBuilder()
+	rb.Table(this.rolePermissionTable)
+	rb.Where("role_id = ?", roleId)
+	if _, err = rb.ExecTx(tx); err != nil {
+		return err
+	}
+
+	if len(permissionIdList) > 0 {
+		var ib = dbs.NewInsertBuilder()
+		ib.Table(this.rolePermissionTable)
+		ib.Options("IGNORE")
+		ib.Columns("ctx", "role_id", "permission_id", "created_on")
+		for _, pId := range permissionIdList {
+			ib.Values(ctx, roleId, pId, now)
+		}
+		if _, err = ib.ExecTx(tx); err != nil {
+			return err
+		}
+	}
+	tx.Commit()
 	return nil
 }
 
@@ -251,6 +280,34 @@ func (this *manager) revokeRole(ctx int64, objectId string, roleIdList []int64) 
 	}
 	return nil
 }
+
+func (this *manager) reGrantRole(ctx int64, objectId string, roleIdList []int64) (err error) {
+	var tx = dbs.MustTx(this.db)
+	var now = time.Now()
+
+	var rb = dbs.NewDeleteBuilder()
+	rb.Table(this.roleGrantTable)
+	rb.Where("object_id = ?", objectId)
+	if _, err = rb.ExecTx(tx); err != nil {
+		return err
+	}
+
+	if len(roleIdList) > 0 {
+		var ib = dbs.NewInsertBuilder()
+		ib.Table(this.roleGrantTable)
+		ib.Options("IGNORE")
+		ib.Columns("ctx", "object_id", "role_id", "created_on")
+		for _, rId := range roleIdList {
+			ib.Values(ctx, objectId, rId, now)
+		}
+		if _, err = ib.ExecTx(tx); err != nil {
+			return err
+		}
+	}
+	tx.Commit()
+	return nil
+}
+
 
 func (this *manager) check(ctx int64, objectId, identifier string) (result bool) {
 	var sb = dbs.NewSelectBuilder()
