@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-func (this *manager) getRoleTree(ctxId int64, objectId string, status int, name string) (result []*Group, err error) {
+func (this *manager) getRoleTree(ctx int64, objectId string, status int, name string) (result []*Group, err error) {
 	var tx = dbs.MustTx(this.db)
 
-	if result, err = this.getGroupList(tx, ctxId, K_GROUP_TYPE_ROLE, status, name); err != nil {
+	if result, err = this.getGroupList(tx, ctx, K_GROUP_TYPE_ROLE, status, name); err != nil {
 		return nil, err
 	}
 
@@ -19,7 +19,7 @@ func (this *manager) getRoleTree(ctxId int64, objectId string, status int, name 
 		gIdList = append(gIdList, group.Id)
 	}
 
-	rList, err := this.getRoles(tx, ctxId, objectId, gIdList, status, "")
+	rList, err := this.getRoles(tx, ctx, objectId, gIdList, status, "")
 	if err != nil {
 		return nil, err
 	}
@@ -37,13 +37,13 @@ func (this *manager) getRoleTree(ctxId int64, objectId string, status int, name 
 	return result, nil
 }
 
-func (this *manager) getRoleList(ctxId, groupId int64, status int, keyword string) (result []*Role, err error) {
+func (this *manager) getRoleList(ctx, groupId int64, status int, keyword string) (result []*Role, err error) {
 	var tx = dbs.MustTx(this.db)
 	var groupIdList []int64
 	if groupId > 0 {
 		groupIdList = append(groupIdList, groupId)
 	}
-	if result, err = this.getRoles(tx, ctxId, "", groupIdList, status, keyword); err != nil {
+	if result, err = this.getRoles(tx, ctx, "", groupIdList, status, keyword); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -52,15 +52,15 @@ func (this *manager) getRoleList(ctxId, groupId int64, status int, keyword strin
 	return result, nil
 }
 
-func (this *manager) getRoles(tx dbs.TX, ctxId int64, objectId string, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
+func (this *manager) getRoles(tx dbs.TX, ctx int64, objectId string, groupIdList []int64, status int, keyword string) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.ctx_id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
+	sb.Selects("r.id", "r.ctx", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.roleTable, "AS r")
 	if objectId != "" {
 		sb.Selects("IF(rg.object_id IS NULL, false, true) AS granted")
 		sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = r.id AND rg.object_id = ?", objectId)
 	}
-	//sb.Where("(r.ctx_id = ? OR r.ctx_id = ?)", 0, ctxId)
+	//sb.Where("(r.ctx = ? OR r.ctx = ?)", 0, ctx)
 	if len(groupIdList) > 0 {
 		sb.Where(dbs.IN("r.group_id", groupIdList))
 	}
@@ -71,20 +71,20 @@ func (this *manager) getRoles(tx dbs.TX, ctxId int64, objectId string, groupIdLi
 		var k = "%" + keyword + "%"
 		sb.Where("r.name LIKE ?", k, k)
 	}
-	sb.OrderBy("r.ctx_id", "r.id")
+	sb.OrderBy("r.ctx", "r.id")
 	if err = sb.ScanTx(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (this *manager) getRoleWithId(ctxId, id int64, withPermissionList bool) (result *Role, err error) {
+func (this *manager) getRoleWithId(ctx, id int64, withPermissionList bool) (result *Role, err error) {
 	var tx = dbs.MustTx(this.db)
-	if result, err = this.getRole(tx, ctxId, id, ""); err != nil {
+	if result, err = this.getRole(tx, ctx, id, ""); err != nil {
 		return nil, err
 	}
 	if withPermissionList {
-		if result.PermissionList, err = this.getPermissionListWithRole(tx, ctxId, result.Id); err != nil {
+		if result.PermissionList, err = this.getPermissionListWithRole(tx, ctx, result.Id); err != nil {
 			return nil, err
 		}
 	}
@@ -94,13 +94,13 @@ func (this *manager) getRoleWithId(ctxId, id int64, withPermissionList bool) (re
 	return result, err
 }
 
-func (this *manager) getRoleWithName(ctxId int64, name string, withPermissionList bool) (result *Role, err error) {
+func (this *manager) getRoleWithName(ctx int64, name string, withPermissionList bool) (result *Role, err error) {
 	var tx = dbs.MustTx(this.db)
-	if result, err = this.getRole(tx, ctxId, 0, name); err != nil {
+	if result, err = this.getRole(tx, ctx, 0, name); err != nil {
 		return nil, err
 	}
 	if withPermissionList {
-		if result.PermissionList, err = this.getPermissionListWithRole(tx, ctxId, result.Id); err != nil {
+		if result.PermissionList, err = this.getPermissionListWithRole(tx, ctx, result.Id); err != nil {
 			return nil, err
 		}
 	}
@@ -110,13 +110,13 @@ func (this *manager) getRoleWithName(ctxId int64, name string, withPermissionLis
 	return result, err
 }
 
-func (this *manager) addRole(ctxId, groupId int64, name string, status int) (result *Role, err error) {
+func (this *manager) addRole(ctx, groupId int64, name string, status int) (result *Role, err error) {
 	var tx = dbs.MustTx(this.db)
 	var newRoleId int64 = 0
-	if newRoleId, err = this.insertRole(tx, ctxId, groupId, status, name); err != nil {
+	if newRoleId, err = this.insertRole(tx, ctx, groupId, status, name); err != nil {
 		return nil, err
 	}
-	if result, err = this.getRole(tx, ctxId, newRoleId, ""); err != nil {
+	if result, err = this.getRole(tx, ctx, newRoleId, ""); err != nil {
 		return nil, err
 	}
 	if err = tx.Commit(); err != nil {
@@ -125,11 +125,11 @@ func (this *manager) addRole(ctxId, groupId int64, name string, status int) (res
 	return result, err
 }
 
-func (this *manager) insertRole(tx dbs.TX, ctxId, groupId int64, status int, name string) (id int64, err error) {
+func (this *manager) insertRole(tx dbs.TX, ctx, groupId int64, status int, name string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.roleTable)
-	ib.Columns("ctx_id", "group_id", "status", "name", "created_on", "updated_on")
-	ib.Values(ctxId, groupId, status, name, time.Now(), time.Now())
+	ib.Columns("ctx", "group_id", "status", "name", "created_on", "updated_on")
+	ib.Values(ctx, groupId, status, name, time.Now(), time.Now())
 	if result, err := ib.ExecTx(tx); err != nil {
 		return 0, err
 	} else {
@@ -138,7 +138,7 @@ func (this *manager) insertRole(tx dbs.TX, ctxId, groupId int64, status int, nam
 	return id, err
 }
 
-func (this *manager) updateRole(ctxId, id, groupId int64, name string, status int) (err error) {
+func (this *manager) updateRole(ctx, id, groupId int64, name string, status int) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.roleTable)
 	ub.SET("group_id", groupId)
@@ -146,32 +146,32 @@ func (this *manager) updateRole(ctxId, id, groupId int64, name string, status in
 	ub.SET("status", status)
 	ub.SET("updated_on", time.Now())
 	ub.Where("id = ?", id)
-	ub.Where("ctx_id = ?", ctxId)
+	ub.Where("ctx = ?", ctx)
 	ub.Limit(1)
 	_, err = ub.Exec(this.db)
 	return err
 }
 
-func (this *manager) updateRoleStatus(ctxId, id int64, status int) (err error) {
+func (this *manager) updateRoleStatus(ctx, id int64, status int) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.roleTable)
 	ub.SET("status", status)
 	ub.SET("updated_on", time.Now())
 	ub.Where("id = ?", id)
-	ub.Where("ctx_id = ?", ctxId)
+	ub.Where("ctx = ?", ctx)
 	ub.Limit(1)
 	_, err = ub.Exec(this.db)
 	return err
 }
 
-func (this *manager) getRole(tx dbs.TX, ctxId, id int64, name string) (result *Role, err error) {
+func (this *manager) getRole(tx dbs.TX, ctx, id int64, name string) (result *Role, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.ctx_id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
+	sb.Selects("r.id", "r.ctx", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.roleTable, "AS r")
 	if id > 0 {
 		sb.Where("r.id = ?", id)
 	}
-	sb.Where("(r.ctx_id = ? OR r.ctx_id = ?)", 0, ctxId)
+	sb.Where("(r.ctx = ? OR r.ctx = ?)", 0, ctx)
 	if name != "" {
 		sb.Where("r.name = ?", name)
 	}
@@ -182,14 +182,14 @@ func (this *manager) getRole(tx dbs.TX, ctxId, id int64, name string) (result *R
 	return result, nil
 }
 
-func (this *manager) getRoleWithIdList(ctxId int64, idList []int64) (result []*Role, err error) {
+func (this *manager) getRoleWithIdList(ctx int64, idList []int64) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.ctx_id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
+	sb.Selects("r.id", "r.ctx", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.roleTable, "AS r")
 	if len(idList) > 0 {
 		sb.Where(dbs.IN("r.id", idList))
 	}
-	sb.Where("(r.ctx_id = ? OR r.ctx_id = ?)", 0, ctxId)
+	sb.Where("(r.ctx = ? OR r.ctx = ?)", 0, ctx)
 	sb.Limit(uint64(len(idList)))
 
 	if err = sb.Scan(this.db, &result); err != nil {
@@ -198,14 +198,14 @@ func (this *manager) getRoleWithIdList(ctxId int64, idList []int64) (result []*R
 	return result, nil
 }
 
-func (this *manager) grantPermission(ctxId, roleId int64, permissionIdList []int64) (err error) {
+func (this *manager) grantPermission(ctx, roleId int64, permissionIdList []int64) (err error) {
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.rolePermissionTable)
 	ib.Options("IGNORE")
-	ib.Columns("ctx_id", "role_id", "permission_id", "created_on")
+	ib.Columns("ctx", "role_id", "permission_id", "created_on")
 	for _, pId := range permissionIdList {
-		ib.Values(ctxId, roleId, pId, now)
+		ib.Values(ctx, roleId, pId, now)
 	}
 	if _, err = ib.Exec(this.db); err != nil {
 		return err
@@ -213,11 +213,11 @@ func (this *manager) grantPermission(ctxId, roleId int64, permissionIdList []int
 	return nil
 }
 
-func (this *manager) revokePermission(ctxId, roleId int64, permissionIdList []int64) (err error) {
+func (this *manager) revokePermission(ctx, roleId int64, permissionIdList []int64) (err error) {
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.rolePermissionTable)
 	rb.Where("role_id = ?", roleId)
-	rb.Where("(ctx_id = ? OR ctx_id = ?)", 0, ctxId)
+	rb.Where("(ctx = ? OR ctx = ?)", 0, ctx)
 	rb.Where(dbs.IN("permission_id", permissionIdList))
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
@@ -225,14 +225,14 @@ func (this *manager) revokePermission(ctxId, roleId int64, permissionIdList []in
 	return nil
 }
 
-func (this *manager) grantRole(ctxId int64, objectId string, roleIdList []int64) (err error) {
+func (this *manager) grantRole(ctx int64, objectId string, roleIdList []int64) (err error) {
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.roleGrantTable)
 	ib.Options("IGNORE")
-	ib.Columns("ctx_id", "object_id", "role_id", "created_on")
+	ib.Columns("ctx", "object_id", "role_id", "created_on")
 	for _, rId := range roleIdList {
-		ib.Values(ctxId, objectId, rId, now)
+		ib.Values(ctx, objectId, rId, now)
 	}
 	if _, err = ib.Exec(this.db); err != nil {
 		return err
@@ -240,11 +240,11 @@ func (this *manager) grantRole(ctxId int64, objectId string, roleIdList []int64)
 	return nil
 }
 
-func (this *manager) revokeRole(ctxId int64, objectId string, roleIdList []int64) (err error) {
+func (this *manager) revokeRole(ctx int64, objectId string, roleIdList []int64) (err error) {
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.roleGrantTable)
 	rb.Where("object_id = ?", objectId)
-	rb.Where("(ctx_id = ? OR ctx_id = ?)", 0, ctxId)
+	rb.Where("(ctx = ? OR ctx = ?)", 0, ctx)
 	rb.Where(dbs.IN("role_id", roleIdList))
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
@@ -252,14 +252,14 @@ func (this *manager) revokeRole(ctxId int64, objectId string, roleIdList []int64
 	return nil
 }
 
-func (this *manager) check(ctxId int64, objectId, identifier string) (result bool) {
+func (this *manager) check(ctx int64, objectId, identifier string) (result bool) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("rg.object_id", "rg.role_id", "rp.permission_id", "p.identifier")
 	sb.From(this.roleGrantTable, "AS rg")
 	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.role_id = rg.role_id")
 	sb.LeftJoin(this.permissionTable, "AS p ON p.id = rp.permission_id")
 	sb.LeftJoin(this.roleTable, "AS r ON r.id = rg.role_id")
-	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctxId)
+	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctx)
 	sb.Where("rg.object_id = ? AND p.identifier = ? AND p.status = ? AND r.status = ?", objectId, identifier, K_STATUS_ENABLE, K_STATUS_ENABLE)
 	sb.OrderBy("r.status", "p.status")
 	sb.Limit(1)
@@ -274,7 +274,7 @@ func (this *manager) check(ctxId int64, objectId, identifier string) (result boo
 	return false
 }
 
-func (this *manager) checkList(ctxId int64, objectId string, identifiers ...string) (result map[string]bool) {
+func (this *manager) checkList(ctx int64, objectId string, identifiers ...string) (result map[string]bool) {
 	result = make(map[string]bool)
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("rg.object_id", "rg.role_id", "rp.permission_id", "p.identifier")
@@ -284,7 +284,7 @@ func (this *manager) checkList(ctxId int64, objectId string, identifiers ...stri
 	sb.LeftJoin(this.roleTable, "AS r ON r.id = rg.role_id")
 
 	sb.Where("rg.object_id = ?", objectId)
-	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctxId)
+	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctx)
 	if len(identifiers) > 0 {
 		var or = dbs.OR()
 		for _, identifier := range identifiers {
@@ -310,14 +310,14 @@ func (this *manager) checkList(ctxId int64, objectId string, identifiers ...stri
 	return result
 }
 
-func (this *manager) getGrantedRoleList(ctxId int64, objectId string) (result []*Role, err error) {
+func (this *manager) getGrantedRoleList(ctx int64, objectId string) (result []*Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.roleTable, "AS r")
 	sb.Selects("IF(rg.object_id IS NULL, false, true) AS granted")
 	sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = r.id")
 	sb.Where("rg.object_id = ? AND r.status = ?", objectId, K_STATUS_ENABLE)
-	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctxId)
+	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctx)
 	if err := sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}

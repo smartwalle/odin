@@ -10,39 +10,39 @@ type redisManager struct {
 	tPrefix string
 }
 
-func (this *redisManager) buildKey(ctxId int64, objectId string) (result string) {
-	return fmt.Sprintf("%s_odin_g_%d_%s", this.tPrefix, ctxId, objectId)
+func (this *redisManager) buildKey(ctx int64, objectId string) (result string) {
+	return fmt.Sprintf("%s_odin_g_%d_%s", this.tPrefix, ctx, objectId)
 }
 
-func (this *redisManager) exists(ctxId int64, objectId string) (result bool) {
+func (this *redisManager) exists(ctx int64, objectId string) (result bool) {
 	var s = this.r.GetSession()
 	defer s.Close()
-	return s.EXISTS(this.buildKey(ctxId, objectId)).MustBool()
+	return s.EXISTS(this.buildKey(ctx, objectId)).MustBool()
 }
 
-func (this *redisManager) check(ctxId int64, objectId, identifier string) (result bool) {
+func (this *redisManager) check(ctx int64, objectId, identifier string) (result bool) {
 	var s = this.r.GetSession()
 	defer s.Close()
-	return s.SISMEMBER(this.buildKey(ctxId, objectId), identifier).MustBool()
+	return s.SISMEMBER(this.buildKey(ctx, objectId), identifier).MustBool()
 }
 
-func (this *redisManager) checkList(ctxId int64, objectId string, identifiers ...string) (result map[string]bool) {
+func (this *redisManager) checkList(ctx int64, objectId string, identifiers ...string) (result map[string]bool) {
 	var s = this.r.GetSession()
 	defer s.Close()
 
 	result = make(map[string]bool)
-	key := this.buildKey(ctxId, objectId)
+	key := this.buildKey(ctx, objectId)
 	for _, identifier := range identifiers {
 		result[identifier] = s.SISMEMBER(key, identifier).MustBool()
 	}
 	return result
 }
 
-func (this *redisManager) grantPermissions(ctxId int64, objectId string, identifier []interface{}) {
+func (this *redisManager) grantPermissions(ctx int64, objectId string, identifier []interface{}) {
 	var s = this.r.GetSession()
 	defer s.Close()
 
-	var key = this.buildKey(ctxId, objectId)
+	var key = this.buildKey(ctx, objectId)
 
 	if len(identifier) == 0 {
 		s.DEL(key)
