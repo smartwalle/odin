@@ -63,11 +63,21 @@ func (this *redisManager) grantPermissions(ctx int64, objectId string, identifie
 	}
 }
 
-func (this *redisManager) clear() {
+func (this *redisManager) clear(ctx int64, objectId string) {
 	var s = this.r.GetSession()
 	defer s.Close()
 
-	var keys = s.KEYS(this.tPrefix + "_odin_g_*").MustStrings()
+	var cKey = "*"
+	var oKey = "*"
+	if ctx > 0 {
+		cKey = fmt.Sprintf("%d", ctx)
+	}
+	if objectId != "" {
+		oKey = objectId
+	}
+	var key = fmt.Sprintf("%s_odin_g_%s_%s", this.tPrefix, cKey, oKey)
+
+	var keys = s.KEYS(key).MustStrings()
 
 	if r := s.Send("MULTI"); r.Error != nil {
 		return

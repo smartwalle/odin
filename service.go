@@ -499,8 +499,8 @@ func (this *Service) GetGrantedPermissionList(ctx int64, objectId string) (resul
 	return this.m.getGrantedPermissionList(ctx, objectId)
 }
 
-func (this *Service) ClearCache() {
+func (this *Service) ClearCache(ctx int64, objectId string) {
 	if this.r != nil {
-		this.r.clear()
+		this.r.clear(ctx, objectId)
 	}
 }

@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	var db, _ = sql.Open("mysql", "root:yangfeng@(192.168.1.111:3306)/odin?parseTime=true")
-	var r = dbr.NewRedis("192.168.1.111:6379", "", 1, 30, 10)
+	var db, _ = sql.Open("mysql", "root:yangfeng@(192.168.1.99:3306)/odin?parseTime=true")
+	var r = dbr.NewRedis("192.168.1.99:6379", "", 1, 30, 10)
 
 	var s = odin.NewService(db, r, "odin")
 
