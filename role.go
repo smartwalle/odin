@@ -190,7 +190,7 @@ func (this *manager) getRoleWithIdList(ctx int64, idList []int64) (result []*Rol
 		sb.Where(dbs.IN("r.id", idList))
 	}
 	sb.Where("(r.ctx = ? OR r.ctx = ?)", 0, ctx)
-	sb.Limit(uint64(len(idList)))
+	sb.Limit(int64(len(idList)))
 
 	if err = sb.Scan(this.db, &result); err != nil {
 		return nil, err
@@ -355,7 +355,7 @@ func (this *manager) checkList(ctx int64, objectId string, identifiers ...string
 
 	sb.GroupBy("p.id")
 	sb.OrderBy("r.status", "p.status")
-	sb.Limit(uint64(len(identifiers)))
+	sb.Limit(int64(len(identifiers)))
 
 	var grantList []*Grant
 	if err := sb.Scan(this.db, &grantList); err != nil || grantList == nil {

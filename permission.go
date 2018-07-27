@@ -84,7 +84,7 @@ func (this *manager) getPermissionWithIdList(ctx int64, idList []int64) (result 
 	if len(idList) > 0 {
 		sb.Where(dbs.IN("p.id", idList))
 	}
-	sb.Limit(uint64(len(idList)))
+	sb.Limit(int64(len(idList)))
 
 	if err = sb.Scan(this.db, &result); err != nil {
 		return nil, err
