@@ -5,14 +5,18 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/smartwalle/dbr"
-	"github.com/smartwalle/odin"
+	"github.com/smartwalle/odin/service"
+	"github.com/smartwalle/odin/service/repository/mysql"
+	"github.com/smartwalle/odin/service/repository/redis"
 )
 
 func main() {
 	var db, _ = sql.Open("mysql", "root:yangfeng@(192.168.1.99:3306)/odin?parseTime=true")
 	var r = dbr.NewRedis("192.168.1.99:6379", "", 1, 30, 10)
 
-	var s = odin.NewService(db, r, "odin")
+	var sRepo = mysql.NewOdinRepository(db, "odin")
+	var rRepo = redis.NewOdinRepository(r, "odin", sRepo)
+	var s = service.NewOdinService(rRepo)
 
 	//s.AddPermissionGroup(0, "S-PG1", odin.K_STATUS_ENABLE)
 	//s.AddPermissionGroup(0, "S-PG2", odin.K_STATUS_ENABLE)
