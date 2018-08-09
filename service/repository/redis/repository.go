@@ -50,11 +50,22 @@ func (this *odinRepository) CheckList(ctx int64, objectId string, identifiers ..
 	var s = this.rPool.GetSession()
 	defer s.Close()
 
+	var key = this.buildKey(ctx, objectId)
+
+	if s.EXISTS(key).MustBool() == false {
+		pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, objectId)
+		var identifierList []interface{}
+		for _, p := range pList {
+			identifierList = append(identifierList, p.Identifier)
+		}
+		this.grantPermissions(key, identifierList)
+	}
+
 	result = make(map[string]bool)
-	key := this.buildKey(ctx, objectId)
 	for _, identifier := range identifiers {
 		result[identifier] = s.SISMEMBER(key, identifier).MustBool()
 	}
+
 	return result
 }
 
