@@ -72,7 +72,7 @@ func (this *manager) getRoles(tx dbs.TX, ctx int64, objectId string, groupIdList
 		sb.Where("r.name LIKE ?", k, k)
 	}
 	sb.OrderBy("r.ctx", "r.id")
-	if err = sb.ScanTx(tx, &result); err != nil {
+	if err = sb.Scan(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -130,7 +130,7 @@ func (this *manager) insertRole(tx dbs.TX, ctx, groupId int64, status int, name 
 	ib.Table(this.roleTable)
 	ib.Columns("ctx", "group_id", "status", "name", "created_on", "updated_on")
 	ib.Values(ctx, groupId, status, name, time.Now(), time.Now())
-	if result, err := ib.ExecTx(tx); err != nil {
+	if result, err := ib.Exec(tx); err != nil {
 		return 0, err
 	} else {
 		id, _ = result.LastInsertId()
@@ -176,7 +176,7 @@ func (this *manager) getRole(tx dbs.TX, ctx, id int64, name string) (result *Rol
 		sb.Where("r.name = ?", name)
 	}
 	sb.Limit(1)
-	if err = sb.ScanTx(tx, &result); err != nil {
+	if err = sb.Scan(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -234,7 +234,7 @@ func (this *manager) reGrantPermission(ctx, roleId int64, permissionIdList []int
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.rolePermissionTable)
 	rb.Where("role_id = ?", roleId)
-	if _, err = rb.ExecTx(tx); err != nil {
+	if _, err = rb.Exec(tx); err != nil {
 		return err
 	}
 
@@ -246,7 +246,7 @@ func (this *manager) reGrantPermission(ctx, roleId int64, permissionIdList []int
 		for _, pId := range permissionIdList {
 			ib.Values(ctx, roleId, pId, now)
 		}
-		if _, err = ib.ExecTx(tx); err != nil {
+		if _, err = ib.Exec(tx); err != nil {
 			return err
 		}
 	}
@@ -288,7 +288,7 @@ func (this *manager) reGrantRole(ctx int64, objectId string, roleIdList []int64)
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.roleGrantTable)
 	rb.Where("object_id = ?", objectId)
-	if _, err = rb.ExecTx(tx); err != nil {
+	if _, err = rb.Exec(tx); err != nil {
 		return err
 	}
 
@@ -300,7 +300,7 @@ func (this *manager) reGrantRole(ctx int64, objectId string, roleIdList []int64)
 		for _, rId := range roleIdList {
 			ib.Values(ctx, objectId, rId, now)
 		}
-		if _, err = ib.ExecTx(tx); err != nil {
+		if _, err = ib.Exec(tx); err != nil {
 			return err
 		}
 	}

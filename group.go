@@ -35,7 +35,7 @@ func (this *manager) getGroupList(tx dbs.TX, ctx int64, gType, status int, name 
 	}
 	sb.OrderBy("g.ctx", "g.id")
 
-	if err = sb.ScanTx(tx, &result); err != nil {
+	if err = sb.Scan(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -83,7 +83,7 @@ func (this *manager) insertGroup(tx dbs.TX, ctx int64, gType, status int, name s
 	ib.Table(this.groupTable)
 	ib.Columns("ctx", "type", "status", "name", "created_on", "updated_on")
 	ib.Values(ctx, gType, status, name, time.Now(), time.Now())
-	if result, err := ib.ExecTx(tx); err != nil {
+	if result, err := ib.Exec(tx); err != nil {
 		return 0, err
 	} else {
 		id, _ = result.LastInsertId()
@@ -143,7 +143,7 @@ func (this *manager) getGroup(tx dbs.TX, ctx, id int64, gType int, name string) 
 		sb.Where("g.name = ?", name)
 	}
 	sb.Limit(1)
-	if err = sb.ScanTx(tx, &result); err != nil {
+	if err = sb.Scan(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil

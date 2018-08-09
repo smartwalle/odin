@@ -70,7 +70,7 @@ func (this *manager) getPermissionListWithGroupIdList(tx dbs.TX, ctx, roleId int
 		sb.Where("(p.name LIKE ? OR p.identifier LIKE ?)", k, k)
 	}
 	sb.OrderBy("p.ctx", "p.id")
-	if err = sb.ScanTx(tx, &result); err != nil {
+	if err = sb.Scan(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -145,7 +145,7 @@ func (this *manager) insertPermission(tx dbs.TX, ctx, groupId int64, status int,
 	ib.Table(this.permissionTable)
 	ib.Columns("ctx", "group_id", "status", "name", "identifier", "created_on", "updated_on")
 	ib.Values(ctx, groupId, status, name, identifier, time.Now(), time.Now())
-	if result, err := ib.ExecTx(tx); err != nil {
+	if result, err := ib.Exec(tx); err != nil {
 		return 0, err
 	} else {
 		id, _ = result.LastInsertId()
@@ -195,7 +195,7 @@ func (this *manager) getPermission(tx dbs.TX, ctx, id int64, name, identifier st
 		sb.Where("p.identifier = ?", identifier)
 	}
 	sb.Limit(1)
-	if err = sb.ScanTx(tx, &result); err != nil {
+	if err = sb.Scan(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -220,7 +220,7 @@ func (this *manager) getPermissionListWithRole(tx dbs.TX, ctx, roleId int64) (re
 	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
 	sb.Where("(p.ctx = ? OR p.ctx = ?)", 0, ctx)
 	sb.Where("rp.role_id = ?", roleId)
-	if err = sb.ScanTx(tx, &result); err != nil {
+	if err = sb.Scan(tx, &result); err != nil {
 		return nil, err
 	}
 	return result, err
