@@ -2,8 +2,8 @@ package mysql
 
 import (
 	"github.com/smartwalle/dbs"
-	"time"
 	"github.com/smartwalle/odin"
+	"time"
 )
 
 func (this *odinRepository) GetGroupListWithType(ctx int64, gType, status int, name string) (result []*odin.Group, err error) {
