@@ -1,9 +1,9 @@
 package mysql
 
 import (
-	"time"
 	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
+	"time"
 )
 
 func (this *odinRepository) GetRoleTree(ctx int64, objectId string, status int, name string) (result []*odin.Group, err error) {
@@ -199,7 +199,6 @@ func (this *odinRepository) GetRoleWithIdList(ctx int64, idList []int64) (result
 	return result, nil
 }
 
-
 func (this *odinRepository) GrantRole(ctx int64, objectId string, roleIdList []int64) (err error) {
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
@@ -219,7 +218,8 @@ func (this *odinRepository) RevokeRole(ctx int64, objectId string, roleIdList []
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.roleGrantTable)
 	rb.Where("object_id = ?", objectId)
-	rb.Where("(ctx = ? OR ctx = ?)", 0, ctx)
+	//rb.Where("(ctx = ? OR ctx = ?)", 0, ctx)
+	rb.Where("ctx = ?", ctx)
 	rb.Where(dbs.IN("role_id", roleIdList))
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
@@ -234,6 +234,7 @@ func (this *odinRepository) ReGrantRole(ctx int64, objectId string, roleIdList [
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.roleGrantTable)
 	rb.Where("object_id = ?", objectId)
+	rb.Where("ctx = ?", ctx)
 	if _, err = rb.Exec(tx); err != nil {
 		return err
 	}

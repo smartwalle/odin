@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"github.com/smartwalle/odin"
 	"github.com/smartwalle/dbs"
+	"github.com/smartwalle/odin"
 	"time"
 )
 
@@ -234,8 +234,7 @@ func (this *odinRepository) GetGrantedPermissionList(ctx int64, objectId string)
 	sb.From(this.permissionTable, "AS p")
 	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
 	sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = rp.role_id")
-	sb.Where("rg.object_id = ?", objectId)
-	sb.Where("p.status = ?", odin.K_STATUS_ENABLE)
+	sb.Where("rg.object_id = ? AND p.status = ?", objectId, odin.K_STATUS_ENABLE)
 	sb.Where("(p.ctx = ? OR p.ctx = ?)", 0, ctx)
 	sb.GroupBy("p.id")
 	if err := sb.Scan(this.db, &result); err != nil {
@@ -243,7 +242,6 @@ func (this *odinRepository) GetGrantedPermissionList(ctx int64, objectId string)
 	}
 	return result, err
 }
-
 
 func (this *odinRepository) GrantPermission(ctx, roleId int64, permissionIdList []int64) (err error) {
 	if len(permissionIdList) > 0 {
@@ -266,7 +264,8 @@ func (this *odinRepository) RevokePermission(ctx, roleId int64, permissionIdList
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.rolePermissionTable)
 	rb.Where("role_id = ?", roleId)
-	rb.Where("(ctx = ? OR ctx = ?)", 0, ctx)
+	//rb.Where("(ctx = ? OR ctx = ?)", 0, ctx)
+	rb.Where("ctx = ?", ctx)
 	rb.Where(dbs.IN("permission_id", permissionIdList))
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
@@ -281,6 +280,7 @@ func (this *odinRepository) ReGrantPermission(ctx, roleId int64, permissionIdLis
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.rolePermissionTable)
 	rb.Where("role_id = ?", roleId)
+	rb.Where("ctx = ?", ctx)
 	if _, err = rb.Exec(tx); err != nil {
 		return err
 	}
