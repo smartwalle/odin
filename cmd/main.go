@@ -12,7 +12,7 @@ import (
 
 func main() {
 	var db, _ = sql.Open("mysql", "root:yangfeng@(192.168.1.99:3306)/odin?parseTime=true")
-	var r = dbr.NewRedis("192.168.1.99:6379", "", 1, 30, 10)
+	var r = dbr.NewRedis("192.168.1.99:6379", 30, 10)
 
 	var sRepo = mysql.NewOdinRepository(db, "odin")
 	var rRepo = redis.NewOdinRepository(r, "odin", sRepo)
