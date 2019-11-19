@@ -20,7 +20,7 @@ func (this *odinRepository) GetGroupListWithType(ctx int64, gType, status int, n
 func (this *odinRepository) getGroupList(tx dbs.TX, ctx int64, gType, status int, name string) (result []*odin.Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.ctx", "g.type", "g.name", "g.status", "g.created_on", "g.updated_on")
-	sb.From(this.groupTable, "AS g")
+	sb.From(this.tblGroup, "AS g")
 
 	sb.Where("(g.ctx = ? OR g.ctx = ?)", 0, ctx)
 
@@ -81,7 +81,7 @@ func (this *odinRepository) AddGroup(ctx int64, gType int, name string, status i
 
 func (this *odinRepository) insertGroup(tx dbs.TX, ctx int64, gType, status int, name string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
-	ib.Table(this.groupTable)
+	ib.Table(this.tblGroup)
 	ib.Columns("ctx", "type", "status", "name", "created_on", "updated_on")
 	ib.Values(ctx, gType, status, name, time.Now(), time.Now())
 	if result, err := ib.Exec(tx); err != nil {
@@ -94,7 +94,7 @@ func (this *odinRepository) insertGroup(tx dbs.TX, ctx int64, gType, status int,
 
 func (this *odinRepository) UpdateGroup(ctx, id int64, name string, status int) (err error) {
 	var ub = dbs.NewUpdateBuilder()
-	ub.Table(this.groupTable)
+	ub.Table(this.tblGroup)
 	ub.SET("name", name)
 	ub.SET("status", status)
 	ub.SET("updated_on", time.Now())
@@ -107,7 +107,7 @@ func (this *odinRepository) UpdateGroup(ctx, id int64, name string, status int) 
 
 func (this *odinRepository) UpdateGroupStatus(ctx, id int64, status int) (err error) {
 	var ub = dbs.NewUpdateBuilder()
-	ub.Table(this.groupTable)
+	ub.Table(this.tblGroup)
 	ub.SET("status", status)
 	ub.SET("updated_on", time.Now())
 	ub.Where("id = ?", id)
@@ -119,7 +119,7 @@ func (this *odinRepository) UpdateGroupStatus(ctx, id int64, status int) (err er
 
 func (this *odinRepository) RemoveGroup(ctx, id int64) (err error) {
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.groupTable)
+	rb.Table(this.tblGroup)
 	rb.Where("id = ?", id)
 	rb.Where("ctx = ?", ctx)
 	rb.Limit(1)
@@ -130,7 +130,7 @@ func (this *odinRepository) RemoveGroup(ctx, id int64) (err error) {
 func (this *odinRepository) getGroup(tx dbs.TX, ctx, id int64, gType int, name string) (result *odin.Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.type", "g.status", "g.name", "g.created_on", "g.updated_on")
-	sb.From(this.groupTable, "AS g")
+	sb.From(this.tblGroup, "AS g")
 	if id > 0 {
 		sb.Where("g.id = ?", id)
 	}

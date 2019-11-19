@@ -20,19 +20,33 @@ func NewOdinRepository(rPool *dbr.Pool, tPrefix string, repo service.OdinReposit
 	return r
 }
 
-func (this *odinRepository) buildKey(ctx int64, objectId string) (result string) {
-	return fmt.Sprintf("%s_odin_g_%d_%s", this.tPrefix, ctx, objectId)
+func (this *odinRepository) buildGrantKey(ctx int64, targetId string, wild bool) (result string) {
+	var cKey = ""
+	var tKey = ""
+
+	if ctx > 0 {
+		cKey = fmt.Sprintf("%d", ctx)
+	} else if wild {
+		cKey = "*"
+	}
+
+	if targetId != "" {
+		tKey = targetId
+	} else if wild {
+		tKey = "*"
+	}
+	return fmt.Sprintf("%s:odin:grant:%s:%s", this.tPrefix, cKey, tKey)
 }
 
-func (this *odinRepository) Check(ctx int64, objectId, identifier string) (result bool) {
+func (this *odinRepository) Check(ctx int64, targetId, identifier string) (result bool) {
 	var s = this.rPool.GetSession()
 	defer s.Close()
 
-	var key = this.buildKey(ctx, objectId)
+	var key = this.buildGrantKey(ctx, targetId, false)
 	result = s.SISMEMBER(key, identifier).MustBool()
 	if result == false {
 		if s.EXISTS(key).MustBool() == false {
-			pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, objectId)
+			pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, targetId)
 			var identifierList []interface{}
 			for _, p := range pList {
 				if p.Identifier == identifier {
@@ -46,14 +60,14 @@ func (this *odinRepository) Check(ctx int64, objectId, identifier string) (resul
 	return result
 }
 
-func (this *odinRepository) CheckList(ctx int64, objectId string, identifiers ...string) (result map[string]bool) {
+func (this *odinRepository) CheckList(ctx int64, targetId string, identifiers ...string) (result map[string]bool) {
 	var s = this.rPool.GetSession()
 	defer s.Close()
 
-	var key = this.buildKey(ctx, objectId)
+	var key = this.buildGrantKey(ctx, targetId, false)
 
 	if s.EXISTS(key).MustBool() == false {
-		pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, objectId)
+		pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, targetId)
 		var identifierList []interface{}
 		for _, p := range pList {
 			identifierList = append(identifierList, p.Identifier)
@@ -92,19 +106,11 @@ func (this *odinRepository) grantPermissions(key string, identifier []interface{
 	}
 }
 
-func (this *odinRepository) ClearCache(ctx int64, objectId string) {
+func (this *odinRepository) ClearCache(ctx int64, targetId string) {
 	var s = this.rPool.GetSession()
 	defer s.Close()
 
-	var cKey = "*"
-	var oKey = "*"
-	if ctx > 0 {
-		cKey = fmt.Sprintf("%d", ctx)
-	}
-	if objectId != "" {
-		oKey = objectId
-	}
-	var key = fmt.Sprintf("%s_odin_g_%s_%s", this.tPrefix, cKey, oKey)
+	var key = this.buildGrantKey(ctx, targetId, true)
 
 	var keys = s.KEYS(key).MustStrings()
 

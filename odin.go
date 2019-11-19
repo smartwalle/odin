@@ -59,7 +59,7 @@ type RolePermission struct {
 
 type Grant struct {
 	Ctx          int64  `json:"ctx"           sql:"ctx"`
-	ObjectId     string `json:"object_id"     sql:"object_id"`
+	TargetId     string `json:"target_id"     sql:"target_id"`
 	RoleId       int64  `json:"role_id"       sql:"role_id"`
 	PermissionId int64  `json:"permission_id" sql:"permission_id"`
 	Identifier   string `json:"identifier"    sql:"identifier"`
@@ -68,7 +68,7 @@ type Grant struct {
 type OdinService interface {
 	GetPermissionTree(ctx, roleId int64, status int, name string) (result []*Group, err error)
 
-	GetRoleTree(ctx int64, objectId string, status int, name string) (result []*Group, err error)
+	GetRoleTree(ctx int64, targetId string, status int, name string) (result []*Group, err error)
 
 	GetPermissionGroupList(ctx int64, status int, name string) (result []*Group, err error)
 
@@ -134,19 +134,19 @@ type OdinService interface {
 
 	ReGrantPermission(ctx, roleId int64, permissionIdList ...int64) (err error)
 
-	GrantRole(ctx int64, objectId string, roleIdList ...int64) (err error)
+	GrantRole(ctx int64, targetId string, roleIdList ...int64) (err error)
 
-	RevokeRole(ctx int64, objectId string, roleIdList ...int64) (err error)
+	RevokeRole(ctx int64, targetId string, roleIdList ...int64) (err error)
 
-	ReGrantRole(ctx int64, objectId string, roleIdList ...int64) (err error)
+	ReGrantRole(ctx int64, targetId string, roleIdList ...int64) (err error)
 
-	Check(ctx int64, objectId, identifier string) (result bool)
+	Check(ctx int64, targetId, identifier string) (result bool)
 
-	CheckList(ctx int64, objectId string, identifiers ...string) (result map[string]bool)
+	CheckList(ctx int64, targetId string, identifiers ...string) (result map[string]bool)
 
-	GetGrantedRoleList(ctx int64, objectId string) (result []*Role, err error)
+	GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error)
 
-	GetGrantedPermissionList(ctx int64, objectId string) (result []*Permission, err error)
+	GetGrantedPermissionList(ctx int64, targetId string) (result []*Permission, err error)
 
-	ClearCache(ctx int64, objectId string)
+	ClearCache(ctx int64, targetId string)
 }

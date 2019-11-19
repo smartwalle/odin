@@ -52,10 +52,10 @@ func (this *odinRepository) GetPermissionList(ctx int64, groupIdList []int64, st
 func (this *odinRepository) getPermissionListWithGroupIdList(tx dbs.TX, ctx, roleId int64, groupIdList []int64, status int, keyword string) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.ctx", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
-	sb.From(this.permissionTable, "AS p")
+	sb.From(this.tblPermission, "AS p")
 	if roleId > 0 {
 		sb.Selects("IF(rp.role_id IS NULL, false , true) AS granted")
-		sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id AND rp.role_id = ?", roleId)
+		sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.permission_id = p.id AND rp.role_id = ?", roleId)
 	}
 
 	sb.Where("(p.ctx = ? OR p.ctx = ?)", 0, ctx)
@@ -80,7 +80,7 @@ func (this *odinRepository) getPermissionListWithGroupIdList(tx dbs.TX, ctx, rol
 func (this *odinRepository) GetPermissionWithIdList(ctx int64, idList []int64) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.ctx", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
-	sb.From(this.permissionTable, "AS p")
+	sb.From(this.tblPermission, "AS p")
 	sb.Where("(p.ctx = ? OR p.ctx = ?)", 0, ctx)
 	if len(idList) > 0 {
 		sb.Where(dbs.IN("p.id", idList))
@@ -143,7 +143,7 @@ func (this *odinRepository) AddPermission(ctx int64, groupId int64, name, identi
 
 func (this *odinRepository) insertPermission(tx dbs.TX, ctx, groupId int64, status int, name, identifier string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
-	ib.Table(this.permissionTable)
+	ib.Table(this.tblPermission)
 	ib.Columns("ctx", "group_id", "status", "name", "identifier", "created_on", "updated_on")
 	ib.Values(ctx, groupId, status, name, identifier, time.Now(), time.Now())
 	if result, err := ib.Exec(tx); err != nil {
@@ -156,7 +156,7 @@ func (this *odinRepository) insertPermission(tx dbs.TX, ctx, groupId int64, stat
 
 func (this *odinRepository) UpdatePermission(ctx, id, groupId int64, name, identifier string, status int) (err error) {
 	var ub = dbs.NewUpdateBuilder()
-	ub.Table(this.permissionTable)
+	ub.Table(this.tblPermission)
 	ub.SET("group_id", groupId)
 	ub.SET("name", name)
 	ub.SET("identifier", identifier)
@@ -171,7 +171,7 @@ func (this *odinRepository) UpdatePermission(ctx, id, groupId int64, name, ident
 
 func (this *odinRepository) UpdatePermissionStatus(ctx, id int64, status int) (err error) {
 	var ub = dbs.NewUpdateBuilder()
-	ub.Table(this.permissionTable)
+	ub.Table(this.tblPermission)
 	ub.SET("status", status)
 	ub.SET("updated_on", time.Now())
 	ub.Where("id = ?", id)
@@ -184,7 +184,7 @@ func (this *odinRepository) UpdatePermissionStatus(ctx, id int64, status int) (e
 func (this *odinRepository) getPermission(tx dbs.TX, ctx, id int64, name, identifier string) (result *odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.ctx", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on", "p.updated_on")
-	sb.From(this.permissionTable, "AS p")
+	sb.From(this.tblPermission, "AS p")
 	if id > 0 {
 		sb.Where("p.id = ?", id)
 	}
@@ -217,8 +217,8 @@ func (this *odinRepository) getPermissionListWithRole(tx dbs.TX, ctx, roleId int
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.ctx", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on", "p.updated_on")
 	sb.Selects("IF(rp.role_id IS NULL, false, true) AS granted")
-	sb.From(this.permissionTable, "AS p")
-	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
+	sb.From(this.tblPermission, "AS p")
+	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.permission_id = p.id")
 	sb.Where("(p.ctx = ? OR p.ctx = ?)", 0, ctx)
 	sb.Where("rp.role_id = ?", roleId)
 	if err = sb.Scan(tx, &result); err != nil {
@@ -231,10 +231,10 @@ func (this *odinRepository) GetGrantedPermissionList(ctx int64, objectId string)
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.ctx", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on", "p.updated_on")
 	sb.Selects("IF(rp.role_id IS NULL, false, true) AS granted")
-	sb.From(this.permissionTable, "AS p")
-	sb.LeftJoin(this.rolePermissionTable, "AS rp ON rp.permission_id = p.id")
-	sb.LeftJoin(this.roleGrantTable, "AS rg ON rg.role_id = rp.role_id")
-	sb.Where("rg.object_id = ? AND p.status = ?", objectId, odin.K_STATUS_ENABLE)
+	sb.From(this.tblPermission, "AS p")
+	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.permission_id = p.id")
+	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = rp.role_id")
+	sb.Where("rg.target_id = ? AND p.status = ?", objectId, odin.K_STATUS_ENABLE)
 	sb.Where("(p.ctx = ? OR p.ctx = ?)", 0, ctx)
 	sb.GroupBy("p.id")
 	if err := sb.Scan(this.db, &result); err != nil {
@@ -247,7 +247,7 @@ func (this *odinRepository) GrantPermission(ctx, roleId int64, permissionIdList 
 	if len(permissionIdList) > 0 {
 		var now = time.Now()
 		var ib = dbs.NewInsertBuilder()
-		ib.Table(this.rolePermissionTable)
+		ib.Table(this.tblRolePermission)
 		ib.Options("IGNORE")
 		ib.Columns("ctx", "role_id", "permission_id", "created_on")
 		for _, pId := range permissionIdList {
@@ -262,7 +262,7 @@ func (this *odinRepository) GrantPermission(ctx, roleId int64, permissionIdList 
 
 func (this *odinRepository) RevokePermission(ctx, roleId int64, permissionIdList []int64) (err error) {
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.rolePermissionTable)
+	rb.Table(this.tblRolePermission)
 	rb.Where("role_id = ?", roleId)
 	//rb.Where("(ctx = ? OR ctx = ?)", 0, ctx)
 	rb.Where("ctx = ?", ctx)
@@ -278,7 +278,7 @@ func (this *odinRepository) ReGrantPermission(ctx, roleId int64, permissionIdLis
 	var now = time.Now()
 
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.rolePermissionTable)
+	rb.Table(this.tblRolePermission)
 	rb.Where("role_id = ?", roleId)
 	rb.Where("ctx = ?", ctx)
 	if _, err = rb.Exec(tx); err != nil {
@@ -287,7 +287,7 @@ func (this *odinRepository) ReGrantPermission(ctx, roleId int64, permissionIdLis
 
 	if len(permissionIdList) > 0 {
 		var ib = dbs.NewInsertBuilder()
-		ib.Table(this.rolePermissionTable)
+		ib.Table(this.tblRolePermission)
 		ib.Options("IGNORE")
 		ib.Columns("ctx", "role_id", "permission_id", "created_on")
 		for _, pId := range permissionIdList {
