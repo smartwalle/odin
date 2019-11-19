@@ -6,23 +6,12 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetGroupListWithType(ctx int64, gType odin.GroupType, status odin.Status, name string) (result []*odin.Group, err error) {
-	var tx = dbs.MustTx(this.db)
-	if result, err = this.getGroupList(tx, ctx, gType, status, name); err != nil {
-		return nil, err
-	}
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-func (this *odinRepository) getGroupList(tx dbs.TX, ctx int64, gType odin.GroupType, status odin.Status, name string) (result []*odin.Group, err error) {
+func (this *odinRepository) GetGroupList(ctx int64, gType odin.GroupType, status odin.Status, name string) (result []*odin.Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.ctx", "g.type", "g.name", "g.status", "g.created_on", "g.updated_on")
 	sb.From(this.tblGroup, "AS g")
 
-	sb.Where("(g.ctx = ? OR g.ctx = ?)", 0, ctx)
+	sb.Where("g.ctx = ?", ctx)
 
 	if gType > 0 {
 		sb.Where("g.type = ?", gType)
@@ -31,65 +20,59 @@ func (this *odinRepository) getGroupList(tx dbs.TX, ctx int64, gType odin.GroupT
 		sb.Where("g.status = ?", status)
 	}
 	if name != "" {
-		var keyword = "%" + name + "%"
-		sb.Where("g.name LIKE ?", keyword)
+		sb.Where(dbs.Like("g.name", "%", name, "%"))
 	}
 	sb.OrderBy("g.ctx", "g.id")
 
-	if err = sb.Scan(tx, &result); err != nil {
+	if err = sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
 func (this *odinRepository) GetGroupWithId(ctx, id int64, gType odin.GroupType) (result *odin.Group, err error) {
-	var tx = dbs.MustTx(this.db)
-	if result, err = this.getGroup(tx, ctx, id, gType, ""); err != nil {
-		return nil, err
-	}
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-	return result, err
+	return this.getGroup(ctx, id, gType, "")
 }
 
 func (this *odinRepository) GetGroupWithName(ctx int64, name string, gType odin.GroupType) (result *odin.Group, err error) {
-	var tx = dbs.MustTx(this.db)
-	if result, err = this.getGroup(tx, ctx, 0, gType, name); err != nil {
-		return nil, err
-	}
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-	return result, err
+	return this.getGroup(ctx, 0, gType, name)
 }
 
-func (this *odinRepository) AddGroup(ctx int64, gType odin.GroupType, name string, status odin.Status) (result *odin.Group, err error) {
-	var tx = dbs.MustTx(this.db)
-	var newGroupId int64 = 0
-	if newGroupId, err = this.insertGroup(tx, ctx, gType, status, name); err != nil {
+func (this *odinRepository) getGroup(ctx, id int64, gType odin.GroupType, name string) (result *odin.Group, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("g.id", "g.ctx", "g.type", "g.name", "g.status", "g.created_on", "g.updated_on")
+	sb.From(this.tblGroup, "AS g")
+	if id > 0 {
+		sb.Where("g.id = ?", id)
+	}
+
+	sb.Where("g.ctx = ?", ctx)
+
+	if gType > 0 {
+		sb.Where("g.type = ?", gType)
+	}
+	if name != "" {
+		sb.Where("g.name = ?", name)
+	}
+	sb.Limit(1)
+	if err = sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}
-	if result, err = this.getGroup(tx, ctx, newGroupId, 0, ""); err != nil {
-		return nil, err
-	}
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-	return result, err
+	return result, nil
 }
 
-func (this *odinRepository) insertGroup(tx dbs.TX, ctx int64, gType odin.GroupType, status odin.Status, name string) (id int64, err error) {
+func (this *odinRepository) AddGroup(ctx int64, gType odin.GroupType, name string, status odin.Status) (result int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.tblGroup)
 	ib.Columns("ctx", "type", "status", "name", "created_on", "updated_on")
 	ib.Values(ctx, gType, status, name, time.Now(), time.Now())
-	if result, err := ib.Exec(tx); err != nil {
+
+	rResult, err := ib.Exec(this.db)
+	if err != nil {
 		return 0, err
-	} else {
-		id, _ = result.LastInsertId()
 	}
-	return id, err
+	result, _ = rResult.LastInsertId()
+	return result, nil
 }
 
 func (this *odinRepository) UpdateGroup(ctx, id int64, name string, status odin.Status) (err error) {
@@ -125,27 +108,4 @@ func (this *odinRepository) RemoveGroup(ctx, id int64) (err error) {
 	rb.Limit(1)
 	_, err = rb.Exec(this.db)
 	return err
-}
-
-func (this *odinRepository) getGroup(tx dbs.TX, ctx, id int64, gType odin.GroupType, name string) (result *odin.Group, err error) {
-	var sb = dbs.NewSelectBuilder()
-	sb.Selects("g.id", "g.type", "g.status", "g.name", "g.created_on", "g.updated_on")
-	sb.From(this.tblGroup, "AS g")
-	if id > 0 {
-		sb.Where("g.id = ?", id)
-	}
-
-	sb.Where("(g.ctx = ? OR g.ctx = ?)", 0, ctx)
-
-	if gType > 0 {
-		sb.Where("g.type = ?", gType)
-	}
-	if name != "" {
-		sb.Where("g.name = ?", name)
-	}
-	sb.Limit(1)
-	if err = sb.Scan(tx, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
 }

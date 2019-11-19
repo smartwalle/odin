@@ -110,21 +110,21 @@ type Service interface {
 
 	UpdatePermission(ctx, id, groupId int64, name, identifier string, status Status) (err error)
 
-	CheckPermissionIsExists(ctx int64, identifier string) (result bool)
-
-	CheckPermissionNameIsExists(ctx int64, name string) (result bool)
-
 	UpdatePermissionStatus(ctx, id int64, status Status) (err error)
+
+	CheckPermissionExists(ctx int64, identifier string) (result bool)
+
+	CheckPermissionNameExists(ctx int64, name string) (result bool)
 
 	GetRoleList(ctx, groupId int64, status Status, keyword string) (result []*Role, err error)
 
-	GetPermissionListWithRole(ctx, roleId int64) (result []*Permission, err error)
+	GetRolePermissionList(ctx, roleId int64) (result []*Permission, err error)
 
 	GetRoleWithId(ctx, id int64) (result *Role, err error)
 
 	GetRoleWithName(ctx int64, name string) (result *Role, err error)
 
-	CheckRoleNameIsExists(ctx int64, name string) (result bool)
+	CheckRoleNameExists(ctx int64, name string) (result bool)
 
 	AddRole(ctx, groupId int64, name string, status Status) (result *Role, err error)
 
@@ -152,5 +152,5 @@ type Service interface {
 
 	GetGrantedPermissionList(ctx int64, target string) (result []*Permission, err error)
 
-	ClearCache(ctx int64, target string)
+	CleanCache(ctx int64, target string)
 }

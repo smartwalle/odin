@@ -3,6 +3,7 @@ package redis
 import (
 	"fmt"
 	"github.com/smartwalle/dbr"
+	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin/service"
 )
 
@@ -20,8 +21,22 @@ func NewOdinRepository(rPool *dbr.Pool, tPrefix string, repo service.OdinReposit
 	return r
 }
 
+
+func (this *odinRepository) BeginTx() (dbs.TX, service.OdinRepository) {
+	var nRepo = *this
+	var tx dbs.TX
+	tx, nRepo.OdinRepository = this.OdinRepository.BeginTx()
+	return tx, &nRepo
+}
+
+func (this *odinRepository) WithTx(tx dbs.TX) service.OdinRepository {
+	var nRepo = *this
+	nRepo.OdinRepository = this.OdinRepository.WithTx(tx)
+	return &nRepo
+}
+
 func (this *odinRepository) buildGrantKey(ctx int64, target string, wild bool) (result string) {
-	var cKey = ""
+	var cKey = "0"
 	var tKey = ""
 
 	if ctx > 0 {
@@ -106,7 +121,7 @@ func (this *odinRepository) grantPermissions(key string, identifier []interface{
 	}
 }
 
-func (this *odinRepository) ClearCache(ctx int64, target string) {
+func (this *odinRepository) CleanCache(ctx int64, target string) {
 	var s = this.rPool.GetSession()
 	defer s.Close()
 

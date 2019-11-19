@@ -1,17 +1,22 @@
 package service
 
 import (
+	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
 )
 
 type OdinRepository interface {
-	GetGroupListWithType(ctx int64, gType odin.GroupType, status odin.Status, name string) (result []*odin.Group, err error)
+	BeginTx() (dbs.TX, OdinRepository)
+
+	WithTx(tx dbs.TX) OdinRepository
+
+	GetGroupList(ctx int64, gType odin.GroupType, status odin.Status, name string) (result []*odin.Group, err error)
 
 	GetGroupWithId(ctx, id int64, gType odin.GroupType) (result *odin.Group, err error)
 
 	GetGroupWithName(ctx int64, name string, gType odin.GroupType) (result *odin.Group, err error)
 
-	AddGroup(ctx int64, gType odin.GroupType, name string, status odin.Status) (result *odin.Group, err error)
+	AddGroup(ctx int64, gType odin.GroupType, name string, status odin.Status) (result int64, err error)
 
 	UpdateGroup(ctx, id int64, name string, status odin.Status) (err error)
 
@@ -19,11 +24,9 @@ type OdinRepository interface {
 
 	RemoveGroup(ctx, id int64) (err error)
 
-	GetPermissionTree(ctx, roleId int64, status odin.Status, name string) (result []*odin.Group, err error)
+	GetPermissionList(ctx int64, groupIdList []int64, status odin.Status, keyword string, roleId int64) (result []*odin.Permission, err error)
 
-	GetPermissionList(ctx int64, groupIdList []int64, status odin.Status, keyword string) (result []*odin.Permission, err error)
-
-	GetPermissionWithIdList(ctx int64, idList []int64) (result []*odin.Permission, err error)
+	GetPermissionListWithIds(ctx int64, idList []int64) (result []*odin.Permission, err error)
 
 	GetPermissionWithId(ctx, id int64) (result *odin.Permission, err error)
 
@@ -31,25 +34,23 @@ type OdinRepository interface {
 
 	GetPermissionWithIdentifier(ctx int64, identifier string) (result *odin.Permission, err error)
 
-	AddPermission(ctx int64, groupId int64, name, identifier string, status odin.Status) (result *odin.Permission, err error)
+	AddPermission(ctx int64, groupId int64, name, identifier string, status odin.Status) (result int64, err error)
 
 	UpdatePermission(ctx, id, groupId int64, name, identifier string, status odin.Status) (err error)
 
 	UpdatePermissionStatus(ctx, id int64, status odin.Status) (err error)
 
-	GetPermissionListWithRoleId(ctx, roleId int64) (result []*odin.Permission, err error)
+	GetRolePermissionList(ctx, roleId int64) (result []*odin.Permission, err error)
 
 	GetGrantedPermissionList(ctx int64, target string) (result []*odin.Permission, err error)
 
-	GetRoleTree(ctx int64, target string, status odin.Status, name string) (result []*odin.Group, err error)
-
-	GetRoleList(ctx, groupId int64, status odin.Status, keyword string) (result []*odin.Role, err error)
+	GetRoleList(ctx int64, target string, groupIdList []int64, status odin.Status, keyword string) (result []*odin.Role, err error)
 
 	GetRoleWithId(ctx, id int64, withPermissionList bool) (result *odin.Role, err error)
 
 	GetRoleWithName(ctx int64, name string, withPermissionList bool) (result *odin.Role, err error)
 
-	AddRole(ctx, groupId int64, name string, status odin.Status) (result *odin.Role, err error)
+	AddRole(ctx, groupId int64, name string, status odin.Status) (result int64, err error)
 
 	UpdateRole(ctx, id, groupId int64, name string, status odin.Status) (err error)
 
@@ -75,14 +76,14 @@ type OdinRepository interface {
 
 	GetGrantedRoleList(ctx int64, target string) (result []*odin.Role, err error)
 
-	ClearCache(ctx int64, target string)
+	CleanCache(ctx int64, target string)
 }
 
 type odinService struct {
 	repo OdinRepository
 }
 
-func NewOdinService(repo OdinRepository) odin.Service {
+func NewService(repo OdinRepository) odin.Service {
 	var s = &odinService{}
 	s.repo = repo
 	return s
@@ -91,24 +92,87 @@ func NewOdinService(repo OdinRepository) odin.Service {
 // GetPermissionTree 获取权限组列表，会返回该组包含的权限列表
 // 如果 roleId 大于 0，则会返回各权限是否有授权给该角色
 func (this *odinService) GetPermissionTree(ctx, roleId int64, status odin.Status, name string) (result []*odin.Group, err error) {
-	return this.repo.GetPermissionTree(ctx, roleId, status, name)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if result, err = nRepo.GetGroupList(ctx, odin.GroupTypeOfPermission, status, name); err != nil {
+		return nil, err
+	}
+
+	var gMap = make(map[int64]*odin.Group)
+	var gIdList = make([]int64, 0, len(result))
+	for _, group := range result {
+		gMap[group.Id] = group
+		gIdList = append(gIdList, group.Id)
+	}
+
+	pList, err := nRepo.GetPermissionList(ctx, gIdList, status, "", roleId)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range pList {
+		var group = gMap[p.GroupId]
+		if group != nil {
+			group.PermissionList = append(group.PermissionList, p)
+		}
+	}
+
+	tx.Commit()
+	return result, nil
 }
 
 // GetRoleTree 获取角色组列表，会返回该组包含的角色列表
 // 如果 target 不为空字符串，则会返回各角色是否有授权给该对象
 func (this *odinService) GetRoleTree(ctx int64, target string, status odin.Status, name string) (result []*odin.Group, err error) {
-	return this.repo.GetRoleTree(ctx, target, status, name)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	result, err = nRepo.GetGroupList(ctx, odin.GroupTypeOfRole, status, name)
+	if err != nil {
+		return nil, err
+	}
+
+	var gMap = make(map[int64]*odin.Group)
+	var gIdList []int64
+	for _, group := range result {
+		gMap[group.Id] = group
+		gIdList = append(gIdList, group.Id)
+	}
+
+	rList, err := nRepo.GetRoleList(ctx, target, gIdList, status, "")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range rList {
+		var group = gMap[r.GroupId]
+		if group != nil {
+			group.RoleList = append(group.RoleList, r)
+		}
+	}
+
+	tx.Commit()
+	return result, nil
 }
 
 // --------------------------------------------------------------------------------
 // GetPermissionGroupList 获取权限组列表，组信息不包含权限列表
 func (this *odinService) GetPermissionGroupList(ctx int64, status odin.Status, name string) (result []*odin.Group, err error) {
-	return this.repo.GetGroupListWithType(ctx, odin.GroupTypeOfPermission, status, name)
+	return this.repo.GetGroupList(ctx, odin.GroupTypeOfPermission, status, name)
 }
 
 // GetRoleGroupList 获取角色组列表，组信息不包含角色列表
 func (this *odinService) GetRoleGroupList(ctx int64, status odin.Status, name string) (result []*odin.Group, err error) {
-	return this.repo.GetGroupListWithType(ctx, odin.GroupTypeOfRole, status, name)
+	return this.repo.GetGroupList(ctx, odin.GroupTypeOfRole, status, name)
 }
 
 // GetPermissionGroupWithId 获取权限组详情，包含权限列表或者角色列表
@@ -133,48 +197,87 @@ func (this *odinService) GetRoleGroupWithName(ctx int64, name string) (result *o
 
 // AddPermissionGroup 添加权限组
 func (this *odinService) AddPermissionGroup(ctx int64, name string, status odin.Status) (result *odin.Group, err error) {
-	if result, err = this.repo.GetGroupWithName(ctx, name, odin.GroupTypeOfPermission); err != nil {
-		return nil, err
-	}
-	if result != nil {
-		return nil, odin.ErrGroupExists
-	}
-	return this.repo.AddGroup(ctx, odin.GroupTypeOfPermission, name, status)
+	return this.addGroup(ctx, odin.GroupTypeOfPermission, name, status)
 }
 
 // AddRoleGroup 添加角色组
 func (this *odinService) AddRoleGroup(ctx int64, name string, status odin.Status) (result *odin.Group, err error) {
-	if result, err = this.repo.GetGroupWithName(ctx, name, odin.GroupTypeOfRole); err != nil {
+	return this.addGroup(ctx, odin.GroupTypeOfRole, name, status)
+}
+
+func (this *odinService) addGroup(ctx int64, gType odin.GroupType, name string, status odin.Status) (result *odin.Group, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 判断组名称是否已经存在
+	if result, err = nRepo.GetGroupWithName(ctx, name, gType); err != nil {
 		return nil, err
 	}
 	if result != nil {
 		return nil, odin.ErrGroupExists
 	}
-	return this.repo.AddGroup(ctx, odin.GroupTypeOfRole, name, status)
+
+	// 添加组信息
+	nId, err := nRepo.AddGroup(ctx, gType, name, status)
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取新添加的组
+	if result, err = nRepo.GetGroupWithId(ctx, nId, gType); err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+	return result, nil
 }
 
 // UpdatePermissionGroup 更新权限组的基本信息
 func (this *odinService) UpdatePermissionGroup(ctx int64, id int64, name string, status odin.Status) (err error) {
-	result, err := this.repo.GetGroupWithName(ctx, name, odin.GroupTypeOfPermission)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+	result, err := nRepo.GetGroupWithName(ctx, name, odin.GroupTypeOfPermission)
 	if err != nil {
 		return err
 	}
 	if result != nil && result.Id != id {
 		return odin.ErrGroupExists
 	}
-	return this.repo.UpdateGroup(ctx, id, name, status)
+	if err = nRepo.UpdateGroup(ctx, id, name, status); err != nil {
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 // UpdateRoleGroup 更新权限组的基本信息
 func (this *odinService) UpdateRoleGroup(ctx int64, id int64, name string, status odin.Status) (err error) {
-	result, err := this.repo.GetGroupWithName(ctx, name, odin.GroupTypeOfRole)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+	result, err := nRepo.GetGroupWithName(ctx, name, odin.GroupTypeOfRole)
 	if err != nil {
 		return err
 	}
 	if result != nil && result.Id != id {
 		return odin.ErrGroupExists
 	}
-	return this.repo.UpdateGroup(ctx, id, name, status)
+	if err = nRepo.UpdateGroup(ctx, id, name, status); err != nil {
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 // UpdateGroupStatus 更新组的状态信息
@@ -184,12 +287,19 @@ func (this *odinService) UpdateGroupStatus(ctx, id int64, status odin.Status) (e
 
 // RemoveGroup 删除组信息
 func (this *odinService) RemoveGroup(ctx, id int64) (err error) {
-	group, err := this.repo.GetGroupWithId(ctx, id, 0)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	group, err := nRepo.GetGroupWithId(ctx, id, 0)
 	if err != nil {
 		return err
 	}
 	if group == nil {
-		return nil
+		return odin.ErrGroupNotExist
 	}
 
 	if group.Ctx != ctx {
@@ -198,7 +308,7 @@ func (this *odinService) RemoveGroup(ctx, id int64) (err error) {
 
 	// 如果 group 下还有内容，则不能删除
 	if group.Type == odin.GroupTypeOfPermission {
-		pList, err := this.repo.GetPermissionList(ctx, []int64{id}, 0, "")
+		pList, err := nRepo.GetPermissionList(ctx, []int64{id}, 0, "", 0)
 		if err != nil {
 			return err
 		}
@@ -206,7 +316,7 @@ func (this *odinService) RemoveGroup(ctx, id int64) (err error) {
 			return odin.ErrRemoveGroupNotAllowed
 		}
 	} else if group.Type == odin.GroupTypeOfRole {
-		rList, err := this.repo.GetRoleList(ctx, id, 0, "")
+		rList, err := nRepo.GetRoleList(ctx, "", []int64{id}, 0, "")
 		if err != nil {
 			return err
 		}
@@ -214,7 +324,12 @@ func (this *odinService) RemoveGroup(ctx, id int64) (err error) {
 			return odin.ErrRemoveGroupNotAllowed
 		}
 	}
-	return this.repo.RemoveGroup(ctx, id)
+	if err = nRepo.RemoveGroup(ctx, id); err != nil {
+		return err
+	}
+	tx.Commit()
+
+	return nil
 }
 
 // --------------------------------------------------------------------------------
@@ -224,7 +339,7 @@ func (this *odinService) GetPermissionList(ctx, groupId int64, status odin.Statu
 	if groupId > 0 {
 		groupIdList = append(groupIdList, groupId)
 	}
-	return this.repo.GetPermissionList(ctx, groupIdList, status, keyword)
+	return this.repo.GetPermissionList(ctx, groupIdList, status, keyword, 0)
 }
 
 // GetPermissionWithId 获取权限详情
@@ -244,10 +359,26 @@ func (this *odinService) GetPermissionWithIdentifier(ctx int64, identifier strin
 
 // AddPermission 添加权限
 func (this *odinService) AddPermission(ctx, groupId int64, name, identifier string, status odin.Status) (result *odin.Permission, err error) {
-	if this.CheckPermissionIsExists(ctx, identifier) == true {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	p, err := nRepo.GetPermissionWithIdentifier(ctx, identifier)
+	if err != nil {
+		return nil, err
+	}
+	if p != nil {
 		return nil, odin.ErrPermissionIdentifierExists
 	}
-	if this.CheckPermissionNameIsExists(ctx, name) == true {
+
+	p, err = nRepo.GetPermissionWithName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	if p != nil {
 		return nil, odin.ErrPermissionNameExists
 	}
 
@@ -255,19 +386,36 @@ func (this *odinService) AddPermission(ctx, groupId int64, name, identifier stri
 		return nil, odin.ErrGroupNotExist
 	}
 
-	group, err := this.repo.GetGroupWithId(ctx, groupId, odin.GroupTypeOfPermission)
+	group, err := nRepo.GetGroupWithId(ctx, groupId, odin.GroupTypeOfPermission)
 	if err != nil {
 		return nil, err
 	}
 	if group == nil {
 		return nil, odin.ErrGroupNotExist
 	}
-	return this.repo.AddPermission(ctx, groupId, name, identifier, status)
+	nId, err := nRepo.AddPermission(ctx, groupId, name, identifier, status)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err = nRepo.GetPermissionWithId(ctx, nId)
+	if err != nil {
+		return nil, err
+	}
+	tx.Commit()
+	return result, nil
 }
 
 // UpdatePermission 更新权限信息
 func (this *odinService) UpdatePermission(ctx, id, groupId int64, name, identifier string, status odin.Status) (err error) {
-	p, err := this.repo.GetPermissionWithIdentifier(ctx, identifier)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	p, err := nRepo.GetPermissionWithIdentifier(ctx, identifier)
 	if err != nil {
 		return err
 	}
@@ -275,7 +423,7 @@ func (this *odinService) UpdatePermission(ctx, id, groupId int64, name, identifi
 		return odin.ErrPermissionIdentifierExists
 	}
 
-	p, err = this.repo.GetPermissionWithName(ctx, name)
+	p, err = nRepo.GetPermissionWithName(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -287,32 +435,18 @@ func (this *odinService) UpdatePermission(ctx, id, groupId int64, name, identifi
 		return odin.ErrGroupNotExist
 	}
 
-	group, err := this.repo.GetGroupWithId(ctx, groupId, odin.GroupTypeOfPermission)
+	group, err := nRepo.GetGroupWithId(ctx, groupId, odin.GroupTypeOfPermission)
 	if err != nil {
 		return err
 	}
 	if group == nil {
 		return odin.ErrGroupNotExist
 	}
-	return this.repo.UpdatePermission(ctx, id, groupId, name, identifier, status)
-}
-
-// CheckPermissionIsExists 验证权限标识已经是否已经存在
-func (this *odinService) CheckPermissionIsExists(ctx int64, identifier string) (result bool) {
-	p, err := this.repo.GetPermissionWithIdentifier(ctx, identifier)
-	if p != nil || err != nil {
-		return true
+	if err = nRepo.UpdatePermission(ctx, id, groupId, name, identifier, status); err != nil {
+		return err
 	}
-	return false
-}
-
-// CheckPermissionNameIsExists 验证权限名称是否已经存在
-func (this *odinService) CheckPermissionNameIsExists(ctx int64, name string) (result bool) {
-	p, err := this.repo.GetPermissionWithName(ctx, name)
-	if p != nil || err != nil {
-		return true
-	}
-	return false
+	tx.Commit()
+	return nil
 }
 
 // UpdatePermissionStatus 更新权限的状态信息
@@ -320,15 +454,33 @@ func (this *odinService) UpdatePermissionStatus(ctx, id int64, status odin.Statu
 	return this.repo.UpdatePermissionStatus(ctx, id, status)
 }
 
+// CheckPermissionExists 验证权限标识已经是否已经存在
+func (this *odinService) CheckPermissionExists(ctx int64, identifier string) (result bool) {
+	p, _ := this.repo.GetPermissionWithIdentifier(ctx, identifier)
+	if p != nil {
+		return true
+	}
+	return false
+}
+
+// CheckPermissionNameExists 验证权限名称是否已经存在
+func (this *odinService) CheckPermissionNameExists(ctx int64, name string) (result bool) {
+	p, _ := this.repo.GetPermissionWithName(ctx, name)
+	if p != nil {
+		return true
+	}
+	return false
+}
+
 // --------------------------------------------------------------------------------
 // GetRoleList 获取指定组的角色组列表
 func (this *odinService) GetRoleList(ctx, groupId int64, status odin.Status, keyword string) (result []*odin.Role, err error) {
-	return this.repo.GetRoleList(ctx, groupId, status, keyword)
+	return this.repo.GetRoleList(ctx, "", []int64{groupId}, status, keyword)
 }
 
-// GetPermissionListWithRole 获取指定角色的权限列表
-func (this *odinService) GetPermissionListWithRole(ctx, roleId int64) (result []*odin.Permission, err error) {
-	return this.repo.GetPermissionListWithRoleId(ctx, roleId)
+// GetRolePermissionList 获取指定角色的权限列表
+func (this *odinService) GetRolePermissionList(ctx, roleId int64) (result []*odin.Permission, err error) {
+	return this.repo.GetRolePermissionList(ctx, roleId)
 }
 
 // GetRoleWithId 获取角色详情，会返回该角色拥有的权限列表
@@ -341,8 +493,8 @@ func (this *odinService) GetRoleWithName(ctx int64, name string) (result *odin.R
 	return this.repo.GetRoleWithName(ctx, name, true)
 }
 
-// CheckRoleNameIsExists 检测角色名是否已经存在
-func (this *odinService) CheckRoleNameIsExists(ctx int64, name string) (result bool) {
+// CheckRoleNameExists 检测角色名是否已经存在
+func (this *odinService) CheckRoleNameExists(ctx int64, name string) (result bool) {
 	role, err := this.repo.GetRoleWithName(ctx, name, false)
 	if role != nil || err != nil {
 		return true
@@ -352,27 +504,57 @@ func (this *odinService) CheckRoleNameIsExists(ctx int64, name string) (result b
 
 // AddRole 添加角色
 func (this *odinService) AddRole(ctx, groupId int64, name string, status odin.Status) (result *odin.Role, err error) {
-	if this.CheckRoleNameIsExists(ctx, name) == true {
-		return nil, odin.ErrRoleNameExists
-	}
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
 
 	if groupId <= 0 {
 		return nil, odin.ErrGroupNotExist
 	}
 
-	group, err := this.repo.GetGroupWithId(ctx, groupId, odin.GroupTypeOfRole)
+	group, err := nRepo.GetGroupWithId(ctx, groupId, odin.GroupTypeOfRole)
 	if err != nil {
 		return nil, err
 	}
 	if group == nil {
 		return nil, odin.ErrGroupNotExist
 	}
-	return this.repo.AddRole(ctx, groupId, name, status)
+
+	role, err := nRepo.GetRoleWithName(ctx, name, false)
+	if err != nil {
+		return nil, err
+	}
+	if role != nil {
+		return nil, odin.ErrRoleNameExists
+	}
+
+	nId, err := nRepo.AddRole(ctx, groupId, name, status)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err = nRepo.GetRoleWithId(ctx, nId, false)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+	return result, err
 }
 
 // UpdateRole 更新角色信息
 func (this *odinService) UpdateRole(ctx, id, groupId int64, name string, status odin.Status) (err error) {
-	role, err := this.repo.GetRoleWithName(ctx, name, false)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	role, err := nRepo.GetRoleWithName(ctx, name, false)
 	if err != nil {
 		return err
 	}
@@ -384,14 +566,20 @@ func (this *odinService) UpdateRole(ctx, id, groupId int64, name string, status 
 		return odin.ErrGroupNotExist
 	}
 
-	group, err := this.repo.GetGroupWithId(ctx, groupId, odin.GroupTypeOfRole)
+	group, err := nRepo.GetGroupWithId(ctx, groupId, odin.GroupTypeOfRole)
 	if err != nil {
 		return err
 	}
 	if group == nil {
 		return odin.ErrGroupNotExist
 	}
-	return this.repo.UpdateRole(ctx, id, groupId, name, status)
+	err = nRepo.UpdateRole(ctx, id, groupId, name, status)
+	if err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
 }
 
 // UpdateRoleStatus 更新角色状态信息
@@ -402,7 +590,14 @@ func (this *odinService) UpdateRoleStatus(ctx, id int64, status odin.Status) (er
 // --------------------------------------------------------------------------------
 // GrantPermission 为角色添加权限信息
 func (this *odinService) GrantPermission(ctx, roleId int64, permissionIdList ...int64) (err error) {
-	role, err := this.repo.GetRoleWithId(ctx, roleId, false)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	role, err := nRepo.GetRoleWithId(ctx, roleId, false)
 	if err != nil {
 		return err
 	}
@@ -413,7 +608,7 @@ func (this *odinService) GrantPermission(ctx, roleId int64, permissionIdList ...
 		return odin.ErrRoleNotExist
 	}
 
-	pList, err := this.repo.GetPermissionWithIdList(ctx, permissionIdList)
+	pList, err := nRepo.GetPermissionListWithIds(ctx, permissionIdList)
 	if err != nil {
 		return err
 	}
@@ -426,7 +621,12 @@ func (this *odinService) GrantPermission(ctx, roleId int64, permissionIdList ...
 	if len(nIdList) == 0 {
 		return odin.ErrGrantFailed
 	}
-	return this.repo.GrantPermission(ctx, roleId, nIdList)
+	if err = nRepo.GrantPermission(ctx, roleId, nIdList); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
 }
 
 func (this *odinService) RevokePermission(ctx, roleId int64, permissionIdList ...int64) (err error) {
@@ -435,7 +635,14 @@ func (this *odinService) RevokePermission(ctx, roleId int64, permissionIdList ..
 
 // ReGrantPermission 移除之前已经授予的权限，添加新的权限
 func (this *odinService) ReGrantPermission(ctx, roleId int64, permissionIdList ...int64) (err error) {
-	role, err := this.repo.GetRoleWithId(ctx, roleId, false)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	role, err := nRepo.GetRoleWithId(ctx, roleId, false)
 	if err != nil {
 		return err
 	}
@@ -446,7 +653,7 @@ func (this *odinService) ReGrantPermission(ctx, roleId int64, permissionIdList .
 		return odin.ErrRoleNotExist
 	}
 
-	pList, err := this.repo.GetPermissionWithIdList(ctx, permissionIdList)
+	pList, err := nRepo.GetPermissionListWithIds(ctx, permissionIdList)
 	if err != nil {
 		return err
 	}
@@ -456,7 +663,11 @@ func (this *odinService) ReGrantPermission(ctx, roleId int64, permissionIdList .
 			nIdList = append(nIdList, p.Id)
 		}
 	}
-	return this.repo.ReGrantPermission(ctx, roleId, nIdList)
+	if err = nRepo.ReGrantPermission(ctx, roleId, nIdList); err != nil {
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 // GrantRole 为目前对象添加角色信息
@@ -467,7 +678,15 @@ func (this *odinService) GrantRole(ctx int64, target string, roleIdList ...int64
 	if target == "" {
 		return odin.ErrObjectNotAllowed
 	}
-	roleList, err := this.repo.GetRoleWithIdList(ctx, roleIdList)
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleList, err := nRepo.GetRoleWithIdList(ctx, roleIdList)
 	if err != nil {
 		return err
 	}
@@ -482,8 +701,12 @@ func (this *odinService) GrantRole(ctx int64, target string, roleIdList ...int64
 		return odin.ErrGrantFailed
 	}
 
-	err = this.repo.GrantRole(ctx, target, nIdList)
-	return err
+	if err = nRepo.GrantRole(ctx, target, nIdList); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
 }
 
 func (this *odinService) RevokeRole(ctx int64, target string, roleIdList ...int64) (err error) {
@@ -498,7 +721,15 @@ func (this *odinService) ReGrantRole(ctx int64, target string, roleIdList ...int
 	if target == "" {
 		return odin.ErrObjectNotAllowed
 	}
-	roleList, err := this.repo.GetRoleWithIdList(ctx, roleIdList)
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleList, err := nRepo.GetRoleWithIdList(ctx, roleIdList)
 	if err != nil {
 		return err
 	}
@@ -510,8 +741,12 @@ func (this *odinService) ReGrantRole(ctx int64, target string, roleIdList ...int
 		}
 	}
 
-	err = this.repo.ReGrantRole(ctx, target, nIdList)
-	return err
+	if err = nRepo.ReGrantRole(ctx, target, nIdList); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
 }
 
 func (this *odinService) Check(ctx int64, target, identifier string) (result bool) {
@@ -530,6 +765,6 @@ func (this *odinService) GetGrantedPermissionList(ctx int64, target string) (res
 	return this.repo.GetGrantedPermissionList(ctx, target)
 }
 
-func (this *odinService) ClearCache(ctx int64, target string) {
-	this.repo.ClearCache(ctx, target)
+func (this *odinService) CleanCache(ctx int64, target string) {
+	this.repo.CleanCache(ctx, target)
 }

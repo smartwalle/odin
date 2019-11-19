@@ -42,6 +42,19 @@ func NewOdinRepository(db dbs.DB, tblPrefix string) service.OdinRepository {
 	return r
 }
 
+func (this *odinRepository) BeginTx() (dbs.TX, service.OdinRepository) {
+	var tx = dbs.MustTx(this.db)
+	var nRepo = *this
+	nRepo.db = tx
+	return tx, &nRepo
+}
+
+func (this *odinRepository) WithTx(tx dbs.TX) service.OdinRepository {
+	var nRepo = *this
+	nRepo.db = tx
+	return &nRepo
+}
+
 func (this *odinRepository) initTable() error {
 	var tx = dbs.MustTx(this.db)
 
@@ -86,7 +99,7 @@ func (this *odinRepository) Check(ctx int64, target, identifier string) (result 
 	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.role_id = rg.role_id")
 	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
 	sb.LeftJoin(this.tblRole, "AS r ON r.id = rg.role_id")
-	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctx)
+	sb.Where("rg.ctx = ?", ctx)
 	sb.Where("rg.target = ? AND p.identifier = ? AND p.status = ? AND r.status = ?", target, identifier, odin.StatusOfEnable, odin.StatusOfEnable)
 	sb.OrderBy("r.status", "p.status")
 	sb.Limit(1)
@@ -111,7 +124,7 @@ func (this *odinRepository) CheckList(ctx int64, target string, identifiers ...s
 	sb.LeftJoin(this.tblRole, "AS r ON r.id = rg.role_id")
 
 	sb.Where("rg.target = ?", target)
-	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctx)
+	sb.Where("rg.ctx = ?", ctx)
 	if len(identifiers) > 0 {
 		var or = dbs.OR()
 		for _, identifier := range identifiers {
@@ -137,5 +150,5 @@ func (this *odinRepository) CheckList(ctx int64, target string, identifiers ...s
 	return result
 }
 
-func (this *odinRepository) ClearCache(ctx int64, target string) {
+func (this *odinRepository) CleanCache(ctx int64, target string) {
 }
