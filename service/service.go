@@ -82,7 +82,7 @@ type odinService struct {
 	repo OdinRepository
 }
 
-func NewOdinService(repo OdinRepository) odin.OdinService {
+func NewOdinService(repo OdinRepository) odin.Service {
 	var s = &odinService{}
 	s.repo = repo
 	return s

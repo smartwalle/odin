@@ -69,7 +69,7 @@ type Grant struct {
 	Identifier   string `json:"identifier"    sql:"identifier"`
 }
 
-type OdinService interface {
+type Service interface {
 	GetPermissionTree(ctx, roleId int64, status Status, name string) (result []*Group, err error)
 
 	GetRoleTree(ctx int64, target string, status Status, name string) (result []*Group, err error)
