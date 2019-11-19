@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetGroupListWithType(ctx int64, gType, status int, name string) (result []*odin.Group, err error) {
+func (this *odinRepository) GetGroupListWithType(ctx int64, gType odin.GroupType, status odin.Status, name string) (result []*odin.Group, err error) {
 	var tx = dbs.MustTx(this.db)
 	if result, err = this.getGroupList(tx, ctx, gType, status, name); err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func (this *odinRepository) GetGroupListWithType(ctx int64, gType, status int, n
 	return result, err
 }
 
-func (this *odinRepository) getGroupList(tx dbs.TX, ctx int64, gType, status int, name string) (result []*odin.Group, err error) {
+func (this *odinRepository) getGroupList(tx dbs.TX, ctx int64, gType odin.GroupType, status odin.Status, name string) (result []*odin.Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.ctx", "g.type", "g.name", "g.status", "g.created_on", "g.updated_on")
 	sb.From(this.tblGroup, "AS g")
@@ -42,7 +42,7 @@ func (this *odinRepository) getGroupList(tx dbs.TX, ctx int64, gType, status int
 	return result, nil
 }
 
-func (this *odinRepository) GetGroupWithId(ctx, id int64, gType int) (result *odin.Group, err error) {
+func (this *odinRepository) GetGroupWithId(ctx, id int64, gType odin.GroupType) (result *odin.Group, err error) {
 	var tx = dbs.MustTx(this.db)
 	if result, err = this.getGroup(tx, ctx, id, gType, ""); err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (this *odinRepository) GetGroupWithId(ctx, id int64, gType int) (result *od
 	return result, err
 }
 
-func (this *odinRepository) GetGroupWithName(ctx int64, name string, gType int) (result *odin.Group, err error) {
+func (this *odinRepository) GetGroupWithName(ctx int64, name string, gType odin.GroupType) (result *odin.Group, err error) {
 	var tx = dbs.MustTx(this.db)
 	if result, err = this.getGroup(tx, ctx, 0, gType, name); err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (this *odinRepository) GetGroupWithName(ctx int64, name string, gType int) 
 	return result, err
 }
 
-func (this *odinRepository) AddGroup(ctx int64, gType int, name string, status int) (result *odin.Group, err error) {
+func (this *odinRepository) AddGroup(ctx int64, gType odin.GroupType, name string, status odin.Status) (result *odin.Group, err error) {
 	var tx = dbs.MustTx(this.db)
 	var newGroupId int64 = 0
 	if newGroupId, err = this.insertGroup(tx, ctx, gType, status, name); err != nil {
@@ -79,7 +79,7 @@ func (this *odinRepository) AddGroup(ctx int64, gType int, name string, status i
 	return result, err
 }
 
-func (this *odinRepository) insertGroup(tx dbs.TX, ctx int64, gType, status int, name string) (id int64, err error) {
+func (this *odinRepository) insertGroup(tx dbs.TX, ctx int64, gType odin.GroupType, status odin.Status, name string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.tblGroup)
 	ib.Columns("ctx", "type", "status", "name", "created_on", "updated_on")
@@ -92,7 +92,7 @@ func (this *odinRepository) insertGroup(tx dbs.TX, ctx int64, gType, status int,
 	return id, err
 }
 
-func (this *odinRepository) UpdateGroup(ctx, id int64, name string, status int) (err error) {
+func (this *odinRepository) UpdateGroup(ctx, id int64, name string, status odin.Status) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblGroup)
 	ub.SET("name", name)
@@ -105,7 +105,7 @@ func (this *odinRepository) UpdateGroup(ctx, id int64, name string, status int) 
 	return err
 }
 
-func (this *odinRepository) UpdateGroupStatus(ctx, id int64, status int) (err error) {
+func (this *odinRepository) UpdateGroupStatus(ctx, id int64, status odin.Status) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblGroup)
 	ub.SET("status", status)
@@ -127,7 +127,7 @@ func (this *odinRepository) RemoveGroup(ctx, id int64) (err error) {
 	return err
 }
 
-func (this *odinRepository) getGroup(tx dbs.TX, ctx, id int64, gType int, name string) (result *odin.Group, err error) {
+func (this *odinRepository) getGroup(tx dbs.TX, ctx, id int64, gType odin.GroupType, name string) (result *odin.Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.type", "g.status", "g.name", "g.created_on", "g.updated_on")
 	sb.From(this.tblGroup, "AS g")

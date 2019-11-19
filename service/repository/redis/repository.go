@@ -20,7 +20,7 @@ func NewOdinRepository(rPool *dbr.Pool, tPrefix string, repo service.OdinReposit
 	return r
 }
 
-func (this *odinRepository) buildGrantKey(ctx int64, targetId string, wild bool) (result string) {
+func (this *odinRepository) buildGrantKey(ctx int64, target string, wild bool) (result string) {
 	var cKey = ""
 	var tKey = ""
 
@@ -30,23 +30,23 @@ func (this *odinRepository) buildGrantKey(ctx int64, targetId string, wild bool)
 		cKey = "*"
 	}
 
-	if targetId != "" {
-		tKey = targetId
+	if target != "" {
+		tKey = target
 	} else if wild {
 		tKey = "*"
 	}
 	return fmt.Sprintf("%s:odin:grant:%s:%s", this.tPrefix, cKey, tKey)
 }
 
-func (this *odinRepository) Check(ctx int64, targetId, identifier string) (result bool) {
+func (this *odinRepository) Check(ctx int64, target, identifier string) (result bool) {
 	var s = this.rPool.GetSession()
 	defer s.Close()
 
-	var key = this.buildGrantKey(ctx, targetId, false)
+	var key = this.buildGrantKey(ctx, target, false)
 	result = s.SISMEMBER(key, identifier).MustBool()
 	if result == false {
 		if s.EXISTS(key).MustBool() == false {
-			pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, targetId)
+			pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, target)
 			var identifierList []interface{}
 			for _, p := range pList {
 				if p.Identifier == identifier {
@@ -60,14 +60,14 @@ func (this *odinRepository) Check(ctx int64, targetId, identifier string) (resul
 	return result
 }
 
-func (this *odinRepository) CheckList(ctx int64, targetId string, identifiers ...string) (result map[string]bool) {
+func (this *odinRepository) CheckList(ctx int64, target string, identifiers ...string) (result map[string]bool) {
 	var s = this.rPool.GetSession()
 	defer s.Close()
 
-	var key = this.buildGrantKey(ctx, targetId, false)
+	var key = this.buildGrantKey(ctx, target, false)
 
 	if s.EXISTS(key).MustBool() == false {
-		pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, targetId)
+		pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, target)
 		var identifierList []interface{}
 		for _, p := range pList {
 			identifierList = append(identifierList, p.Identifier)
@@ -106,11 +106,11 @@ func (this *odinRepository) grantPermissions(key string, identifier []interface{
 	}
 }
 
-func (this *odinRepository) ClearCache(ctx int64, targetId string) {
+func (this *odinRepository) ClearCache(ctx int64, target string) {
 	var s = this.rPool.GetSession()
 	defer s.Close()
 
-	var key = this.buildGrantKey(ctx, targetId, true)
+	var key = this.buildGrantKey(ctx, target, true)
 
 	var keys = s.KEYS(key).MustStrings()
 

@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetPermissionTree(ctx, roleId int64, status int, name string) (result []*odin.Group, err error) {
+func (this *odinRepository) GetPermissionTree(ctx, roleId int64, status odin.Status, name string) (result []*odin.Group, err error) {
 	var tx = dbs.MustTx(this.db)
 
-	if result, err = this.getGroupList(tx, ctx, odin.K_GROUP_TYPE_PERMISSION, status, name); err != nil {
+	if result, err = this.getGroupList(tx, ctx, odin.GroupTypeOfPermission, status, name); err != nil {
 		return nil, err
 	}
 
@@ -38,7 +38,7 @@ func (this *odinRepository) GetPermissionTree(ctx, roleId int64, status int, nam
 	return result, nil
 }
 
-func (this *odinRepository) GetPermissionList(ctx int64, groupIdList []int64, status int, keyword string) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetPermissionList(ctx int64, groupIdList []int64, status odin.Status, keyword string) (result []*odin.Permission, err error) {
 	var tx = dbs.MustTx(this.db)
 	if result, err = this.getPermissionListWithGroupIdList(tx, ctx, 0, groupIdList, status, keyword); err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (this *odinRepository) GetPermissionList(ctx int64, groupIdList []int64, st
 	return result, nil
 }
 
-func (this *odinRepository) getPermissionListWithGroupIdList(tx dbs.TX, ctx, roleId int64, groupIdList []int64, status int, keyword string) (result []*odin.Permission, err error) {
+func (this *odinRepository) getPermissionListWithGroupIdList(tx dbs.TX, ctx, roleId int64, groupIdList []int64, status odin.Status, keyword string) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.ctx", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on")
 	sb.From(this.tblPermission, "AS p")
@@ -126,7 +126,7 @@ func (this *odinRepository) GetPermissionWithIdentifier(ctx int64, identifier st
 	return result, err
 }
 
-func (this *odinRepository) AddPermission(ctx int64, groupId int64, name, identifier string, status int) (result *odin.Permission, err error) {
+func (this *odinRepository) AddPermission(ctx int64, groupId int64, name, identifier string, status odin.Status) (result *odin.Permission, err error) {
 	var tx = dbs.MustTx(this.db)
 	var newPermissionId int64 = 0
 	if newPermissionId, err = this.insertPermission(tx, ctx, groupId, status, name, identifier); err != nil {
@@ -141,7 +141,7 @@ func (this *odinRepository) AddPermission(ctx int64, groupId int64, name, identi
 	return result, err
 }
 
-func (this *odinRepository) insertPermission(tx dbs.TX, ctx, groupId int64, status int, name, identifier string) (id int64, err error) {
+func (this *odinRepository) insertPermission(tx dbs.TX, ctx, groupId int64, status odin.Status, name, identifier string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.tblPermission)
 	ib.Columns("ctx", "group_id", "status", "name", "identifier", "created_on", "updated_on")
@@ -154,7 +154,7 @@ func (this *odinRepository) insertPermission(tx dbs.TX, ctx, groupId int64, stat
 	return id, err
 }
 
-func (this *odinRepository) UpdatePermission(ctx, id, groupId int64, name, identifier string, status int) (err error) {
+func (this *odinRepository) UpdatePermission(ctx, id, groupId int64, name, identifier string, status odin.Status) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblPermission)
 	ub.SET("group_id", groupId)
@@ -169,7 +169,7 @@ func (this *odinRepository) UpdatePermission(ctx, id, groupId int64, name, ident
 	return err
 }
 
-func (this *odinRepository) UpdatePermissionStatus(ctx, id int64, status int) (err error) {
+func (this *odinRepository) UpdatePermissionStatus(ctx, id int64, status odin.Status) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblPermission)
 	ub.SET("status", status)
@@ -227,14 +227,14 @@ func (this *odinRepository) getPermissionListWithRole(tx dbs.TX, ctx, roleId int
 	return result, err
 }
 
-func (this *odinRepository) GetGrantedPermissionList(ctx int64, objectId string) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetGrantedPermissionList(ctx int64, target string) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.ctx", "p.group_id", "p.name", "p.identifier", "p.status", "p.created_on", "p.updated_on")
 	sb.Selects("IF(rp.role_id IS NULL, false, true) AS granted")
 	sb.From(this.tblPermission, "AS p")
 	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.permission_id = p.id")
 	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = rp.role_id")
-	sb.Where("rg.target_id = ? AND p.status = ?", objectId, odin.K_STATUS_ENABLE)
+	sb.Where("rg.target = ? AND p.status = ?", target, odin.StatusOfEnable)
 	sb.Where("(p.ctx = ? OR p.ctx = ?)", 0, ctx)
 	sb.GroupBy("p.id")
 	if err := sb.Scan(this.db, &result); err != nil {

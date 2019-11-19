@@ -79,15 +79,15 @@ func (this *odinRepository) initTable() error {
 	return nil
 }
 
-func (this *odinRepository) Check(ctx int64, targetId, identifier string) (result bool) {
+func (this *odinRepository) Check(ctx int64, target, identifier string) (result bool) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("rg.target_id", "rg.role_id", "rp.permission_id", "p.identifier")
+	sb.Selects("rg.target", "rg.role_id", "rp.permission_id", "p.identifier")
 	sb.From(this.tblGrant, "AS rg")
 	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.role_id = rg.role_id")
 	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
 	sb.LeftJoin(this.tblRole, "AS r ON r.id = rg.role_id")
 	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctx)
-	sb.Where("rg.target_id = ? AND p.identifier = ? AND p.status = ? AND r.status = ?", targetId, identifier, odin.K_STATUS_ENABLE, odin.K_STATUS_ENABLE)
+	sb.Where("rg.target = ? AND p.identifier = ? AND p.status = ? AND r.status = ?", target, identifier, odin.StatusOfEnable, odin.StatusOfEnable)
 	sb.OrderBy("r.status", "p.status")
 	sb.Limit(1)
 
@@ -95,22 +95,22 @@ func (this *odinRepository) Check(ctx int64, targetId, identifier string) (resul
 	if err := sb.Scan(this.db, &grant); err != nil || grant == nil {
 		return false
 	}
-	if grant.Identifier == identifier && grant.TargetId == targetId {
+	if grant.Identifier == identifier && grant.Target == target {
 		return true
 	}
 	return false
 }
 
-func (this *odinRepository) CheckList(ctx int64, targetId string, identifiers ...string) (result map[string]bool) {
+func (this *odinRepository) CheckList(ctx int64, target string, identifiers ...string) (result map[string]bool) {
 	result = make(map[string]bool)
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("rg.target_id", "rg.role_id", "rp.permission_id", "p.identifier")
+	sb.Selects("rg.target", "rg.role_id", "rp.permission_id", "p.identifier")
 	sb.From(this.tblGrant, "AS rg")
 	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.role_id = rg.role_id")
 	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
 	sb.LeftJoin(this.tblRole, "AS r ON r.id = rg.role_id")
 
-	sb.Where("rg.target_id = ?", targetId)
+	sb.Where("rg.target = ?", target)
 	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctx)
 	if len(identifiers) > 0 {
 		var or = dbs.OR()
@@ -120,8 +120,8 @@ func (this *odinRepository) CheckList(ctx int64, targetId string, identifiers ..
 		}
 		sb.Where(or)
 	}
-	sb.Where("p.status = ?", odin.K_STATUS_ENABLE)
-	sb.Where("r.status = ?", odin.K_STATUS_ENABLE)
+	sb.Where("p.status = ?", odin.StatusOfEnable)
+	sb.Where("r.status = ?", odin.StatusOfEnable)
 
 	sb.GroupBy("p.id")
 	sb.OrderBy("r.status", "p.status")
@@ -137,5 +137,5 @@ func (this *odinRepository) CheckList(ctx int64, targetId string, identifiers ..
 	return result
 }
 
-func (this *odinRepository) ClearCache(ctx int64, targetId string) {
+func (this *odinRepository) ClearCache(ctx int64, target string) {
 }

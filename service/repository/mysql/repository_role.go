@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetRoleTree(ctx int64, targetId string, status int, name string) (result []*odin.Group, err error) {
+func (this *odinRepository) GetRoleTree(ctx int64, target string, status odin.Status, name string) (result []*odin.Group, err error) {
 	var tx = dbs.MustTx(this.db)
 
-	if result, err = this.getGroupList(tx, ctx, odin.K_GROUP_TYPE_ROLE, status, name); err != nil {
+	if result, err = this.getGroupList(tx, ctx, odin.GroupTypeOfRole, status, name); err != nil {
 		return nil, err
 	}
 
@@ -20,7 +20,7 @@ func (this *odinRepository) GetRoleTree(ctx int64, targetId string, status int, 
 		gIdList = append(gIdList, group.Id)
 	}
 
-	rList, err := this.getRoles(tx, ctx, targetId, gIdList, status, "")
+	rList, err := this.getRoles(tx, ctx, target, gIdList, status, "")
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (this *odinRepository) GetRoleTree(ctx int64, targetId string, status int, 
 	return result, nil
 }
 
-func (this *odinRepository) GetRoleList(ctx, groupId int64, status int, keyword string) (result []*odin.Role, err error) {
+func (this *odinRepository) GetRoleList(ctx, groupId int64, status odin.Status, keyword string) (result []*odin.Role, err error) {
 	var tx = dbs.MustTx(this.db)
 	var groupIdList []int64
 	if groupId > 0 {
@@ -53,13 +53,13 @@ func (this *odinRepository) GetRoleList(ctx, groupId int64, status int, keyword 
 	return result, nil
 }
 
-func (this *odinRepository) getRoles(tx dbs.TX, ctx int64, targetId string, groupIdList []int64, status int, keyword string) (result []*odin.Role, err error) {
+func (this *odinRepository) getRoles(tx dbs.TX, ctx int64, target string, groupIdList []int64, status odin.Status, keyword string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.tblRole, "AS r")
-	if targetId != "" {
-		sb.Selects("IF(rg.target_id IS NULL, false, true) AS granted")
-		sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id AND rg.target_id = ?", targetId)
+	if target != "" {
+		sb.Selects("IF(rg.target IS NULL, false, true) AS granted")
+		sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id AND rg.target = ?", target)
 	}
 	//sb.Where("(r.ctx = ? OR r.ctx = ?)", 0, ctx)
 	if len(groupIdList) > 0 {
@@ -111,7 +111,7 @@ func (this *odinRepository) GetRoleWithName(ctx int64, name string, withPermissi
 	return result, err
 }
 
-func (this *odinRepository) AddRole(ctx, groupId int64, name string, status int) (result *odin.Role, err error) {
+func (this *odinRepository) AddRole(ctx, groupId int64, name string, status odin.Status) (result *odin.Role, err error) {
 	var tx = dbs.MustTx(this.db)
 	var newRoleId int64 = 0
 	if newRoleId, err = this.insertRole(tx, ctx, groupId, status, name); err != nil {
@@ -126,7 +126,7 @@ func (this *odinRepository) AddRole(ctx, groupId int64, name string, status int)
 	return result, err
 }
 
-func (this *odinRepository) insertRole(tx dbs.TX, ctx, groupId int64, status int, name string) (id int64, err error) {
+func (this *odinRepository) insertRole(tx dbs.TX, ctx, groupId int64, status odin.Status, name string) (id int64, err error) {
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.tblRole)
 	ib.Columns("ctx", "group_id", "status", "name", "created_on", "updated_on")
@@ -139,7 +139,7 @@ func (this *odinRepository) insertRole(tx dbs.TX, ctx, groupId int64, status int
 	return id, err
 }
 
-func (this *odinRepository) UpdateRole(ctx, id, groupId int64, name string, status int) (err error) {
+func (this *odinRepository) UpdateRole(ctx, id, groupId int64, name string, status odin.Status) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblRole)
 	ub.SET("group_id", groupId)
@@ -153,7 +153,7 @@ func (this *odinRepository) UpdateRole(ctx, id, groupId int64, name string, stat
 	return err
 }
 
-func (this *odinRepository) UpdateRoleStatus(ctx, id int64, status int) (err error) {
+func (this *odinRepository) UpdateRoleStatus(ctx, id int64, status odin.Status) (err error) {
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblRole)
 	ub.SET("status", status)
@@ -199,14 +199,14 @@ func (this *odinRepository) GetRoleWithIdList(ctx int64, idList []int64) (result
 	return result, nil
 }
 
-func (this *odinRepository) GrantRole(ctx int64, targetId string, roleIdList []int64) (err error) {
+func (this *odinRepository) GrantRole(ctx int64, target string, roleIdList []int64) (err error) {
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.tblGrant)
 	ib.Options("IGNORE")
-	ib.Columns("ctx", "target_id", "role_id", "created_on")
+	ib.Columns("ctx", "target", "role_id", "created_on")
 	for _, rId := range roleIdList {
-		ib.Values(ctx, targetId, rId, now)
+		ib.Values(ctx, target, rId, now)
 	}
 	if _, err = ib.Exec(this.db); err != nil {
 		return err
@@ -214,10 +214,10 @@ func (this *odinRepository) GrantRole(ctx int64, targetId string, roleIdList []i
 	return nil
 }
 
-func (this *odinRepository) RevokeRole(ctx int64, targetId string, roleIdList []int64) (err error) {
+func (this *odinRepository) RevokeRole(ctx int64, target string, roleIdList []int64) (err error) {
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.tblGrant)
-	rb.Where("target_id = ?", targetId)
+	rb.Where("target = ?", target)
 	//rb.Where("(ctx = ? OR ctx = ?)", 0, ctx)
 	rb.Where("ctx = ?", ctx)
 	rb.Where(dbs.IN("role_id", roleIdList))
@@ -227,13 +227,13 @@ func (this *odinRepository) RevokeRole(ctx int64, targetId string, roleIdList []
 	return nil
 }
 
-func (this *odinRepository) ReGrantRole(ctx int64, targetId string, roleIdList []int64) (err error) {
+func (this *odinRepository) ReGrantRole(ctx int64, target string, roleIdList []int64) (err error) {
 	var tx = dbs.MustTx(this.db)
 	var now = time.Now()
 
 	var rb = dbs.NewDeleteBuilder()
 	rb.Table(this.tblGrant)
-	rb.Where("target_id = ?", targetId)
+	rb.Where("target = ?", target)
 	rb.Where("ctx = ?", ctx)
 	if _, err = rb.Exec(tx); err != nil {
 		return err
@@ -243,9 +243,9 @@ func (this *odinRepository) ReGrantRole(ctx int64, targetId string, roleIdList [
 		var ib = dbs.NewInsertBuilder()
 		ib.Table(this.tblGrant)
 		ib.Options("IGNORE")
-		ib.Columns("ctx", "target_id", "role_id", "created_on")
+		ib.Columns("ctx", "target", "role_id", "created_on")
 		for _, rId := range roleIdList {
-			ib.Values(ctx, targetId, rId, now)
+			ib.Values(ctx, target, rId, now)
 		}
 		if _, err = ib.Exec(tx); err != nil {
 			return err
@@ -255,13 +255,13 @@ func (this *odinRepository) ReGrantRole(ctx int64, targetId string, roleIdList [
 	return nil
 }
 
-func (this *odinRepository) GetGrantedRoleList(ctx int64, targetId string) (result []*odin.Role, err error) {
+func (this *odinRepository) GetGrantedRoleList(ctx int64, target string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.group_id", "r.name", "r.status", "r.created_on", "r.updated_on")
 	sb.From(this.tblRole, "AS r")
-	sb.Selects("IF(rg.target_id IS NULL, false, true) AS granted")
+	sb.Selects("IF(rg.target IS NULL, false, true) AS granted")
 	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id")
-	sb.Where("rg.target_id = ? AND r.status = ?", targetId, odin.K_STATUS_ENABLE)
+	sb.Where("rg.target = ? AND r.status = ?", target, odin.StatusOfEnable)
 	sb.Where("(rg.ctx = ? OR rg.ctx = ?)", 0, ctx)
 	if err := sb.Scan(this.db, &result); err != nil {
 		return nil, err
