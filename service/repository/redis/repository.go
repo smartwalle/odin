@@ -9,11 +9,11 @@ import (
 
 type odinRepository struct {
 	odin.Repository
-	rPool   *dbr.Pool
+	rPool   dbr.Pool
 	tPrefix string
 }
 
-func NewRepository(rPool *dbr.Pool, tPrefix string, repo odin.Repository) odin.Repository {
+func NewRepository(rPool dbr.Pool, tPrefix string, repo odin.Repository) odin.Repository {
 	var r = &odinRepository{}
 	r.rPool = rPool
 	r.tPrefix = tPrefix
