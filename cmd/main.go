@@ -7,7 +7,6 @@ import (
 	"github.com/smartwalle/dbr"
 	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
-	"github.com/smartwalle/odin/service"
 	"github.com/smartwalle/odin/service/repository/mysql"
 	"github.com/smartwalle/odin/service/repository/redis"
 )
@@ -18,9 +17,9 @@ func main() {
 
 	dbs.SetLogger(nil)
 
-	var sRepo = mysql.NewOdinRepository(db, "odin")
-	var rRepo = redis.NewOdinRepository(r, "odin", sRepo)
-	var s = service.NewService(rRepo)
+	var sRepo = mysql.NewRepository(db, "odin")
+	var rRepo = redis.NewRepository(r, "odin", sRepo)
+	var s = odin.NewService(rRepo)
 
 	if g, err := s.AddPermissionGroup(1, "pg1", odin.StatusOfEnable); err == nil && g != nil {
 		s.AddPermission(1, g.Id, "权限g11", "pg1-p1", odin.StatusOfEnable)

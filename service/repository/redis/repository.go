@@ -4,34 +4,33 @@ import (
 	"fmt"
 	"github.com/smartwalle/dbr"
 	"github.com/smartwalle/dbs"
-	"github.com/smartwalle/odin/service"
+	"github.com/smartwalle/odin"
 )
 
 type odinRepository struct {
-	service.OdinRepository
+	odin.Repository
 	rPool   *dbr.Pool
 	tPrefix string
 }
 
-func NewOdinRepository(rPool *dbr.Pool, tPrefix string, repo service.OdinRepository) service.OdinRepository {
+func NewRepository(rPool *dbr.Pool, tPrefix string, repo odin.Repository) odin.Repository {
 	var r = &odinRepository{}
 	r.rPool = rPool
 	r.tPrefix = tPrefix
-	r.OdinRepository = repo
+	r.Repository = repo
 	return r
 }
 
-
-func (this *odinRepository) BeginTx() (dbs.TX, service.OdinRepository) {
+func (this *odinRepository) BeginTx() (dbs.TX, odin.Repository) {
 	var nRepo = *this
 	var tx dbs.TX
-	tx, nRepo.OdinRepository = this.OdinRepository.BeginTx()
+	tx, nRepo.Repository = this.Repository.BeginTx()
 	return tx, &nRepo
 }
 
-func (this *odinRepository) WithTx(tx dbs.TX) service.OdinRepository {
+func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
 	var nRepo = *this
-	nRepo.OdinRepository = this.OdinRepository.WithTx(tx)
+	nRepo.Repository = this.Repository.WithTx(tx)
 	return &nRepo
 }
 
@@ -61,7 +60,7 @@ func (this *odinRepository) Check(ctx int64, target, identifier string) (result 
 	result = s.SISMEMBER(key, identifier).MustBool()
 	if result == false {
 		if s.EXISTS(key).MustBool() == false {
-			pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, target)
+			pList, _ := this.Repository.GetGrantedPermissionList(ctx, target)
 			var identifierList []interface{}
 			for _, p := range pList {
 				if p.Identifier == identifier {
@@ -82,7 +81,7 @@ func (this *odinRepository) CheckList(ctx int64, target string, identifiers ...s
 	var key = this.buildGrantKey(ctx, target, false)
 
 	if s.EXISTS(key).MustBool() == false {
-		pList, _ := this.OdinRepository.GetGrantedPermissionList(ctx, target)
+		pList, _ := this.Repository.GetGrantedPermissionList(ctx, target)
 		var identifierList []interface{}
 		for _, p := range pList {
 			identifierList = append(identifierList, p.Identifier)

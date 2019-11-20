@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
-	"github.com/smartwalle/odin/service"
 	"strings"
 )
 
@@ -17,7 +16,7 @@ type odinRepository struct {
 	tblGrant          string
 }
 
-func NewOdinRepository(db dbs.DB, tblPrefix string) service.OdinRepository {
+func NewRepository(db dbs.DB, tblPrefix string) odin.Repository {
 	var r = &odinRepository{}
 	r.db = db
 
@@ -42,14 +41,14 @@ func NewOdinRepository(db dbs.DB, tblPrefix string) service.OdinRepository {
 	return r
 }
 
-func (this *odinRepository) BeginTx() (dbs.TX, service.OdinRepository) {
+func (this *odinRepository) BeginTx() (dbs.TX, odin.Repository) {
 	var tx = dbs.MustTx(this.db)
 	var nRepo = *this
 	nRepo.db = tx
 	return tx, &nRepo
 }
 
-func (this *odinRepository) WithTx(tx dbs.TX) service.OdinRepository {
+func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
 	var nRepo = *this
 	nRepo.db = tx
 	return &nRepo
