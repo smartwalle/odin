@@ -7,15 +7,15 @@ import (
 type GroupType int
 
 const (
-	GroupTypeOfPermission GroupType = 1
-	GroupTypeOfRole       GroupType = 2
+	GroupPermission GroupType = 1
+	GroupRole       GroupType = 2
 )
 
 type Status int
 
 const (
-	StatusOfEnable  Status = 1
-	StatusOfDisable Status = 2
+	Enable  Status = 1
+	Disable Status = 2
 )
 
 type Group struct {

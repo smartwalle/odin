@@ -99,7 +99,7 @@ func (this *odinRepository) Check(ctx int64, target, identifier string) (result 
 	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
 	sb.LeftJoin(this.tblRole, "AS r ON r.id = rg.role_id")
 	sb.Where("rg.ctx = ?", ctx)
-	sb.Where("rg.target = ? AND p.identifier = ? AND p.status = ? AND r.status = ?", target, identifier, odin.StatusOfEnable, odin.StatusOfEnable)
+	sb.Where("rg.target = ? AND p.identifier = ? AND p.status = ? AND r.status = ?", target, identifier, odin.Enable, odin.Enable)
 	sb.OrderBy("r.status", "p.status")
 	sb.Limit(1)
 
@@ -132,8 +132,8 @@ func (this *odinRepository) CheckList(ctx int64, target string, identifiers ...s
 		}
 		sb.Where(or)
 	}
-	sb.Where("p.status = ?", odin.StatusOfEnable)
-	sb.Where("r.status = ?", odin.StatusOfEnable)
+	sb.Where("p.status = ?", odin.Enable)
+	sb.Where("r.status = ?", odin.Enable)
 
 	sb.GroupBy("p.id")
 	sb.OrderBy("r.status", "p.status")

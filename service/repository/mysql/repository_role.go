@@ -187,7 +187,7 @@ func (this *odinRepository) GetGrantedRoleList(ctx int64, target string) (result
 	sb.From(this.tblRole, "AS r")
 	sb.Selects("IF(rg.target IS NULL, false, true) AS granted")
 	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id")
-	sb.Where("rg.target = ? AND r.status = ?", target, odin.StatusOfEnable)
+	sb.Where("rg.target = ? AND r.status = ?", target, odin.Enable)
 	sb.Where("rg.ctx = ?", ctx)
 	if err := sb.Scan(this.db, &result); err != nil {
 		return nil, err

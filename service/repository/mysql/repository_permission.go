@@ -146,7 +146,7 @@ func (this *odinRepository) GetGrantedPermissionList(ctx int64, target string) (
 	sb.From(this.tblPermission, "AS p")
 	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.permission_id = p.id")
 	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = rp.role_id")
-	sb.Where("rg.target = ? AND p.status = ?", target, odin.StatusOfEnable)
+	sb.Where("rg.target = ? AND p.status = ?", target, odin.Enable)
 	sb.Where("p.ctx = ?", ctx)
 	sb.GroupBy("p.id")
 	if err := sb.Scan(this.db, &result); err != nil {

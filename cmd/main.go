@@ -21,33 +21,33 @@ func main() {
 	var rRepo = redis.NewRepository(r, "odin", sRepo)
 	var s = odin.NewService(rRepo)
 
-	if g, err := s.AddPermissionGroup(1, "pg1", odin.StatusOfEnable); err == nil && g != nil {
-		s.AddPermission(1, g.Id, "权限g11", "pg1-p1", odin.StatusOfEnable)
-		s.AddPermission(1, g.Id, "权限g12", "pg1-p2", odin.StatusOfEnable)
-		s.AddPermission(1, g.Id, "权限g13", "pg1-p3", odin.StatusOfEnable)
+	if g, err := s.AddPermissionGroup(1, "pg1", odin.Enable); err == nil && g != nil {
+		s.AddPermission(1, g.Id, "权限g11", "pg1-p1", odin.Enable)
+		s.AddPermission(1, g.Id, "权限g12", "pg1-p2", odin.Enable)
+		s.AddPermission(1, g.Id, "权限g13", "pg1-p3", odin.Enable)
 	} else {
 		fmt.Println(err)
 	}
-	if g, err := s.AddPermissionGroup(2, "pg2", odin.StatusOfEnable); err == nil && g != nil {
-		s.AddPermission(2, g.Id, "权限g21", "pg2-p1", odin.StatusOfEnable)
-		s.AddPermission(2, g.Id, "权限g22", "pg2-p2", odin.StatusOfEnable)
-		s.AddPermission(2, g.Id, "权限g23", "pg2-p3", odin.StatusOfEnable)
-	} else {
-		fmt.Println(err)
-	}
-
-	if g, err := s.AddRoleGroup(1, "rg1", odin.StatusOfEnable); err == nil && g != nil {
-		s.AddRole(1, g.Id, "角色g11", odin.StatusOfEnable)
-		s.AddRole(1, g.Id, "角色g12", odin.StatusOfEnable)
-		s.AddRole(1, g.Id, "角色g13", odin.StatusOfEnable)
+	if g, err := s.AddPermissionGroup(2, "pg2", odin.Enable); err == nil && g != nil {
+		s.AddPermission(2, g.Id, "权限g21", "pg2-p1", odin.Enable)
+		s.AddPermission(2, g.Id, "权限g22", "pg2-p2", odin.Enable)
+		s.AddPermission(2, g.Id, "权限g23", "pg2-p3", odin.Enable)
 	} else {
 		fmt.Println(err)
 	}
 
-	if g, err := s.AddRoleGroup(2, "rg2", odin.StatusOfEnable); err == nil && g != nil {
-		s.AddRole(2, g.Id, "角色g21", odin.StatusOfEnable)
-		s.AddRole(2, g.Id, "角色g22", odin.StatusOfEnable)
-		s.AddRole(2, g.Id, "角色g23", odin.StatusOfEnable)
+	if g, err := s.AddRoleGroup(1, "rg1", odin.Enable); err == nil && g != nil {
+		s.AddRole(1, g.Id, "角色g11", odin.Enable)
+		s.AddRole(1, g.Id, "角色g12", odin.Enable)
+		s.AddRole(1, g.Id, "角色g13", odin.Enable)
+	} else {
+		fmt.Println(err)
+	}
+
+	if g, err := s.AddRoleGroup(2, "rg2", odin.Enable); err == nil && g != nil {
+		s.AddRole(2, g.Id, "角色g21", odin.Enable)
+		s.AddRole(2, g.Id, "角色g22", odin.Enable)
+		s.AddRole(2, g.Id, "角色g23", odin.Enable)
 	} else {
 		fmt.Println(err)
 	}
