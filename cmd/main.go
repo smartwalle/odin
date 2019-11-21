@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	var db, _ = sql.Open("mysql", "root:youle@tcp(192.168.1.77:3306)/tt?parseTime=true")
+	var db, _ = sql.Open("mysql", "root:yangfeng@tcp(192.168.1.99:3306)/tt?parseTime=true")
 	var r = dbr.NewRedis("192.168.1.99:6379", 30, 10, dbr.DialDatabase(1))
 
 	dbs.SetLogger(nil)
