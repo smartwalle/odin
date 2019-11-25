@@ -32,3 +32,6 @@ func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
 	nRepo.Repository = this.Repository.WithTx(tx)
 	return &nRepo
 }
+
+func (this *odinRepository) CleanCache(ctx int64, targetId string) {
+}
