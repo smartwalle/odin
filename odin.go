@@ -29,6 +29,7 @@ type Group struct {
 
 type Permission struct {
 	Id          int64      `json:"id"              sql:"id"`
+	GroupId     int64      `json:"group_id"        sql:"group_id"`
 	Ctx         int64      `json:"ctx"             sql:"ctx"`
 	Name        string     `json:"name"            sql:"name"`
 	AliasName   string     `json:"alias_name"      sql:"alias_name"`
@@ -74,7 +75,7 @@ type Service interface {
 	GetPermissionGroupList(ctx int64, status Status, keywords string) (result []*Group, err error)
 
 	// GetPermissionGroupWithId 根据组 id 获取组信息
-	GetPermissionGroupWithId(ctx int64, groupId int64) (result *Group, err error)
+	GetPermissionGroupWithId(ctx, groupId int64) (result *Group, err error)
 
 	// GetPermissionGroupWithName 根据组名称获取组信息
 	GetPermissionGroupWithName(ctx int64, gType GroupType, name string) (result *Group, err error)
@@ -83,15 +84,21 @@ type Service interface {
 	AddPermissionGroup(ctx int64, name, aliasName string, status Status) (result int64, err error)
 
 	// UpdatePermissionGroup 更新组信息
-	UpdatePermissionGroup(ctx int64, groupId int64, name, aliasName string, status Status) (err error)
+	UpdatePermissionGroup(ctx, groupId int64, name, aliasName string, status Status) (err error)
+
+	// UpdatePermissionGroupWithName 更新组信息
+	UpdatePermissionGroupWithName(ctx int64, groupName string, name, aliasName string, status Status) (err error)
 
 	// UpdatePermissionGroupStatus 更新组状态
 	UpdatePermissionGroupStatus(ctx int64, groupId int64, status Status) (err error)
 
+	// UpdatePermissionGroupStatusWithName 更新组状态
+	UpdatePermissionGroupStatusWithName(ctx int64, groupName string, status Status) (err error)
+
 	// permission
 
 	// GetPermissionList 获取权限列表
-	GetPermissionList(ctx int64, status Status, keywords string) (result []*Permission, err error)
+	GetPermissionList(ctx, groupId int64, status Status, keywords string) (result []*Permission, err error)
 
 	// GetPermissionWithId 根据权限 id 获取权限信息
 	GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error)
@@ -100,10 +107,10 @@ type Service interface {
 	GetPermissionWithName(ctx int64, name string) (result *Permission, err error)
 
 	// AddPermission 添加权限
-	AddPermission(ctx int64, name, aliasName, description string, status Status) (result int64, err error)
+	AddPermission(ctx int64, groupName, name, aliasName, description string, status Status) (result int64, err error)
 
 	// UpdatePermission 更新权限
-	UpdatePermission(ctx, permissionId int64, name, aliasName, description string, status Status) (err error)
+	UpdatePermission(ctx, permissionId int64, groupName string, name, aliasName, description string, status Status) (err error)
 
 	// UpdatePermissionStatus 更新权限状态
 	UpdatePermissionStatus(ctx, permissionId int64, status Status) (err error)

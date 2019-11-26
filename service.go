@@ -23,7 +23,7 @@ type Repository interface {
 	UpdateGroupStatus(ctx int64, gType GroupType, groupId int64, status Status) (err error)
 
 	// permission
-	GetPermissionList(ctx int64, status Status, keywords string) (result []*Permission, err error)
+	GetPermissionList(ctx, groupId int64, status Status, keywords string) (result []*Permission, err error)
 
 	GetPermissionListWithIds(ctx int64, permissionIds ...int64) (result []*Permission, err error)
 
@@ -35,9 +35,9 @@ type Repository interface {
 
 	GetPermissionWithName(ctx int64, name string) (result *Permission, err error)
 
-	AddPermission(ctx int64, name, aliasName, description string, status Status) (result int64, err error)
+	AddPermission(ctx, groupId int64, name, aliasName, description string, status Status) (result int64, err error)
 
-	UpdatePermission(ctx, permissionId int64, name, aliasName, description string, status Status) (err error)
+	UpdatePermission(ctx, permissionId, groupId int64, name, aliasName, description string, status Status) (err error)
 
 	UpdatePermissionStatus(ctx, permissionId int64, status Status) (err error)
 
@@ -91,7 +91,7 @@ func (this *odinService) GetPermissionGroupList(ctx int64, status Status, keywor
 	return this.repo.GetGroupList(ctx, GroupPermission, status, keywords)
 }
 
-func (this *odinService) GetPermissionGroupWithId(ctx int64, groupId int64) (result *Group, err error) {
+func (this *odinService) GetPermissionGroupWithId(ctx, groupId int64) (result *Group, err error) {
 	return this.repo.GetGroupWithId(ctx, GroupPermission, groupId)
 }
 
@@ -145,13 +145,15 @@ func (this *odinService) updateGroup(ctx int64, gType GroupType, groupId int64, 
 		return ErrGroupNotExist
 	}
 
-	// 验证 name 是否已经存在
-	group, err = nRepo.GetGroupWithName(ctx, gType, name)
-	if err != nil {
-		return err
-	}
-	if group != nil && group.Id != groupId {
-		return ErrGroupNameExists
+	if group.Name != name {
+		// 验证 name 是否已经存在
+		group, err = nRepo.GetGroupWithName(ctx, gType, name)
+		if err != nil {
+			return err
+		}
+		if group != nil && group.Id != groupId {
+			return ErrGroupNameExists
+		}
 	}
 
 	if err = nRepo.UpdateGroup(ctx, gType, groupId, name, aliasName, status); err != nil {
@@ -162,8 +164,49 @@ func (this *odinService) updateGroup(ctx int64, gType GroupType, groupId int64, 
 	return nil
 }
 
-func (this *odinService) UpdatePermissionGroup(ctx int64, groupId int64, name, aliasName string, status Status) (err error) {
+func (this *odinService) UpdatePermissionGroup(ctx, groupId int64, name, aliasName string, status Status) (err error) {
 	return this.updateGroup(ctx, GroupPermission, groupId, name, aliasName, status)
+}
+
+func (this *odinService) updateGroupWithName(ctx int64, gType GroupType, groupName, name, aliasName string, status Status) (err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证组是否存在
+	group, err := nRepo.GetGroupWithName(ctx, gType, groupName)
+	if err != nil {
+		return err
+	}
+	if group == nil {
+		return ErrGroupNotExist
+	}
+
+	// 如果新的组名和原组名不一致
+	if group.Name != name {
+		// 验证 name 是否已经存在
+		nGroup, err := nRepo.GetGroupWithName(ctx, gType, name)
+		if err != nil {
+			return err
+		}
+		if nGroup != nil && nGroup.Id != group.Id {
+			return ErrGroupNameExists
+		}
+	}
+
+	if err = nRepo.UpdateGroup(ctx, gType, group.Id, name, aliasName, status); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) UpdatePermissionGroupWithName(ctx int64, groupName string, name, aliasName string, status Status) (err error) {
+	return this.updateGroupWithName(ctx, GroupPermission, groupName, name, aliasName, status)
 }
 
 func (this *odinService) updateGroupStatus(ctx int64, gType GroupType, groupId int64, status Status) (err error) {
@@ -175,11 +218,11 @@ func (this *odinService) updateGroupStatus(ctx int64, gType GroupType, groupId i
 	}()
 
 	// 验证组是否存在
-	role, err := nRepo.GetGroupWithId(ctx, gType, groupId)
+	group, err := nRepo.GetGroupWithId(ctx, gType, groupId)
 	if err != nil {
 		return err
 	}
-	if role == nil {
+	if group == nil {
 		return ErrRoleNotExist
 	}
 
@@ -195,10 +238,39 @@ func (this *odinService) UpdatePermissionGroupStatus(ctx int64, groupId int64, s
 	return this.updateGroupStatus(ctx, GroupPermission, groupId, status)
 }
 
+func (this *odinService) updateGroupStatusWithName(ctx int64, gType GroupType, groupName string, status Status) (err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证组是否存在
+	group, err := nRepo.GetGroupWithName(ctx, gType, groupName)
+	if err != nil {
+		return err
+	}
+	if group == nil {
+		return ErrRoleNotExist
+	}
+
+	if err = nRepo.UpdateGroupStatus(ctx, gType, group.Id, status); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) UpdatePermissionGroupStatusWithName(ctx int64, groupName string, status Status) (err error) {
+	return this.updateGroupStatusWithName(ctx, GroupPermission, groupName, status)
+}
+
 // permission
 
-func (this *odinService) GetPermissionList(ctx int64, status Status, keywords string) (result []*Permission, err error) {
-	return this.repo.GetPermissionList(ctx, status, keywords)
+func (this *odinService) GetPermissionList(ctx, groupId int64, status Status, keywords string) (result []*Permission, err error) {
+	return this.repo.GetPermissionList(ctx, groupId, status, keywords)
 }
 
 func (this *odinService) GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error) {
@@ -217,13 +289,22 @@ func (this *odinService) GetPermissionWithName(ctx int64, name string) (result *
 	return result, nil
 }
 
-func (this *odinService) AddPermission(ctx int64, name, aliasName, description string, status Status) (result int64, err error) {
+func (this *odinService) AddPermission(ctx int64, groupName, name, aliasName, description string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
 			tx.Rollback()
 		}
 	}()
+
+	// 判断组是否存在
+	group, err := nRepo.GetGroupWithName(ctx, GroupPermission, groupName)
+	if err != nil {
+		return 0, err
+	}
+	if group == nil {
+		return 0, ErrGroupNotExist
+	}
 
 	// 验证 name 是否已经存在
 	permission, err := nRepo.GetPermissionWithName(ctx, name)
@@ -234,7 +315,7 @@ func (this *odinService) AddPermission(ctx int64, name, aliasName, description s
 		return 0, ErrPermissionNameExists
 	}
 
-	if result, err = nRepo.AddPermission(ctx, name, aliasName, description, status); err != nil {
+	if result, err = nRepo.AddPermission(ctx, group.Id, name, aliasName, description, status); err != nil {
 		return 0, err
 	}
 
@@ -242,7 +323,7 @@ func (this *odinService) AddPermission(ctx int64, name, aliasName, description s
 	return result, nil
 }
 
-func (this *odinService) UpdatePermission(ctx, permissionId int64, name, aliasName, description string, status Status) (err error) {
+func (this *odinService) UpdatePermission(ctx, permissionId int64, groupName string, name, aliasName, description string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -259,16 +340,27 @@ func (this *odinService) UpdatePermission(ctx, permissionId int64, name, aliasNa
 		return ErrPermissionNotExist
 	}
 
-	// 验证 name 是否已经存在
-	permission, err = nRepo.GetPermissionWithName(ctx, name)
+	// 判断组是否存在
+	group, err := nRepo.GetGroupWithName(ctx, GroupPermission, groupName)
 	if err != nil {
 		return err
 	}
-	if permission != nil && permission.Id != permissionId {
-		return ErrPermissionNameExists
+	if group == nil {
+		return ErrGroupNotExist
 	}
 
-	if err = nRepo.UpdatePermission(ctx, permissionId, name, aliasName, description, status); err != nil {
+	if permission.Name != name {
+		// 验证 name 是否已经存在
+		permission, err = nRepo.GetPermissionWithName(ctx, name)
+		if err != nil {
+			return err
+		}
+		if permission != nil && permission.Id != permissionId {
+			return ErrPermissionNameExists
+		}
+	}
+
+	if err = nRepo.UpdatePermission(ctx, permissionId, group.Id, name, aliasName, description, status); err != nil {
 		return err
 	}
 
@@ -589,13 +681,15 @@ func (this *odinService) UpdateRole(ctx, roleId int64, name, aliasName, descript
 		return ErrRoleNotExist
 	}
 
-	// 验证 name 是否已经存在
-	role, err = nRepo.GetRoleWithName(ctx, name)
-	if err != nil {
-		return err
-	}
-	if role != nil && role.Id != roleId {
-		return ErrRoleNameExists
+	if role.Name != name {
+		// 验证 name 是否已经存在
+		role, err = nRepo.GetRoleWithName(ctx, name)
+		if err != nil {
+			return err
+		}
+		if role != nil && role.Id != roleId {
+			return ErrRoleNameExists
+		}
 	}
 
 	if err = nRepo.UpdateRole(ctx, roleId, name, aliasName, description, status); err != nil {

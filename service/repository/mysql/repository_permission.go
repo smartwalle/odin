@@ -6,11 +6,14 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetPermissionList(ctx int64, status odin.Status, keywords string) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetPermissionList(ctx, groupId int64, status odin.Status, keywords string) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("p.id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
+	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
 	sb.Where("p.ctx = ?", ctx)
+	if groupId > 0 {
+		sb.Where("p.group_id = ?", groupId)
+	}
 	if status != 0 {
 		sb.Where("p.status = ?", status)
 	}
@@ -29,7 +32,7 @@ func (this *odinRepository) GetPermissionList(ctx int64, status odin.Status, key
 
 func (this *odinRepository) GetPermissionListWithIds(ctx int64, permissionIds ...int64) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("p.id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
+	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
 	sb.Where("p.ctx = ?", ctx)
 	sb.Where(dbs.IN("p.id", permissionIds))
@@ -43,7 +46,7 @@ func (this *odinRepository) GetPermissionListWithIds(ctx int64, permissionIds ..
 
 func (this *odinRepository) GetPermissionListWithNames(ctx int64, names ...string) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("p.id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
+	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
 	sb.Where("p.ctx = ?", ctx)
 	sb.Where(dbs.IN("p.name", names))
@@ -57,7 +60,7 @@ func (this *odinRepository) GetPermissionListWithNames(ctx int64, names ...strin
 
 func (this *odinRepository) GetPermissionListWithRoleId(ctx int64, roleId int64) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("p.id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
+	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblRolePermission, "AS rp")
 	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
 	sb.Where("rp.ctx = ?", ctx)
@@ -72,7 +75,7 @@ func (this *odinRepository) GetPermissionListWithRoleId(ctx int64, roleId int64)
 
 func (this *odinRepository) getPermission(ctx int64, permissionId int64, name string) (result *odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("p.id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
+	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
 	sb.Where("p.ctx = ?", ctx)
 	if permissionId > 0 {
@@ -96,12 +99,12 @@ func (this *odinRepository) GetPermissionWithName(ctx int64, name string) (resul
 	return this.getPermission(ctx, 0, name)
 }
 
-func (this *odinRepository) AddPermission(ctx int64, name, aliasName, description string, status odin.Status) (result int64, err error) {
+func (this *odinRepository) AddPermission(ctx, groupId int64, name, aliasName, description string, status odin.Status) (result int64, err error) {
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
 	ib.Table(this.tblPermission)
-	ib.Columns("ctx", "name", "alias_name", "status", "description", "created_on", "updated_on")
-	ib.Values(ctx, name, aliasName, status, description, now, now)
+	ib.Columns("group_id", "ctx", "name", "alias_name", "status", "description", "created_on", "updated_on")
+	ib.Values(groupId, ctx, name, aliasName, status, description, now, now)
 	rResult, err := ib.Exec(this.db)
 	if err != nil {
 		return 0, err
@@ -112,10 +115,11 @@ func (this *odinRepository) AddPermission(ctx int64, name, aliasName, descriptio
 	return result, nil
 }
 
-func (this *odinRepository) UpdatePermission(ctx, permissionId int64, name, aliasName, description string, status odin.Status) (err error) {
+func (this *odinRepository) UpdatePermission(ctx, permissionId, groupId int64, name, aliasName, description string, status odin.Status) (err error) {
 	var now = time.Now()
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblPermission)
+	ub.SET("group_id", groupId)
 	ub.SET("name", name)
 	ub.SET("alias_name", aliasName)
 	ub.SET("status", status)
