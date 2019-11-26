@@ -16,8 +16,8 @@ func (this *odinRepository) GetPermissionList(ctx int64, status odin.Status, key
 	}
 	if keywords != "" {
 		var or = dbs.OR()
-		or.Append(dbs.Like("r.name", "%", keywords, "%"))
-		or.Append(dbs.Like("r.alias_name", "%", keywords, "%"))
+		or.Append(dbs.Like("p.name", "%", keywords, "%"))
+		or.Append(dbs.Like("p.alias_name", "%", keywords, "%"))
 		sb.Where(or)
 	}
 	sb.OrderBy("p.ctx", "p.id")
