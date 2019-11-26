@@ -66,25 +66,25 @@ func (this *odinRepository) initTable() error {
 	}
 
 	cb = dbs.NewBuilder("")
-	cb.Format(odinPermissionSQL, this.tblPermission, this.tblPermission, this.tblPermission, this.tblPermission)
+	cb.Format(odinPermissionSQL, this.tblPermission)
 	if _, err := cb.Exec(tx); err != nil {
 		return err
 	}
 
 	cb = dbs.NewBuilder("")
-	cb.Format(odinRoleSQL, this.tblRole, this.tblRole, this.tblRole, this.tblRole)
+	cb.Format(odinRoleSQL, this.tblRole)
 	if _, err := cb.Exec(tx); err != nil {
 		return err
 	}
 
 	cb = dbs.NewBuilder("")
-	cb.Format(odinRolePermissionSQL, this.tblRolePermission, this.tblRolePermission)
+	cb.Format(odinRolePermissionSQL, this.tblRolePermission)
 	if _, err := cb.Exec(tx); err != nil {
 		return err
 	}
 
 	cb = dbs.NewBuilder("")
-	cb.Format(odinGrantSQL, this.tblGrant, this.tblGrant, this.tblGrant, this.tblGrant)
+	cb.Format(odinGrantSQL, this.tblGrant)
 	if _, err := cb.Exec(tx); err != nil {
 		return err
 	}

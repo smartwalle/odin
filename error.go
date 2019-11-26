@@ -10,4 +10,6 @@ var (
 	ErrGrantFailed          = errors.New("授权失败")
 	ErrPermissionNotExist   = errors.New("权限不存在")
 	ErrPermissionNameExists = errors.New("权限名已存在")
+	ErrGroupNotExist        = errors.New("组不存在")
+	ErrGroupNameExists      = errors.New("组名已存在")
 )

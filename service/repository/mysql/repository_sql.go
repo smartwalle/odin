@@ -1,7 +1,7 @@
 package mysql
 
 const odinGroupSQL = "" +
-	"CREATE TABLE `%s_group` (" +
+	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
 	"`ctx` bigint(20) DEFAULT NULL," +
 	"`type` int(2) DEFAULT NULL," +
@@ -11,13 +11,14 @@ const odinGroupSQL = "" +
 	"`created_on` datetime DEFAULT NULL," +
 	"`updated_on` datetime DEFAULT NULL," +
 	"PRIMARY KEY (`id`)," +
-	"UNIQUE KEY `%s_group_id_uindex` (`id`)," +
-	"UNIQUE KEY `%s_group_pk` (`ctx`,`type`,`name`)" +
+	"UNIQUE KEY `odin_group_id_uindex` (`id`)," +
+	"UNIQUE KEY `odin_group_pk` (`ctx`,`type`,`name`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
 const odinPermissionSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
+	"`group_id` bigint(20) DEFAULT NULL," +
 	"`ctx` bigint(20) DEFAULT NULL," +
 	"`name` varchar(255) DEFAULT NULL," +
 	"`alias_name` varchar(255) DEFAULT NULL," +
@@ -26,9 +27,10 @@ const odinPermissionSQL = "" +
 	"`created_on` datetime DEFAULT NULL," +
 	"`updated_on` datetime DEFAULT NULL," +
 	"PRIMARY KEY (`id`)," +
-	"UNIQUE KEY `%s_id_uindex` (`id`)," +
-	"UNIQUE KEY `%s_ctx_name_uindex` (`ctx`,`name`)," +
-	"KEY `%s_ctx_index` (`ctx`)" +
+	"UNIQUE KEY `odin_permission_id_uindex` (`id`)," +
+	"UNIQUE KEY `odin_permission_ctx_name_uindex` (`ctx`,`name`)," +
+	"KEY `odin_permission_ctx_index` (`ctx`)," +
+	"KEY `odin_permission_ctx_group_id_index` (`ctx`,`group_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
 const odinRoleSQL = "" +
@@ -43,9 +45,9 @@ const odinRoleSQL = "" +
 	"`created_on` datetime DEFAULT NULL," +
 	"`updated_on` datetime DEFAULT NULL," +
 	"PRIMARY KEY (`id`)," +
-	"UNIQUE KEY `%s_id_uindex` (`id`)," +
-	"UNIQUE KEY `%s_ctx_name_uindex` (`ctx`,`name`)," +
-	"KEY `%s_ctx_index` (`ctx`)" +
+	"UNIQUE KEY `odin_permission_id_uindex` (`id`)," +
+	"UNIQUE KEY `odin_permission_ctx_name_uindex` (`ctx`,`name`)," +
+	"KEY `odin_permission_ctx_index` (`ctx`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
 const odinRolePermissionSQL = "" +
@@ -54,7 +56,7 @@ const odinRolePermissionSQL = "" +
 	"`role_id` bigint(20) DEFAULT NULL," +
 	"`permission_id` bigint(20) DEFAULT NULL," +
 	"`created_on` datetime DEFAULT NULL," +
-	"UNIQUE KEY `%s_pk` (`ctx`,`role_id`,`permission_id`)" +
+	"UNIQUE KEY `odin_permission_pk` (`ctx`,`role_id`,`permission_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
 const odinGrantSQL = "" +
@@ -63,7 +65,7 @@ const odinGrantSQL = "" +
 	"`role_id` bigint(20) DEFAULT NULL," +
 	"`target_id` varchar(64) DEFAULT NULL," +
 	"`created_on` datetime DEFAULT NULL," +
-	"UNIQUE KEY `%s_pk` (`ctx`,`role_id`,`target_id`)," +
-	"KEY `%s_role_id_index` (`role_id`)," +
-	"KEY `%s_target_id_index` (`target_id`)" +
+	"UNIQUE KEY `odin_permission_pk` (`ctx`,`role_id`,`target_id`)," +
+	"KEY `odin_permission_role_id_index` (`role_id`)," +
+	"KEY `odin_permission_target_id_index` (`target_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"

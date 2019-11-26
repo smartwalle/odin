@@ -20,25 +20,5 @@ func main() {
 	var rRepo = redis.NewRepository(r, "v2", sRepo)
 	var s = odin.NewService(rRepo)
 
-	var roleList, err = s.GetRoleList(1, "1", 0, "")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	for _, role := range roleList {
-		fmt.Println(role)
-	}
-
-	role, err := s.GetRoleWithName(1, "root")
-	fmt.Println(role)
-
-	role, err = s.GetRoleWithId(1, 1)
-	fmt.Println(role)
-
-	fmt.Println(s.UpdateRole(1, 8, "update_root2", "更新一下2", "haha2", odin.Enable))
-
-	fmt.Println(s.GrantRoleWithIds(1, "2", 1, 7,8))
-	fmt.Println(s.GetGrantedRoleList(1, "1"))
-	fmt.Println(s.GetGrantedRoleList(1, "2"))
+	fmt.Println(s.AddPermissionGroup(1, "pg1", "权限组1", odin.Enable))
 }

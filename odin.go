@@ -68,6 +68,26 @@ type Grant struct {
 }
 
 type Service interface {
+	// group
+
+	// GetPermissionGroupList 获取权限组列表
+	GetPermissionGroupList(ctx int64, status Status, keywords string) (result []*Group, err error)
+
+	// GetPermissionGroupWithId 根据组 id 获取组信息
+	GetPermissionGroupWithId(ctx int64, groupId int64) (result *Group, err error)
+
+	// GetPermissionGroupWithName 根据组名称获取组信息
+	GetPermissionGroupWithName(ctx int64, gType GroupType, name string) (result *Group, err error)
+
+	// AddPermissionGroup 添加组信息
+	AddPermissionGroup(ctx int64, name, aliasName string, status Status) (result int64, err error)
+
+	// UpdatePermissionGroup 更新组信息
+	UpdatePermissionGroup(ctx int64, groupId int64, name, aliasName string, status Status) (err error)
+
+	// UpdatePermissionGroupStatus 更新组状态
+	UpdatePermissionGroupStatus(ctx int64, groupId int64, status Status) (err error)
+
 	// permission
 
 	// GetPermissionList 获取权限列表

@@ -9,6 +9,19 @@ type Repository interface {
 
 	WithTx(tx dbs.TX) Repository
 
+	// group
+	GetGroupList(ctx int64, gType GroupType, status Status, keywords string) (result []*Group, err error)
+
+	GetGroupWithId(ctx int64, gType GroupType, groupId int64) (result *Group, err error)
+
+	GetGroupWithName(ctx int64, gType GroupType, name string) (result *Group, err error)
+
+	AddGroup(ctx int64, gType GroupType, name, aliasName string, status Status) (result int64, err error)
+
+	UpdateGroup(ctx int64, gType GroupType, groupId int64, name, aliasName string, status Status) (err error)
+
+	UpdateGroupStatus(ctx int64, gType GroupType, groupId int64, status Status) (err error)
+
 	// permission
 	GetPermissionList(ctx int64, status Status, keywords string) (result []*Permission, err error)
 
@@ -71,6 +84,118 @@ func NewService(repo Repository) Service {
 	s.repo = repo
 	return s
 }
+
+// group
+
+func (this *odinService) GetPermissionGroupList(ctx int64, status Status, keywords string) (result []*Group, err error) {
+	return this.repo.GetGroupList(ctx, GroupPermission, status, keywords)
+}
+
+func (this *odinService) GetPermissionGroupWithId(ctx int64, groupId int64) (result *Group, err error) {
+	return this.repo.GetGroupWithId(ctx, GroupPermission, groupId)
+}
+
+func (this *odinService) GetPermissionGroupWithName(ctx int64, gType GroupType, name string) (result *Group, err error) {
+	return this.repo.GetGroupWithName(ctx, GroupPermission, name)
+}
+
+func (this *odinService) addGroup(ctx int64, gType GroupType, name, aliasName string, status Status) (result int64, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证 name 是否已经存在
+	group, err := nRepo.GetGroupWithName(ctx, gType, name)
+	if err != nil {
+		return 0, err
+	}
+	if group != nil {
+		return 0, ErrGroupNameExists
+	}
+
+	if result, err = nRepo.AddGroup(ctx, gType, name, aliasName, status); err != nil {
+		return 0, err
+	}
+
+	tx.Commit()
+	return result, nil
+}
+
+func (this *odinService) AddPermissionGroup(ctx int64, name, aliasName string, status Status) (result int64, err error) {
+	return this.addGroup(ctx, GroupPermission, name, aliasName, status)
+}
+
+func (this *odinService) updateGroup(ctx int64, gType GroupType, groupId int64, name, aliasName string, status Status) (err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证组是否存在
+	group, err := nRepo.GetGroupWithId(ctx, gType, groupId)
+	if err != nil {
+		return err
+	}
+	if group == nil {
+		return ErrGroupNotExist
+	}
+
+	// 验证 name 是否已经存在
+	group, err = nRepo.GetGroupWithName(ctx, gType, name)
+	if err != nil {
+		return err
+	}
+	if group != nil && group.Id != groupId {
+		return ErrGroupNameExists
+	}
+
+	if err = nRepo.UpdateGroup(ctx, gType, groupId, name, aliasName, status); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) UpdatePermissionGroup(ctx int64, groupId int64, name, aliasName string, status Status) (err error) {
+	return this.updateGroup(ctx, GroupPermission, groupId, name, aliasName, status)
+}
+
+func (this *odinService) updateGroupStatus(ctx int64, gType GroupType, groupId int64, status Status) (err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证组是否存在
+	role, err := nRepo.GetGroupWithId(ctx, gType, groupId)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	if err = nRepo.UpdateGroupStatus(ctx, gType, groupId, status); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) UpdatePermissionGroupStatus(ctx int64, groupId int64, status Status) (err error) {
+	return this.updateGroupStatus(ctx, GroupPermission, groupId, status)
+}
+
+// permission
 
 func (this *odinService) GetPermissionList(ctx int64, status Status, keywords string) (result []*Permission, err error) {
 	return this.repo.GetPermissionList(ctx, status, keywords)
@@ -376,6 +501,8 @@ func (this *odinService) RevokePermissionWithIds(ctx int64, roleId int64, permis
 func (this *odinService) RevokeAllPermission(ctx, roleId int64) (err error) {
 	return this.repo.RevokeAllPermission(ctx, roleId)
 }
+
+// role
 
 func (this *odinService) GetRoleList(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error) {
 	return this.repo.GetRoleList(ctx, targetId, status, keywords)
