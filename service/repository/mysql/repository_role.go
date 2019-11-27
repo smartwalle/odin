@@ -102,11 +102,10 @@ func (this *odinRepository) AddRole(ctx, parentId int64, name, aliasName, descri
 	return result, nil
 }
 
-func (this *odinRepository) UpdateRole(ctx, roleId int64, name, aliasName, description string, status odin.Status) (err error) {
+func (this *odinRepository) UpdateRole(ctx, roleId int64, aliasName, description string, status odin.Status) (err error) {
 	var now = time.Now()
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblRole)
-	ub.SET("name", name)
 	ub.SET("alias_name", aliasName)
 	ub.SET("status", status)
 	ub.SET("description", description)

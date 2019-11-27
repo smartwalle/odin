@@ -12,4 +12,5 @@ var (
 	ErrPermissionNameExists = errors.New("权限名已存在")
 	ErrGroupNotExist        = errors.New("组不存在")
 	ErrGroupNameExists      = errors.New("组名已存在")
+	ErrRevokeFailed         = errors.New("取消授权失败")
 )

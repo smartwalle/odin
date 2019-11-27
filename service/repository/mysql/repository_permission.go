@@ -115,12 +115,11 @@ func (this *odinRepository) AddPermission(ctx, groupId int64, name, aliasName, d
 	return result, nil
 }
 
-func (this *odinRepository) UpdatePermission(ctx, permissionId, groupId int64, name, aliasName, description string, status odin.Status) (err error) {
+func (this *odinRepository) UpdatePermission(ctx, permissionId, groupId int64, aliasName, description string, status odin.Status) (err error) {
 	var now = time.Now()
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblPermission)
 	ub.SET("group_id", groupId)
-	ub.SET("name", name)
 	ub.SET("alias_name", aliasName)
 	ub.SET("status", status)
 	ub.SET("description", description)

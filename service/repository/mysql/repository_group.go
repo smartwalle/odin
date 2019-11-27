@@ -70,11 +70,10 @@ func (this *odinRepository) AddGroup(ctx int64, gType odin.GroupType, name, alia
 	return result, nil
 }
 
-func (this *odinRepository) UpdateGroup(ctx int64, gType odin.GroupType, groupId int64, name, aliasName string, status odin.Status) (err error) {
+func (this *odinRepository) UpdateGroup(ctx int64, gType odin.GroupType, groupId int64, aliasName string, status odin.Status) (err error) {
 	var now = time.Now()
 	var ub = dbs.NewUpdateBuilder()
 	ub.Table(this.tblGroup)
-	ub.SET("name", name)
 	ub.SET("alias_name", aliasName)
 	ub.SET("status", status)
 	ub.SET("updated_on", now)
