@@ -193,7 +193,7 @@ type Service interface {
 	RevokeRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error)
 
 	// RevokeRole 取消对 targetId 的角色授权
-	RevokeRole(ctx int64, targetId string, names ...string) (err error)
+	RevokeRole(ctx int64, targetId string, roleNames ...string) (err error)
 
 	// RevokeAllRole 取消对 targetId 的所有角色授权
 	RevokeAllRole(ctx int64, targetId string) (err error)
