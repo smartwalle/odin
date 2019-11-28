@@ -1165,3 +1165,8 @@ func (this *odinService) GetPermissionListWithRole(ctx int64, roleName string) (
 func (this *odinService) GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error) {
 	return this.repo.GetGrantedRoleList(ctx, targetId)
 }
+
+func (this *odinService) GetPermissionGroups(ctx, roleId int64, status Status) (result []*Group, err error) {
+	// TODO 待思考
+	return result, nil
+}
