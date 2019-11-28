@@ -23,7 +23,9 @@ type Repository interface {
 	UpdateGroupStatus(ctx int64, gType GroupType, groupId int64, status Status) (err error)
 
 	// permission
-	GetPermissionList(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
+
+	// GetPermissionList 获取角色列表，如果有传递 roleId 参数，则返回的权限数据中将附带该权限是否已授权给该 roleId
+	GetPermissionList(ctx, roleId int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
 
 	GetPermissionListWithIds(ctx int64, permissionIds ...int64) (result []*Permission, err error)
 
@@ -48,6 +50,7 @@ type Repository interface {
 	RevokeAllPermission(ctx, roleId int64) (err error)
 
 	// role
+	// GetRoleList 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
 	GetRoleList(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
 
 	GetRoleListWithIds(ctx int64, roleIds ...int64) (result []*Role, err error)
@@ -247,7 +250,7 @@ func (this *odinService) UpdatePermissionGroupStatus(ctx int64, groupName string
 // permission
 
 func (this *odinService) GetPermissionList(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error) {
-	return this.repo.GetPermissionList(ctx, status, keywords, groupIds...)
+	return this.repo.GetPermissionList(ctx, 0, status, keywords, groupIds...)
 }
 
 func (this *odinService) GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error) {

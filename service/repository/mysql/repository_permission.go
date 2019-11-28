@@ -6,10 +6,14 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetPermissionList(ctx int64, status odin.Status, keywords string, groupIds ...int64) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetPermissionList(ctx, roleId int64, status odin.Status, keywords string, groupIds ...int64) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
+	if roleId > 0 {
+		sb.Selects("IF(rp.role_id IS NULL, false , true) AS granted")
+		sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.permission_id = p.id AND rp.role_id = ?", roleId)
+	}
 	sb.Where("p.ctx = ?", ctx)
 	if len(groupIds) > 0 {
 		sb.Where(dbs.IN("p.group_id", groupIds))
