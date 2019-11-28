@@ -23,7 +23,7 @@ type Repository interface {
 	UpdateGroupStatus(ctx int64, gType GroupType, groupId int64, status Status) (err error)
 
 	// permission
-	GetPermissionList(ctx, groupId int64, status Status, keywords string) (result []*Permission, err error)
+	GetPermissionList(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
 
 	GetPermissionListWithIds(ctx int64, permissionIds ...int64) (result []*Permission, err error)
 
@@ -246,8 +246,8 @@ func (this *odinService) UpdatePermissionGroupStatus(ctx int64, groupName string
 
 // permission
 
-func (this *odinService) GetPermissionList(ctx, groupId int64, status Status, keywords string) (result []*Permission, err error) {
-	return this.repo.GetPermissionList(ctx, groupId, status, keywords)
+func (this *odinService) GetPermissionList(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error) {
+	return this.repo.GetPermissionList(ctx, status, keywords, groupIds...)
 }
 
 func (this *odinService) GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error) {

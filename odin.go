@@ -98,7 +98,7 @@ type Service interface {
 	// permission
 
 	// GetPermissionList 获取权限列表
-	GetPermissionList(ctx, groupId int64, status Status, keywords string) (result []*Permission, err error)
+	GetPermissionList(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
 
 	// GetPermissionWithId 根据 permissionId 获取权限信息
 	GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error)
