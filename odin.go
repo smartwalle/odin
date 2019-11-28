@@ -160,10 +160,10 @@ type Service interface {
 	GetRole(ctx int64, roleName string) (result *Role, err error)
 
 	// AddRole 添加角色，如果 parentName 参数的值大于 0，则会验证 parent 是否存在
-	AddRoleWithParentId(ctx, parentId int64, roleName, aliasName, description string, status Status) (result int64, err error)
+	AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error)
 
 	// AddRole 添加角色，如果 parentName 不为空字符串，则会验证 parent 是否存在
-	AddRole(ctx int64, parentName, roleName, aliasName, description string, status Status) (result int64, err error)
+	AddRole(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error)
 
 	// UpdateRoleWithId 根据 roleId 更新角色信息
 	UpdateRoleWithId(ctx, roleId int64, aliasName, description string, status Status) (err error)
@@ -171,30 +171,41 @@ type Service interface {
 	// UpdateRole 根据 roleName 更新角色信息
 	UpdateRole(ctx int64, roleName, aliasName, description string, status Status) (err error)
 
-	// UpdateRoleStatus 更新角色的状态
-	UpdateRoleStatus(ctx, roleId int64, status Status) (err error)
+	// UpdateRoleStatusWithId 根据 roleId 更新角色的状态
+	UpdateRoleStatusWithId(ctx, roleId int64, status Status) (err error)
 
-	// GetGrantedRoleList 获取已授权给 targetId 的角色列表
-	GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error)
+	// UpdateRoleStatus 根据 roleName 更新角色的状态
+	UpdateRoleStatus(ctx int64, roleName string, status Status) (err error)
+
+	// GrantRoleWithId 授权角色给 targetId
+	GrantRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error)
 
 	// GrantRole 授权角色给 targetId
-	GrantRole(ctx int64, targetId string, names ...string) (err error)
+	GrantRole(ctx int64, targetId string, roleNames ...string) (err error)
 
-	// GrantRoleWithIds 授权角色给 targetId
-	GrantRoleWithIds(ctx int64, targetId string, roleIds ...int64) (err error)
+	// ReGrantRoleWithId 授权角色给 targetId，会将原有的角色授权先取消掉
+	ReGrantRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error)
 
 	// ReGrantRole 授权角色给 targetId，会将原有的角色授权先取消掉
-	ReGrantRole(ctx int64, targetId string, names ...string) (err error)
+	ReGrantRole(ctx int64, targetId string, roleNames ...string) (err error)
 
-	// ReGrantRoleWithIds 授权角色给 targetId，会将原有的角色授权先取消掉
-	ReGrantRoleWithIds(ctx int64, targetId string, roleIds ...int64) (err error)
+	// RevokeRoleWithId 取消对 targetId 的角色授权
+	RevokeRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error)
 
 	// RevokeRole 取消对 targetId 的角色授权
 	RevokeRole(ctx int64, targetId string, names ...string) (err error)
 
-	// RevokeRoleWithIds 取消对 targetId 的角色授权
-	RevokeRoleWithIds(ctx int64, targetId string, roleIds ...int64) (err error)
-
 	// RevokeAllRole 取消对 targetId 的所有角色授权
 	RevokeAllRole(ctx int64, targetId string) (err error)
+
+	//
+
+	// GetPermissionListWithRoleId 根据 roleId 获取权限列表
+	GetPermissionListWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
+
+	// GetPermissionListWithRole 根据 roleName 获取权限列表
+	GetPermissionListWithRole(ctx int64, roleName string) (result []*Permission, err error)
+
+	// GetGrantedRoleList 获取已授权给 targetId 的角色列表
+	GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error)
 }

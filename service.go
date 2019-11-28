@@ -751,7 +751,7 @@ func (this *odinService) GetRole(ctx int64, name string) (result *Role, err erro
 	return result, nil
 }
 
-func (this *odinService) AddRoleWithParentId(ctx, parentId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
+func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -759,13 +759,13 @@ func (this *odinService) AddRoleWithParentId(ctx, parentId int64, roleName, alia
 		}
 	}()
 
-	if parentId < 0 {
-		parentId = 0
+	if parentRoleId < 0 {
+		parentRoleId = 0
 	}
 
 	// 验证 parent 是否存在
-	if parentId > 0 {
-		parent, err := nRepo.GetRoleWithId(ctx, parentId)
+	if parentRoleId > 0 {
+		parent, err := nRepo.GetRoleWithId(ctx, parentRoleId)
 		if err != nil {
 			return 0, err
 		}
@@ -783,7 +783,7 @@ func (this *odinService) AddRoleWithParentId(ctx, parentId int64, roleName, alia
 		return 0, ErrRoleNameExists
 	}
 
-	if result, err = nRepo.AddRole(ctx, parentId, roleName, aliasName, description, status); err != nil {
+	if result, err = nRepo.AddRole(ctx, parentRoleId, roleName, aliasName, description, status); err != nil {
 		return 0, err
 	}
 
@@ -791,7 +791,7 @@ func (this *odinService) AddRoleWithParentId(ctx, parentId int64, roleName, alia
 	return result, nil
 }
 
-func (this *odinService) AddRole(ctx int64, parentName, roleName, aliasName, description string, status Status) (result int64, err error) {
+func (this *odinService) AddRole(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -801,8 +801,8 @@ func (this *odinService) AddRole(ctx int64, parentName, roleName, aliasName, des
 
 	// 验证 parent 是否存在
 	var parentId int64 = 0
-	if parentName != "" {
-		parent, err := nRepo.GetRoleWithName(ctx, parentName)
+	if parentRoleName != "" {
+		parent, err := nRepo.GetRoleWithName(ctx, parentRoleName)
 		if err != nil {
 			return 0, err
 		}
@@ -852,7 +852,7 @@ func (this *odinService) UpdateRoleWithId(ctx, roleId int64, aliasName, descript
 	tx.Commit()
 	return nil
 }
-// TODO xxx
+
 func (this *odinService) UpdateRole(ctx int64, roleName, aliasName, description string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
@@ -878,7 +878,7 @@ func (this *odinService) UpdateRole(ctx int64, roleName, aliasName, description 
 	return nil
 }
 
-func (this *odinService) UpdateRoleStatus(ctx, roleId int64, status Status) (err error) {
+func (this *odinService) UpdateRoleStatusWithId(ctx, roleId int64, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -895,7 +895,7 @@ func (this *odinService) UpdateRoleStatus(ctx, roleId int64, status Status) (err
 		return ErrRoleNotExist
 	}
 
-	if err = nRepo.UpdateRoleStatus(ctx, roleId, status); err != nil {
+	if err = nRepo.UpdateRoleStatus(ctx, role.Id, status); err != nil {
 		return err
 	}
 
@@ -903,19 +903,7 @@ func (this *odinService) UpdateRoleStatus(ctx, roleId int64, status Status) (err
 	return nil
 }
 
-func (this *odinService) GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error) {
-	return this.repo.GetGrantedRoleList(ctx, targetId)
-}
-
-func (this *odinService) GrantRole(ctx int64, targetId string, names ...string) (err error) {
-	if len(names) == 0 {
-		return ErrRoleNotExist
-	}
-
-	if targetId == "" {
-		return ErrTargetNotAllowed
-	}
-
+func (this *odinService) UpdateRoleStatus(ctx int64, roleName string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -923,20 +911,16 @@ func (this *odinService) GrantRole(ctx int64, targetId string, names ...string) 
 		}
 	}()
 
-	roleList, err := nRepo.GetRoleListWithNames(ctx, names...)
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
 	if err != nil {
 		return err
 	}
-
-	var nIds = make([]int64, 0, len(roleList))
-	for _, role := range roleList {
-		nIds = append(nIds, role.Id)
-	}
-	if len(nIds) == 0 {
-		return ErrGrantFailed
+	if role == nil {
+		return ErrRoleNotExist
 	}
 
-	if err = nRepo.GrantRoleWithIds(ctx, targetId, nIds...); err != nil {
+	if err = nRepo.UpdateRoleStatus(ctx, role.Id, status); err != nil {
 		return err
 	}
 
@@ -944,7 +928,7 @@ func (this *odinService) GrantRole(ctx int64, targetId string, names ...string) 
 	return nil
 }
 
-func (this *odinService) GrantRoleWithIds(ctx int64, targetId string, roleIds ...int64) (err error) {
+func (this *odinService) GrantRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error) {
 	if len(roleIds) == 0 {
 		return ErrRoleNotExist
 	}
@@ -981,8 +965,8 @@ func (this *odinService) GrantRoleWithIds(ctx int64, targetId string, roleIds ..
 	return nil
 }
 
-func (this *odinService) ReGrantRole(ctx int64, targetId string, names ...string) (err error) {
-	if len(names) == 0 {
+func (this *odinService) GrantRole(ctx int64, targetId string, roleNames ...string) (err error) {
+	if len(roleNames) == 0 {
 		return ErrRoleNotExist
 	}
 
@@ -997,7 +981,7 @@ func (this *odinService) ReGrantRole(ctx int64, targetId string, names ...string
 		}
 	}()
 
-	roleList, err := nRepo.GetRoleListWithNames(ctx, names...)
+	roleList, err := nRepo.GetRoleListWithNames(ctx, roleNames...)
 	if err != nil {
 		return err
 	}
@@ -1010,10 +994,6 @@ func (this *odinService) ReGrantRole(ctx int64, targetId string, names ...string
 		return ErrGrantFailed
 	}
 
-	if err = nRepo.RevokeAllRole(ctx, targetId); err != nil {
-		return err
-	}
-
 	if err = nRepo.GrantRoleWithIds(ctx, targetId, nIds...); err != nil {
 		return err
 	}
@@ -1022,7 +1002,7 @@ func (this *odinService) ReGrantRole(ctx int64, targetId string, names ...string
 	return nil
 }
 
-func (this *odinService) ReGrantRoleWithIds(ctx int64, targetId string, roleIds ...int64) (err error) {
+func (this *odinService) ReGrantRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error) {
 	if len(roleIds) == 0 {
 		return ErrRoleNotExist
 	}
@@ -1063,8 +1043,8 @@ func (this *odinService) ReGrantRoleWithIds(ctx int64, targetId string, roleIds 
 	return nil
 }
 
-func (this *odinService) RevokeRole(ctx int64, targetId string, names ...string) (err error) {
-	if len(names) == 0 {
+func (this *odinService) ReGrantRole(ctx int64, targetId string, roleNames ...string) (err error) {
+	if len(roleNames) == 0 {
 		return ErrRoleNotExist
 	}
 
@@ -1079,7 +1059,58 @@ func (this *odinService) RevokeRole(ctx int64, targetId string, names ...string)
 		}
 	}()
 
-	roleList, err := nRepo.GetRoleListWithNames(ctx, names...)
+	roleList, err := nRepo.GetRoleListWithNames(ctx, roleNames...)
+	if err != nil {
+		return err
+	}
+
+	var nIds = make([]int64, 0, len(roleList))
+	for _, role := range roleList {
+		nIds = append(nIds, role.Id)
+	}
+	if len(nIds) == 0 {
+		return ErrGrantFailed
+	}
+
+	if err = nRepo.RevokeAllRole(ctx, targetId); err != nil {
+		return err
+	}
+
+	if err = nRepo.GrantRoleWithIds(ctx, targetId, nIds...); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) RevokeRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error) {
+	if len(roleIds) == 0 {
+		return ErrRoleNotExist
+	}
+	if targetId == "" {
+		return ErrTargetNotAllowed
+	}
+	return this.repo.RevokeRoleWithIds(ctx, targetId, roleIds...)
+}
+
+func (this *odinService) RevokeRole(ctx int64, targetId string, roleNames ...string) (err error) {
+	if len(roleNames) == 0 {
+		return ErrRoleNotExist
+	}
+
+	if targetId == "" {
+		return ErrTargetNotAllowed
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	roleList, err := nRepo.GetRoleListWithNames(ctx, roleNames...)
 	if err != nil {
 		return err
 	}
@@ -1100,10 +1131,34 @@ func (this *odinService) RevokeRole(ctx int64, targetId string, names ...string)
 	return nil
 }
 
-func (this *odinService) RevokeRoleWithIds(ctx int64, targetId string, roleIds ...int64) (err error) {
-	return this.repo.RevokeRoleWithIds(ctx, targetId, roleIds...)
-}
-
 func (this *odinService) RevokeAllRole(ctx int64, targetId string) (err error) {
 	return this.repo.RevokeAllRole(ctx, targetId)
+}
+
+//
+
+func (this *odinService) GetPermissionListWithRoleId(ctx int64, roleId int64) (result []*Permission, err error) {
+	role, err := this.repo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, ErrRoleNotExist
+	}
+	return this.repo.GetPermissionListWithRoleId(ctx, role.Id)
+}
+
+func (this *odinService) GetPermissionListWithRole(ctx int64, roleName string) (result []*Permission, err error) {
+	role, err := this.repo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, ErrRoleNotExist
+	}
+	return this.repo.GetPermissionListWithRoleId(ctx, role.Id)
+}
+
+func (this *odinService) GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error) {
+	return this.repo.GetGrantedRoleList(ctx, targetId)
 }
