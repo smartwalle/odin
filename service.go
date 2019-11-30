@@ -1166,7 +1166,109 @@ func (this *odinService) GetGrantedRoleList(ctx int64, targetId string) (result 
 	return this.repo.GetGrantedRoleList(ctx, targetId)
 }
 
-func (this *odinService) GetPermissionGroups(ctx, roleId int64, status Status) (result []*Group, err error) {
-	// TODO 待思考
+func (this *odinService) GetPermissionTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 获取权限信息
+	if roleId > 0 {
+		role, err := nRepo.GetRoleWithId(ctx, roleId)
+		if err != nil {
+			return nil, err
+		}
+		if role == nil {
+			return nil, ErrRoleNotExist
+		}
+		roleId = role.Id
+	}
+
+	groupList, err := nRepo.GetGroupList(ctx, GroupPermission, status, "")
+	if err != nil {
+		return nil, err
+	}
+	if len(groupList) == 0 {
+		tx.Commit()
+		return nil, nil
+	}
+
+	var groupMap = make(map[int64]*Group)
+	var groupIds = make([]int64, 0, len(groupList))
+	for _, group := range groupList {
+		groupMap[group.Id] = group
+		groupIds = append(groupIds, group.Id)
+	}
+
+	pList, err := nRepo.GetPermissionList(ctx, roleId, status, "", groupIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range pList {
+		var group = groupMap[p.GroupId]
+		if group != nil {
+			group.PermissionList = append(group.PermissionList, p)
+		}
+	}
+
+	tx.Commit()
+	result = groupList
+	return result, nil
+}
+
+func (this *odinService) GetPermissionTree(ctx int64, roleName string, status Status) (result []*Group, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 获取权限信息
+	var roleId int64
+	if roleName != "" {
+		role, err := nRepo.GetRoleWithName(ctx, roleName)
+		if err != nil {
+			return nil, err
+		}
+		if role == nil {
+			return nil, ErrRoleNotExist
+		}
+		roleId = role.Id
+	}
+
+	groupList, err := nRepo.GetGroupList(ctx, GroupPermission, status, "")
+	if err != nil {
+		return nil, err
+	}
+	if len(groupList) == 0 {
+		tx.Commit()
+		return nil, nil
+	}
+
+	var groupMap = make(map[int64]*Group)
+	var groupIds = make([]int64, 0, len(groupList))
+	for _, group := range groupList {
+		groupMap[group.Id] = group
+		groupIds = append(groupIds, group.Id)
+	}
+
+	pList, err := nRepo.GetPermissionList(ctx, roleId, status, "", groupIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range pList {
+		var group = groupMap[p.GroupId]
+		if group != nil {
+			group.PermissionList = append(group.PermissionList, p)
+		}
+	}
+
+	tx.Commit()
+	result = groupList
 	return result, nil
 }

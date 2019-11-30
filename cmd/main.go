@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	var db, _ = sql.Open("mysql", "root:yangfeng@tcp(192.168.1.99:3306)/tt?parseTime=true")
+	var db, _ = sql.Open("mysql", "root:yangfeng@tcp(127.0.0.1:3306)/test?parseTime=true")
 	var r = dbr.NewRedis("192.168.1.99:6379", 30, 10, dbr.DialDatabase(1))
 
 	dbs.SetLogger(nil)
@@ -21,6 +21,52 @@ func main() {
 	var rRepo = redis.NewRepository(r, "v2", sRepo)
 	var s = odin.NewService(rRepo)
 
+	// 添加权限组
 	fmt.Println(s.AddPermissionGroup(1, "pg1", "权限组1", odin.Enable))
-	fmt.Println(s.AddPermissionGroup(1, "pg2", "权限组1", odin.Enable))
+	fmt.Println(s.AddPermissionGroup(1, "pg2", "权限组2", odin.Enable))
+	fmt.Println(s.AddPermissionGroup(1, "pg3", "权限组3", odin.Enable))
+
+	// 添加权限信息
+	fmt.Println(s.AddPermission(1, "pg1", "pg1-p1", "权限组1下的权限1", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg1", "pg1-p2", "权限组1下的权限2", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg1", "pg1-p3", "权限组1下的权限3", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg1", "pg1-p4", "权限组1下的权限4", "", odin.Enable))
+
+	fmt.Println(s.AddPermission(1, "pg2", "pg2-p1", "权限组2下的权限1", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg2", "pg2-p2", "权限组2下的权限2", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg2", "pg2-p3", "权限组2下的权限3", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg2", "pg2-p4", "权限组2下的权限4", "", odin.Enable))
+
+	fmt.Println(s.AddPermission(1, "pg3", "pg3-p1", "权限组3下的权限1", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg3", "pg3-p2", "权限组3下的权限2", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg3", "pg3-p3", "权限组3下的权限3", "", odin.Enable))
+	fmt.Println(s.AddPermission(1, "pg3", "pg3-p4", "权限组3下的权限4", "", odin.Enable))
+
+	// 添加角色信息
+	fmt.Println(s.AddRole(1, "", "r1", "角色1", "", odin.Enable))
+	fmt.Println(s.AddRole(1, "", "r2", "角色2", "", odin.Enable))
+	fmt.Println(s.AddRole(1, "", "r3", "角色3", "", odin.Enable))
+	fmt.Println(s.AddRole(1, "", "r4", "角色4", "", odin.Enable))
+
+	// 授予权限给角色
+	fmt.Println(s.GrantPermission(1, "r1", "pg1-p1", "pg2-p2", "pg3-p3"))
+	fmt.Println(s.GrantPermission(1, "r4", "pg1-p1", "pg2-p2", "pg3-p3"))
+
+	fmt.Println("---")
+	groupList, _ := s.GetPermissionTree(1, "r1", odin.Enable)
+	for _, group := range groupList {
+		fmt.Println("-", group.Name, group.AliasName)
+		for _, p := range group.PermissionList {
+			fmt.Println("--", p.Name, p.AliasName, p.Granted)
+		}
+	}
+	fmt.Println("---")
+	groupList, _ = s.GetPermissionTreeWithRoleId(1, 4, odin.Enable)
+	for _, group := range groupList {
+		fmt.Println("-", group.Name, group.AliasName)
+		for _, p := range group.PermissionList {
+			fmt.Println("--", p.Name, p.AliasName, p.Granted)
+		}
+	}
+
 }
