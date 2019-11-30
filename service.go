@@ -49,6 +49,8 @@ type Repository interface {
 
 	RevokeAllPermission(ctx, roleId int64) (err error)
 
+	GetGrantedPermissionList(ctx int64, targetId string) (result []*Permission, err error)
+
 	// role
 	// GetRoleList 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
 	GetRoleList(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
@@ -1164,6 +1166,10 @@ func (this *odinService) GetPermissionListWithRole(ctx int64, roleName string) (
 
 func (this *odinService) GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error) {
 	return this.repo.GetGrantedRoleList(ctx, targetId)
+}
+
+func (this *odinService) GetGrantedPermissionList(ctx int64, targetId string) (result []*Permission, err error) {
+	return this.repo.GetGrantedPermissionList(ctx, targetId)
 }
 
 func (this *odinService) GetPermissionTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error) {

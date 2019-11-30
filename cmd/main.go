@@ -69,4 +69,12 @@ func main() {
 		}
 	}
 
+	s.GrantRole(1, "1", "r1", "r2", "r4")
+
+	permissionList, err := s.GetGrantedPermissionList(1, "1")
+	fmt.Println(err)
+	for _, p := range permissionList {
+		fmt.Println(p.Name, p.AliasName, p.Granted)
+	}
+
 }

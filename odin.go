@@ -210,6 +210,9 @@ type Service interface {
 	// GetGrantedRoleList 获取已授权给 targetId 的角色列表
 	GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error)
 
+	// GetGrantedPermissionList 获取已授权给 targetId 的权限列表
+	GetGrantedPermissionList(ctx int64, targetId string) (result []*Permission, err error)
+
 	// GetPermissionTree 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleId，则返回的权限数据中将附带该权限是否已授权给该 roleId
 	GetPermissionTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error)
 
