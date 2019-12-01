@@ -33,5 +33,9 @@ func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
 	return &nRepo
 }
 
+func (this *odinRepository) Check(ctx int64, targetId string, permissionName string) (bool) {
+	return false
+}
+
 func (this *odinRepository) CleanCache(ctx int64, targetId string) {
 }

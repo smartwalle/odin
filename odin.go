@@ -63,10 +63,12 @@ type RolePermission struct {
 }
 
 type Grant struct {
-	Ctx       int64      `json:"ctx"             sql:"ctx"`
-	RoleId    int64      `json:"role_id"         sql:"role_id"`
-	TargetId  string     `json:"target_id"       sql:"target_id"`
-	CreatedOn *time.Time `json:"created_on"      sql:"created_on"`
+	Ctx            int64  `json:"ctx"                sql:"ctx"`
+	TargetId       string `json:"target_id"          sql:"target_id"`
+	RoleId         int64  `json:"role_id"            sql:"role_id"`
+	RoleName       string `json:"role_name"          sql:"role_name"`
+	PermissionId   int64  `json:"permission_id"      sql:"permission_id"`
+	PermissionName string `json:"permission_name"    sql:"permission_name"`
 }
 
 type Service interface {
@@ -218,4 +220,7 @@ type Service interface {
 
 	// GetPermissionTree 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleName，则返回的权限数据中将附带该权限是否已授权给该 roleName
 	GetPermissionTree(ctx int64, roleName string, status Status) (result []*Group, err error)
+
+	// Check 验证 targetId 是否拥有指定权限
+	Check(ctx int64, targetId string, permissionName string) bool
 }

@@ -93,5 +93,29 @@ func (this *odinRepository) initTable() error {
 	return nil
 }
 
+func (this *odinRepository) Check(ctx int64, targetId string, permissionName string) (bool) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("g.ctx", "g.target_id", "g.role_id")
+	sb.Selects("r.name AS role_name")
+	sb.Selects("p.id AS permission_id", "p.name AS permission_name")
+	sb.From(this.tblGrant, "AS g")
+	sb.LeftJoin(this.tblRole, "AS r ON r.id = g.role_id")
+	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.role_id = r.id")
+	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
+	sb.Where("g.ctx = ? AND g.target_id = ?", ctx, targetId)
+	sb.Where("r.ctx = ? AND r.status = ?", ctx, odin.Enable)
+	sb.Where("rp.ctx = ?", ctx)
+	sb.Where("p.ctx = ? AND p.name = ? AND p.status = ?", ctx, permissionName, odin.Enable)
+	sb.Limit(1)
+	var grant *odin.Grant
+	if err := sb.Scan(this.db, &grant); err != nil {
+		return false
+	}
+	if grant != nil {
+		return true
+	}
+	return false
+}
+
 func (this *odinRepository) CleanCache(ctx int64, targetId string) {
 }

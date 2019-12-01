@@ -77,6 +77,8 @@ type Repository interface {
 
 	RevokeAllRole(ctx int64, targetId string) (err error)
 
+	Check(ctx int64, targetId string, permissionName string) (bool)
+
 	CleanCache(ctx int64, targetId string)
 }
 
@@ -1277,4 +1279,8 @@ func (this *odinService) GetPermissionTree(ctx int64, roleName string, status St
 	tx.Commit()
 	result = groupList
 	return result, nil
+}
+
+func (this *odinService) Check(ctx int64, targetId string, permissionName string) (bool) {
+	return this.repo.Check(ctx, targetId, permissionName)
 }
