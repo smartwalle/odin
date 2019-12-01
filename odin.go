@@ -72,8 +72,8 @@ type Grant struct {
 type Service interface {
 	// group
 
-	// GetPermissionGroupList 获取权限组列表
-	GetPermissionGroupList(ctx int64, status Status, keywords string) (result []*Group, err error)
+	// GetPermissionGroups 获取权限组列表
+	GetPermissionGroups(ctx int64, status Status, keywords string) (result []*Group, err error)
 
 	// GetPermissionGroupWithId 根据组 id 获取组信息
 	GetPermissionGroupWithId(ctx, groupId int64) (result *Group, err error)
@@ -98,8 +98,8 @@ type Service interface {
 
 	// permission
 
-	// GetPermissionList 获取权限列表
-	GetPermissionList(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
+	// GetPermissions 获取权限列表
+	GetPermissions(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
 
 	// GetPermissionWithId 根据 permissionId 获取权限信息
 	GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error)
@@ -151,8 +151,8 @@ type Service interface {
 
 	// role
 
-	// GetRoleList 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
-	GetRoleList(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
+	// GetRoles 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
+	GetRoles(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
 
 	// GetRoleWithId 根据 roleId 获取角色信息
 	GetRoleWithId(ctx, roleId int64) (result *Role, err error)
@@ -201,17 +201,17 @@ type Service interface {
 
 	//
 
-	// GetPermissionListWithRoleId 根据 roleId 获取权限列表
-	GetPermissionListWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
+	// GetPermissionsWithRoleId 根据 roleId 获取权限列表
+	GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
 
-	// GetPermissionListWithRole 根据 roleName 获取权限列表
-	GetPermissionListWithRole(ctx int64, roleName string) (result []*Permission, err error)
+	// GetPermissionsWithRole 根据 roleName 获取权限列表
+	GetPermissionsWithRole(ctx int64, roleName string) (result []*Permission, err error)
 
-	// GetGrantedRoleList 获取已授权给 targetId 的角色列表
-	GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error)
+	// GetGrantedRoles 获取已授权给 targetId 的角色列表
+	GetGrantedRoles(ctx int64, targetId string) (result []*Role, err error)
 
-	// GetGrantedPermissionList 获取已授权给 targetId 的权限列表
-	GetGrantedPermissionList(ctx int64, targetId string) (result []*Permission, err error)
+	// GetGrantedPermissions 获取已授权给 targetId 的权限列表
+	GetGrantedPermissions(ctx int64, targetId string) (result []*Permission, err error)
 
 	// GetPermissionTree 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleId，则返回的权限数据中将附带该权限是否已授权给该 roleId
 	GetPermissionTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error)

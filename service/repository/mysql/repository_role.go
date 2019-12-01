@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetRoleList(ctx int64, targetId string, status odin.Status, keywords string) (result []*odin.Role, err error) {
+func (this *odinRepository) GetRoles(ctx int64, targetId string, status odin.Status, keywords string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.created_on", "r.updated_on")
 	sb.From(this.tblRole, "AS r")
@@ -32,7 +32,7 @@ func (this *odinRepository) GetRoleList(ctx int64, targetId string, status odin.
 	return result, nil
 }
 
-func (this *odinRepository) GetRoleListWithIds(ctx int64, roleIds ...int64) (result []*odin.Role, err error) {
+func (this *odinRepository) GetRolesWithIds(ctx int64, roleIds ...int64) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.created_on", "r.updated_on")
 	sb.From(this.tblRole, "AS r")
@@ -46,7 +46,7 @@ func (this *odinRepository) GetRoleListWithIds(ctx int64, roleIds ...int64) (res
 	return result, nil
 }
 
-func (this *odinRepository) GetRoleListWithNames(ctx int64, names ...string) (result []*odin.Role, err error) {
+func (this *odinRepository) GetRolesWithNames(ctx int64, names ...string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.created_on", "r.updated_on")
 	sb.From(this.tblRole, "AS r")
@@ -128,7 +128,7 @@ func (this *odinRepository) UpdateRoleStatus(ctx, roleId int64, status odin.Stat
 	return err
 }
 
-func (this *odinRepository) GetGrantedRoleList(ctx int64, targetId string) (result []*odin.Role, err error) {
+func (this *odinRepository) GetGrantedRoles(ctx int64, targetId string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.created_on", "r.updated_on")
 	sb.Selects("IF(rg.target_id IS NULL, false, true) AS granted")

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetGroupList(ctx int64, gType odin.GroupType, status odin.Status, keywords string) (result []*odin.Group, err error) {
+func (this *odinRepository) GetGroups(ctx int64, gType odin.GroupType, status odin.Status, keywords string) (result []*odin.Group, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.id", "g.ctx", "g.type", "g.name", "g.alias_name", "g.status", "g.created_on", "g.updated_on")
 	sb.From(this.tblGroup, "AS g")

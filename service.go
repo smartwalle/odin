@@ -10,7 +10,7 @@ type Repository interface {
 	WithTx(tx dbs.TX) Repository
 
 	// group
-	GetGroupList(ctx int64, gType GroupType, status Status, keywords string) (result []*Group, err error)
+	GetGroups(ctx int64, gType GroupType, status Status, keywords string) (result []*Group, err error)
 
 	GetGroupWithId(ctx int64, gType GroupType, groupId int64) (result *Group, err error)
 
@@ -24,14 +24,14 @@ type Repository interface {
 
 	// permission
 
-	// GetPermissionList 获取角色列表，如果有传递 roleId 参数，则返回的权限数据中将附带该权限是否已授权给该 roleId
-	GetPermissionList(ctx, roleId int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
+	// GetPermissions 获取角色列表，如果有传递 roleId 参数，则返回的权限数据中将附带该权限是否已授权给该 roleId
+	GetPermissions(ctx, roleId int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
 
-	GetPermissionListWithIds(ctx int64, permissionIds ...int64) (result []*Permission, err error)
+	GetPermissionsWithIds(ctx int64, permissionIds ...int64) (result []*Permission, err error)
 
-	GetPermissionListWithNames(ctx int64, names ...string) (result []*Permission, err error)
+	GetPermissionsWithNames(ctx int64, names ...string) (result []*Permission, err error)
 
-	GetPermissionListWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
+	GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
 
 	GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error)
 
@@ -49,15 +49,15 @@ type Repository interface {
 
 	RevokeAllPermission(ctx, roleId int64) (err error)
 
-	GetGrantedPermissionList(ctx int64, targetId string) (result []*Permission, err error)
+	GetGrantedPermissions(ctx int64, targetId string) (result []*Permission, err error)
 
 	// role
-	// GetRoleList 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
-	GetRoleList(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
+	// GetRoles 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
+	GetRoles(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
 
-	GetRoleListWithIds(ctx int64, roleIds ...int64) (result []*Role, err error)
+	GetRolesWithIds(ctx int64, roleIds ...int64) (result []*Role, err error)
 
-	GetRoleListWithNames(ctx int64, names ...string) (result []*Role, err error)
+	GetRolesWithNames(ctx int64, names ...string) (result []*Role, err error)
 
 	GetRoleWithId(ctx, roleId int64) (result *Role, err error)
 
@@ -69,7 +69,7 @@ type Repository interface {
 
 	UpdateRoleStatus(ctx, roleId int64, status Status) (err error)
 
-	GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error)
+	GetGrantedRoles(ctx int64, targetId string) (result []*Role, err error)
 
 	GrantRoleWithIds(ctx int64, targetId string, roleIds ...int64) (err error)
 
@@ -92,8 +92,8 @@ func NewService(repo Repository) Service {
 
 // group
 
-func (this *odinService) GetPermissionGroupList(ctx int64, status Status, keywords string) (result []*Group, err error) {
-	return this.repo.GetGroupList(ctx, GroupPermission, status, keywords)
+func (this *odinService) GetPermissionGroups(ctx int64, status Status, keywords string) (result []*Group, err error) {
+	return this.repo.GetGroups(ctx, GroupPermission, status, keywords)
 }
 
 func (this *odinService) GetPermissionGroupWithId(ctx, groupId int64) (result *Group, err error) {
@@ -251,8 +251,8 @@ func (this *odinService) UpdatePermissionGroupStatus(ctx int64, groupName string
 
 // permission
 
-func (this *odinService) GetPermissionList(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error) {
-	return this.repo.GetPermissionList(ctx, 0, status, keywords, groupIds...)
+func (this *odinService) GetPermissions(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error) {
+	return this.repo.GetPermissions(ctx, 0, status, keywords, groupIds...)
 }
 
 func (this *odinService) GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error) {
@@ -481,7 +481,7 @@ func (this *odinService) GrantPermissionWithId(ctx int64, roleId int64, permissi
 		return ErrRoleNotExist
 	}
 
-	permissionList, err := nRepo.GetPermissionListWithIds(ctx, permissionIds...)
+	permissionList, err := nRepo.GetPermissionsWithIds(ctx, permissionIds...)
 	if err != nil {
 		return err
 	}
@@ -526,7 +526,7 @@ func (this *odinService) GrantPermission(ctx int64, roleName string, permissionN
 		return ErrRoleNotExist
 	}
 
-	permissionList, err := nRepo.GetPermissionListWithNames(ctx, permissionNames...)
+	permissionList, err := nRepo.GetPermissionsWithNames(ctx, permissionNames...)
 	if err != nil {
 		return err
 	}
@@ -571,7 +571,7 @@ func (this *odinService) ReGrantPermissionWithId(ctx int64, roleId int64, permis
 		return ErrRoleNotExist
 	}
 
-	permissionList, err := nRepo.GetPermissionListWithIds(ctx, permissionIds...)
+	permissionList, err := nRepo.GetPermissionsWithIds(ctx, permissionIds...)
 	if err != nil {
 		return err
 	}
@@ -620,7 +620,7 @@ func (this *odinService) ReGrantPermission(ctx int64, roleName string, permissio
 		return ErrRoleNotExist
 	}
 
-	permissionList, err := nRepo.GetPermissionListWithNames(ctx, permissionNames...)
+	permissionList, err := nRepo.GetPermissionsWithNames(ctx, permissionNames...)
 	if err != nil {
 		return err
 	}
@@ -673,7 +673,7 @@ func (this *odinService) RevokePermission(ctx int64, roleName string, permission
 		return ErrRoleNotExist
 	}
 
-	permissionList, err := nRepo.GetPermissionListWithNames(ctx, permissionNames...)
+	permissionList, err := nRepo.GetPermissionsWithNames(ctx, permissionNames...)
 	if err != nil {
 		return err
 	}
@@ -724,8 +724,8 @@ func (this *odinService) RevokeAllPermission(ctx int64, roleName string) (err er
 
 // role
 
-func (this *odinService) GetRoleList(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error) {
-	return this.repo.GetRoleList(ctx, targetId, status, keywords)
+func (this *odinService) GetRoles(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error) {
+	return this.repo.GetRoles(ctx, targetId, status, keywords)
 }
 
 func (this *odinService) GetRoleWithId(ctx, roleId int64) (result *Role, err error) {
@@ -734,7 +734,7 @@ func (this *odinService) GetRoleWithId(ctx, roleId int64) (result *Role, err err
 		return nil, err
 	}
 	if result != nil {
-		result.PermissionList, err = this.repo.GetPermissionListWithRoleId(ctx, result.Id)
+		result.PermissionList, err = this.repo.GetPermissionsWithRoleId(ctx, result.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -748,7 +748,7 @@ func (this *odinService) GetRole(ctx int64, name string) (result *Role, err erro
 		return nil, err
 	}
 	if result != nil {
-		result.PermissionList, err = this.repo.GetPermissionListWithRoleId(ctx, result.Id)
+		result.PermissionList, err = this.repo.GetPermissionsWithRoleId(ctx, result.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -949,7 +949,7 @@ func (this *odinService) GrantRoleWithId(ctx int64, targetId string, roleIds ...
 		}
 	}()
 
-	roleList, err := nRepo.GetRoleListWithIds(ctx, roleIds...)
+	roleList, err := nRepo.GetRolesWithIds(ctx, roleIds...)
 	if err != nil {
 		return err
 	}
@@ -986,7 +986,7 @@ func (this *odinService) GrantRole(ctx int64, targetId string, roleNames ...stri
 		}
 	}()
 
-	roleList, err := nRepo.GetRoleListWithNames(ctx, roleNames...)
+	roleList, err := nRepo.GetRolesWithNames(ctx, roleNames...)
 	if err != nil {
 		return err
 	}
@@ -1023,7 +1023,7 @@ func (this *odinService) ReGrantRoleWithId(ctx int64, targetId string, roleIds .
 		}
 	}()
 
-	roleList, err := nRepo.GetRoleListWithIds(ctx, roleIds...)
+	roleList, err := nRepo.GetRolesWithIds(ctx, roleIds...)
 	if err != nil {
 		return err
 	}
@@ -1064,7 +1064,7 @@ func (this *odinService) ReGrantRole(ctx int64, targetId string, roleNames ...st
 		}
 	}()
 
-	roleList, err := nRepo.GetRoleListWithNames(ctx, roleNames...)
+	roleList, err := nRepo.GetRolesWithNames(ctx, roleNames...)
 	if err != nil {
 		return err
 	}
@@ -1115,7 +1115,7 @@ func (this *odinService) RevokeRole(ctx int64, targetId string, roleNames ...str
 		}
 	}()
 
-	roleList, err := nRepo.GetRoleListWithNames(ctx, roleNames...)
+	roleList, err := nRepo.GetRolesWithNames(ctx, roleNames...)
 	if err != nil {
 		return err
 	}
@@ -1142,7 +1142,7 @@ func (this *odinService) RevokeAllRole(ctx int64, targetId string) (err error) {
 
 //
 
-func (this *odinService) GetPermissionListWithRoleId(ctx int64, roleId int64) (result []*Permission, err error) {
+func (this *odinService) GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error) {
 	role, err := this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
 		return nil, err
@@ -1150,10 +1150,10 @@ func (this *odinService) GetPermissionListWithRoleId(ctx int64, roleId int64) (r
 	if role == nil {
 		return nil, ErrRoleNotExist
 	}
-	return this.repo.GetPermissionListWithRoleId(ctx, role.Id)
+	return this.repo.GetPermissionsWithRoleId(ctx, role.Id)
 }
 
-func (this *odinService) GetPermissionListWithRole(ctx int64, roleName string) (result []*Permission, err error) {
+func (this *odinService) GetPermissionsWithRole(ctx int64, roleName string) (result []*Permission, err error) {
 	role, err := this.repo.GetRoleWithName(ctx, roleName)
 	if err != nil {
 		return nil, err
@@ -1161,15 +1161,15 @@ func (this *odinService) GetPermissionListWithRole(ctx int64, roleName string) (
 	if role == nil {
 		return nil, ErrRoleNotExist
 	}
-	return this.repo.GetPermissionListWithRoleId(ctx, role.Id)
+	return this.repo.GetPermissionsWithRoleId(ctx, role.Id)
 }
 
-func (this *odinService) GetGrantedRoleList(ctx int64, targetId string) (result []*Role, err error) {
-	return this.repo.GetGrantedRoleList(ctx, targetId)
+func (this *odinService) GetGrantedRoles(ctx int64, targetId string) (result []*Role, err error) {
+	return this.repo.GetGrantedRoles(ctx, targetId)
 }
 
-func (this *odinService) GetGrantedPermissionList(ctx int64, targetId string) (result []*Permission, err error) {
-	return this.repo.GetGrantedPermissionList(ctx, targetId)
+func (this *odinService) GetGrantedPermissions(ctx int64, targetId string) (result []*Permission, err error) {
+	return this.repo.GetGrantedPermissions(ctx, targetId)
 }
 
 func (this *odinService) GetPermissionTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error) {
@@ -1192,7 +1192,7 @@ func (this *odinService) GetPermissionTreeWithRoleId(ctx, roleId int64, status S
 		roleId = role.Id
 	}
 
-	groupList, err := nRepo.GetGroupList(ctx, GroupPermission, status, "")
+	groupList, err := nRepo.GetGroups(ctx, GroupPermission, status, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1208,7 +1208,7 @@ func (this *odinService) GetPermissionTreeWithRoleId(ctx, roleId int64, status S
 		groupIds = append(groupIds, group.Id)
 	}
 
-	pList, err := nRepo.GetPermissionList(ctx, roleId, status, "", groupIds...)
+	pList, err := nRepo.GetPermissions(ctx, roleId, status, "", groupIds...)
 	if err != nil {
 		return nil, err
 	}
@@ -1246,7 +1246,7 @@ func (this *odinService) GetPermissionTree(ctx int64, roleName string, status St
 		roleId = role.Id
 	}
 
-	groupList, err := nRepo.GetGroupList(ctx, GroupPermission, status, "")
+	groupList, err := nRepo.GetGroups(ctx, GroupPermission, status, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1262,7 +1262,7 @@ func (this *odinService) GetPermissionTree(ctx int64, roleName string, status St
 		groupIds = append(groupIds, group.Id)
 	}
 
-	pList, err := nRepo.GetPermissionList(ctx, roleId, status, "", groupIds...)
+	pList, err := nRepo.GetPermissions(ctx, roleId, status, "", groupIds...)
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetPermissionList(ctx, roleId int64, status odin.Status, keywords string, groupIds ...int64) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetPermissions(ctx, roleId int64, status odin.Status, keywords string, groupIds ...int64) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
@@ -34,7 +34,7 @@ func (this *odinRepository) GetPermissionList(ctx, roleId int64, status odin.Sta
 	return result, nil
 }
 
-func (this *odinRepository) GetPermissionListWithIds(ctx int64, permissionIds ...int64) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetPermissionsWithIds(ctx int64, permissionIds ...int64) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
@@ -48,7 +48,7 @@ func (this *odinRepository) GetPermissionListWithIds(ctx int64, permissionIds ..
 	return result, nil
 }
 
-func (this *odinRepository) GetPermissionListWithNames(ctx int64, names ...string) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetPermissionsWithNames(ctx int64, names ...string) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
@@ -62,7 +62,7 @@ func (this *odinRepository) GetPermissionListWithNames(ctx int64, names ...strin
 	return result, nil
 }
 
-func (this *odinRepository) GetPermissionListWithRoleId(ctx int64, roleId int64) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblRolePermission, "AS rp")
@@ -191,7 +191,7 @@ func (this *odinRepository) RevokeAllPermission(ctx, roleId int64) (err error) {
 	return nil
 }
 
-func (this *odinRepository) GetGrantedPermissionList(ctx int64, targetId string) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetGrantedPermissions(ctx int64, targetId string) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.Selects("IF(p.id IS NULL, false, true) AS granted")
