@@ -1284,3 +1284,7 @@ func (this *odinService) GetPermissionTree(ctx int64, roleName string, status St
 func (this *odinService) Check(ctx int64, targetId string, permissionName string) (bool) {
 	return this.repo.Check(ctx, targetId, permissionName)
 }
+
+func (this *odinService) CleanCache(ctx int64, targetId string) {
+	this.repo.CleanCache(ctx, targetId)
+}

@@ -223,4 +223,7 @@ type Service interface {
 
 	// Check 验证 targetId 是否拥有指定权限
 	Check(ctx int64, targetId string, permissionName string) bool
+
+	// CleanCache 清除缓存，如果 targetId 为空字符串或者 targetId 的值为星号(*)，则会清空所有缓存
+	CleanCache(ctx int64, targetId string)
 }

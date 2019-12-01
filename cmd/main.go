@@ -88,4 +88,6 @@ func main() {
 	fmt.Println(s.Check(1, "1", "pg3-p3"))
 	fmt.Println(s.Check(1, "1", "pg3-p1"))
 	fmt.Println(s.Check(1, "1", "pg3-p2"))
+
+	s.CleanCache(1, "*")
 }
