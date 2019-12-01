@@ -8,13 +8,14 @@ import (
 		"github.com/smartwalle/odin"
 	"github.com/smartwalle/odin/service/repository/mysql"
 	"github.com/smartwalle/odin/service/repository/redis"
+	"github.com/smartwalle/dbs"
 )
 
 func main() {
 	var db, _ = sql.Open("mysql", "root:yangfeng@tcp(127.0.0.1:3306)/test?parseTime=true")
-	var r = dbr.NewRedis("192.168.1.99:6379", 30, 10, dbr.DialDatabase(1))
+	var r = dbr.NewRedis("127.0.0.1:6379", 30, 10, dbr.DialDatabase(1))
 
-	//dbs.SetLogger(nil)
+	dbs.SetLogger(nil)
 
 	var sRepo = mysql.NewRepository(db, "v2")
 	var rRepo = redis.NewRepository(r, "v2", sRepo)
@@ -82,9 +83,9 @@ func main() {
 	}
 
 	fmt.Println(s.Check(1, "1", "pg1-p1"))
-	//fmt.Println(s.Check(1, "2", "pg1-p1"))
-	//fmt.Println(s.Check(1, "1", "pg2-p2"))
-	//fmt.Println(s.Check(1, "1", "pg3-p3"))
-	//fmt.Println(s.Check(1, "1", "pg3-p1"))
-	//fmt.Println(s.Check(1, "1", "pg3-p2"))
+	fmt.Println(s.Check(1, "2", "pg1-p1"))
+	fmt.Println(s.Check(1, "1", "pg2-p2"))
+	fmt.Println(s.Check(1, "1", "pg3-p3"))
+	fmt.Println(s.Check(1, "1", "pg3-p1"))
+	fmt.Println(s.Check(1, "1", "pg3-p2"))
 }
