@@ -43,10 +43,10 @@ func main() {
 	fmt.Println(s.AddPermission(1, "pg3", "pg3-p4", "权限组3下的权限4", "", odin.Enable))
 
 	// 添加角色信息
-	fmt.Println(s.AddRole(1, "", "r1", "角色1", "", odin.Enable))
-	fmt.Println(s.AddRole(1, "", "r2", "角色2", "", odin.Enable))
-	fmt.Println(s.AddRole(1, "", "r3", "角色3", "", odin.Enable))
-	fmt.Println(s.AddRole(1, "", "r4", "角色4", "", odin.Enable))
+	fmt.Println(s.AddRole(1, "r1", "角色1", "", odin.Enable))
+	fmt.Println(s.AddRole(1, "r2", "角色2", "", odin.Enable))
+	fmt.Println(s.AddRole(1, "r3", "角色3", "", odin.Enable))
+	fmt.Println(s.AddRole(1, "r4", "角色4", "", odin.Enable))
 
 	// 授予权限给角色
 	fmt.Println(s.GrantPermission(1, "r1", "pg1-p1", "pg2-p2", "pg3-p3"))

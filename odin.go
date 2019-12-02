@@ -162,11 +162,8 @@ type Service interface {
 	// GetRole 根据 roleName 获取角色信息
 	GetRole(ctx int64, roleName string) (result *Role, err error)
 
-	// AddRole 添加角色，如果 parentName 参数的值大于 0，则会验证 parent 是否存在
-	AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error)
-
-	// AddRole 添加角色，如果 parentName 不为空字符串，则会验证 parent 是否存在
-	AddRole(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error)
+	// AddRole 添加角色
+	AddRole(ctx int64, roleName, aliasName, description string, status Status) (result int64, err error)
 
 	// UpdateRoleWithId 根据 roleId 更新角色信息
 	UpdateRoleWithId(ctx, roleId int64, aliasName, description string, status Status) (err error)

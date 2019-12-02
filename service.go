@@ -758,28 +758,13 @@ func (this *odinService) GetRole(ctx int64, name string) (result *Role, err erro
 	return result, nil
 }
 
-func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
+func (this *odinService) AddRole(ctx int64, roleName, aliasName, description string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
 			tx.Rollback()
 		}
 	}()
-
-	if parentRoleId < 0 {
-		parentRoleId = 0
-	}
-
-	// 验证 parent 是否存在
-	if parentRoleId > 0 {
-		parent, err := nRepo.GetRoleWithId(ctx, parentRoleId)
-		if err != nil {
-			return 0, err
-		}
-		if parent == nil {
-			return 0, ErrParentRoleNotExist
-		}
-	}
 
 	// 验证 name 是否已经存在
 	role, err := nRepo.GetRoleWithName(ctx, roleName)
@@ -790,44 +775,7 @@ func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, 
 		return 0, ErrRoleNameExists
 	}
 
-	if result, err = nRepo.AddRole(ctx, parentRoleId, roleName, aliasName, description, status); err != nil {
-		return 0, err
-	}
-
-	tx.Commit()
-	return result, nil
-}
-
-func (this *odinService) AddRole(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error) {
-	var tx, nRepo = this.repo.BeginTx()
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	// 验证 parent 是否存在
-	var parentId int64 = 0
-	if parentRoleName != "" {
-		parent, err := nRepo.GetRoleWithName(ctx, parentRoleName)
-		if err != nil {
-			return 0, err
-		}
-		if parent == nil {
-			return 0, ErrParentRoleNotExist
-		}
-	}
-
-	// 验证 name 是否已经存在
-	role, err := nRepo.GetRoleWithName(ctx, roleName)
-	if err != nil {
-		return 0, err
-	}
-	if role != nil {
-		return 0, ErrRoleNameExists
-	}
-
-	if result, err = nRepo.AddRole(ctx, parentId, roleName, aliasName, description, status); err != nil {
+	if result, err = nRepo.AddRole(ctx, 0, roleName, aliasName, description, status); err != nil {
 		return 0, err
 	}
 
