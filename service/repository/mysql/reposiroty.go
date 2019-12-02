@@ -93,7 +93,7 @@ func (this *odinRepository) initTable() error {
 	return nil
 }
 
-func (this *odinRepository) Check(ctx int64, targetId string, permissionName string) (bool) {
+func (this *odinRepository) Check(ctx int64, targetId string, permissionName string) bool {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.ctx", "g.target_id", "g.role_id")
 	sb.Selects("r.name AS role_name")

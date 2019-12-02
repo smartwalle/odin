@@ -53,7 +53,7 @@ func main() {
 	fmt.Println(s.GrantPermission(1, "r4", "pg1-p1", "pg2-p2", "pg3-p3"))
 
 	fmt.Println("---")
-	groupList, _ := s.GetPermissionTree(1, "r1", odin.Enable)
+	groupList, _ := s.GetPermissionTreeWithRole(1, "r1", odin.Enable)
 	for _, group := range groupList {
 		fmt.Println("-", group.Name, group.AliasName)
 		for _, p := range group.PermissionList {

@@ -77,7 +77,7 @@ type Repository interface {
 
 	RevokeAllRole(ctx int64, targetId string) (err error)
 
-	Check(ctx int64, targetId string, permissionName string) (bool)
+	Check(ctx int64, targetId string, permissionName string) bool
 
 	CleanCache(ctx int64, targetId string)
 }
@@ -1227,7 +1227,7 @@ func (this *odinService) GetPermissionTreeWithRoleId(ctx, roleId int64, status S
 	return result, nil
 }
 
-func (this *odinService) GetPermissionTree(ctx int64, roleName string, status Status) (result []*Group, err error) {
+func (this *odinService) GetPermissionTreeWithRole(ctx int64, roleName string, status Status) (result []*Group, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1281,7 +1281,7 @@ func (this *odinService) GetPermissionTree(ctx int64, roleName string, status St
 	return result, nil
 }
 
-func (this *odinService) Check(ctx int64, targetId string, permissionName string) (bool) {
+func (this *odinService) Check(ctx int64, targetId string, permissionName string) bool {
 	return this.repo.Check(ctx, targetId, permissionName)
 }
 

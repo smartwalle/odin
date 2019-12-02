@@ -215,11 +215,11 @@ type Service interface {
 	// GetGrantedPermissions 获取已授权给 targetId 的权限列表
 	GetGrantedPermissions(ctx int64, targetId string) (result []*Permission, err error)
 
-	// GetPermissionTree 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleId，则返回的权限数据中将附带该权限是否已授权给该 roleId
+	// GetPermissionTreeWithRole 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleId，则返回的权限数据中将附带该权限是否已授权给该 roleId
 	GetPermissionTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error)
 
-	// GetPermissionTree 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleName，则返回的权限数据中将附带该权限是否已授权给该 roleName
-	GetPermissionTree(ctx int64, roleName string, status Status) (result []*Group, err error)
+	// GetPermissionTreeWithRole 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleName，则返回的权限数据中将附带该权限是否已授权给该 roleName
+	GetPermissionTreeWithRole(ctx int64, roleName string, status Status) (result []*Group, err error)
 
 	// Check 验证 targetId 是否拥有指定权限
 	Check(ctx int64, targetId string, permissionName string) bool
