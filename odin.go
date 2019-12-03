@@ -235,4 +235,18 @@ type Service interface {
 
 	// CleanCache 清除缓存，如果 targetId 为空字符串或者 targetId 的值为星号(*)，则会清空所有缓存
 	CleanCache(ctx int64, targetId string)
+
+	// 角色继承
+
+	// AddRoleWithParent 添加角色，新添加的角色将作为 parentRoleName 的子角色，调用时应该确认操作者是否有访问 parentRoleName 的权限
+	AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error)
+
+	// AddRoleWithParentId 添加角色，新添加的角色将作为 parentRoleId 的子角色，调用时应该确认操作者是否有访问 parentRoleId 的权限
+	AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error)
+
+	// GetRolesWithTargetId 获取 targetId 已拥有的角色列表，和方法 GetGrantedRoles 作用相同
+	GetRolesWithTargetId(ctx int64, targetId string) (result []*Role, err error)
+
+	// GetPermissionsWithTargetId 获取 targetId 已拥有的权限列表，和方法 GetGrantedPermissions 作用相同
+	GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error)
 }

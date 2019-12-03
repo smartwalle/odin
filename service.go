@@ -1266,3 +1266,89 @@ func (this *odinService) CheckRoleWithId(ctx int64, targetId string, roleId int6
 func (this *odinService) CleanCache(ctx int64, targetId string) {
 	this.repo.CleanCache(ctx, targetId)
 }
+
+// 角色继承
+
+func (this *odinService) AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if parentRoleName == "" {
+		return 0, ErrParentRoleNotExist
+	}
+
+	// 验证 parentRoleName 不为存在
+	parent, err := nRepo.GetRoleWithName(ctx, parentRoleName)
+	if err != nil {
+		return 0, err
+	}
+	if parent == nil {
+		return 0, ErrParentRoleNotExist
+	}
+
+	// 验证 name 是否已经存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return 0, err
+	}
+	if role != nil {
+		return 0, ErrRoleNameExists
+	}
+
+	if result, err = nRepo.AddRole(ctx, parent.Id, roleName, aliasName, description, status); err != nil {
+		return 0, err
+	}
+
+	tx.Commit()
+	return result, nil
+}
+
+func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if parentRoleId <= 0 {
+		return 0, ErrParentRoleNotExist
+	}
+
+	// 验证 parentRoleName 不为存在
+	parent, err := nRepo.GetRoleWithId(ctx, parentRoleId)
+	if err != nil {
+		return 0, err
+	}
+	if parent == nil {
+		return 0, ErrParentRoleNotExist
+	}
+
+	// 验证 name 是否已经存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return 0, err
+	}
+	if role != nil {
+		return 0, ErrRoleNameExists
+	}
+
+	if result, err = nRepo.AddRole(ctx, parent.Id, roleName, aliasName, description, status); err != nil {
+		return 0, err
+	}
+
+	tx.Commit()
+	return result, nil
+}
+
+func (this *odinService) GetRolesWithTargetId(ctx int64, targetId string) (result []*Role, err error) {
+	return this.repo.GetGrantedRoles(ctx, targetId)
+}
+
+func (this *odinService) GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error) {
+	return this.repo.GetGrantedPermissions(ctx, targetId)
+}
