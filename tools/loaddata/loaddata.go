@@ -33,6 +33,7 @@ func LoadData(repo odin.Repository, configFile string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
