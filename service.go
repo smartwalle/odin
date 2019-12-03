@@ -9,6 +9,9 @@ type Repository interface {
 
 	WithTx(tx dbs.TX) Repository
 
+	// InitTable 初始化数据库
+	InitTable() error
+
 	// group
 	GetGroups(ctx int64, gType GroupType, status Status, keywords string) (result []*Group, err error)
 

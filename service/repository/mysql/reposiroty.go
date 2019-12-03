@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"fmt"
 	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
 	"strings"
@@ -34,10 +33,6 @@ func NewRepository(db dbs.DB, tblPrefix string) odin.Repository {
 	r.tblRolePermission = tblPrefix + "_role_permission"
 	r.tblGrant = tblPrefix + "_grant"
 
-	if err := r.initTable(); err != nil {
-		panic(fmt.Sprintf("初始化 Odin 失败, 错误信息为: %v", err))
-	}
-
 	return r
 }
 
@@ -54,7 +49,7 @@ func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
 	return &nRepo
 }
 
-func (this *odinRepository) initTable() error {
+func (this *odinRepository) InitTable() error {
 	var tx = dbs.MustTx(this.db)
 
 	var cb *dbs.RawBuilder
