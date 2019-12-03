@@ -42,7 +42,7 @@ func (this *odinRepository) buildTargetKey(ctx int64, target string) (result str
 	return fmt.Sprintf("%s:odin:grant:%d:%s", this.tPrefix, ctx, target)
 }
 
-func (this *odinRepository) Check(ctx int64, targetId string, permissionName string) bool {
+func (this *odinRepository) CheckPermission(ctx int64, targetId string, permissionName string) bool {
 	var rSess = this.rPool.GetSession()
 	defer rSess.Close()
 

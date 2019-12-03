@@ -84,12 +84,15 @@ func main() {
 		fmt.Println(r.Name, r.AliasName, r.Granted)
 	}
 
-	fmt.Println(s.Check(1, "1", "pg1-p1"))
-	fmt.Println(s.Check(1, "2", "pg1-p1"))
-	fmt.Println(s.Check(1, "1", "pg2-p2"))
-	fmt.Println(s.Check(1, "1", "pg3-p3"))
-	fmt.Println(s.Check(1, "1", "pg3-p1"))
-	fmt.Println(s.Check(1, "1", "pg3-p2"))
+	fmt.Println("1", "pg1-p1", s.CheckPermission(1, "1", "pg1-p1"))
+	fmt.Println("2", "pg1-p1", s.CheckPermission(1, "2", "pg1-p1"))
+	fmt.Println("1", "pg2-p2", s.CheckPermission(1, "1", "pg2-p2"))
+	fmt.Println("1", "pg3-p3", s.CheckPermission(1, "1", "pg3-p3"))
+	fmt.Println("1", "pg3-p1", s.CheckPermission(1, "1", "pg3-p1"))
+	fmt.Println("1", "pg3-p2", s.CheckPermission(1, "1", "pg3-p2"))
+	fmt.Println("1", "r1", s.CheckRole(1, "1", "r1"))
+	fmt.Println("1", "r2", s.CheckRole(1, "1", "r3"))
+	fmt.Println("2", "r1", s.CheckRole(1, "2", "r1"))
 
 	s.CleanCache(1, "*")
 }

@@ -84,7 +84,7 @@ func (this *odinRepository) InitTable() error {
 	return nil
 }
 
-func (this *odinRepository) Check(ctx int64, targetId string, permissionName string) bool {
+func (this *odinRepository) CheckPermission(ctx int64, targetId string, permissionName string) bool {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("g.ctx", "g.target_id", "g.role_id")
 	sb.Selects("r.name AS role_name")
@@ -97,6 +97,68 @@ func (this *odinRepository) Check(ctx int64, targetId string, permissionName str
 	sb.Where("r.ctx = ? AND r.status = ?", ctx, odin.Enable)
 	sb.Where("rp.ctx = ?", ctx)
 	sb.Where("p.ctx = ? AND p.name = ? AND p.status = ?", ctx, permissionName, odin.Enable)
+	sb.Limit(1)
+	var grant *odin.Grant
+	if err := sb.Scan(this.db, &grant); err != nil {
+		return false
+	}
+	if grant != nil {
+		return true
+	}
+	return false
+}
+
+func (this *odinRepository) CheckPermissionWithId(ctx int64, targetId string, permissionId int64) bool {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("g.ctx", "g.target_id", "g.role_id")
+	sb.Selects("r.name AS role_name")
+	sb.Selects("p.id AS permission_id", "p.name AS permission_name")
+	sb.From(this.tblGrant, "AS g")
+	sb.LeftJoin(this.tblRole, "AS r ON r.id = g.role_id")
+	sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.role_id = r.id")
+	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
+	sb.Where("g.ctx = ? AND g.target_id = ?", ctx, targetId)
+	sb.Where("r.ctx = ? AND r.status = ?", ctx, odin.Enable)
+	sb.Where("rp.ctx = ?", ctx)
+	sb.Where("p.ctx = ? AND p.id = ? AND p.status = ?", ctx, permissionId, odin.Enable)
+	sb.Limit(1)
+	var grant *odin.Grant
+	if err := sb.Scan(this.db, &grant); err != nil {
+		return false
+	}
+	if grant != nil {
+		return true
+	}
+	return false
+}
+
+func (this *odinRepository) CheckRole(ctx int64, targetId string, roleName string) bool {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("g.ctx", "g.target_id", "g.role_id")
+	sb.Selects("r.name AS role_name")
+	sb.From(this.tblGrant, "AS g")
+	sb.LeftJoin(this.tblRole, "AS r ON r.id = g.role_id")
+	sb.Where("g.ctx = ? AND g.target_id = ?", ctx, targetId)
+	sb.Where("r.ctx = ? AND r.name = ? AND r.status = ?", ctx, roleName, odin.Enable)
+	sb.Limit(1)
+	var grant *odin.Grant
+	if err := sb.Scan(this.db, &grant); err != nil {
+		return false
+	}
+	if grant != nil {
+		return true
+	}
+	return false
+}
+
+func (this *odinRepository) CheckRoleWithId(ctx int64, targetId string, roleId int64) bool {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("g.ctx", "g.target_id", "g.role_id")
+	sb.Selects("r.name AS role_name")
+	sb.From(this.tblGrant, "AS g")
+	sb.LeftJoin(this.tblRole, "AS r ON r.id = g.role_id")
+	sb.Where("g.ctx = ? AND g.role_id = ? AND g.target_id = ?", ctx, roleId, targetId)
+	sb.Where("r.ctx = ? AND r.status = ?", ctx, odin.Enable)
 	sb.Limit(1)
 	var grant *odin.Grant
 	if err := sb.Scan(this.db, &grant); err != nil {

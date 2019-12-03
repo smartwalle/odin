@@ -72,7 +72,6 @@ type Grant struct {
 }
 
 type Service interface {
-
 	// Init 执行初始化操作
 	Init() error
 
@@ -222,8 +221,17 @@ type Service interface {
 	// GetPermissionTreeWithRole 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleName，则返回的权限数据中将附带该权限是否已授权给该 roleName
 	GetPermissionTreeWithRole(ctx int64, roleName string, status Status) (result []*Group, err error)
 
-	// Check 验证 targetId 是否拥有指定权限
-	Check(ctx int64, targetId string, permissionName string) bool
+	// CheckPermission 验证 targetId 是否拥有指定权限
+	CheckPermission(ctx int64, targetId string, permissionName string) bool
+
+	// CheckPermissionWithId 验证 targetId 是否拥有指定权限
+	CheckPermissionWithId(ctx int64, targetId string, permissionId int64) bool
+
+	// CheckRole 验证 targetId 是否拥有指定角色
+	CheckRole(ctx int64, targetId string, roleName string) bool
+
+	// CheckRoleWithId 验证 targetId 是否拥有指定角色
+	CheckRoleWithId(ctx int64, targetId string, roleId int64) bool
 
 	// CleanCache 清除缓存，如果 targetId 为空字符串或者 targetId 的值为星号(*)，则会清空所有缓存
 	CleanCache(ctx int64, targetId string)
