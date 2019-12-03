@@ -5,10 +5,10 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/smartwalle/dbr"
-		"github.com/smartwalle/odin"
+	"github.com/smartwalle/dbs"
+	"github.com/smartwalle/odin"
 	"github.com/smartwalle/odin/service/repository/mysql"
 	"github.com/smartwalle/odin/service/repository/redis"
-	"github.com/smartwalle/dbs"
 )
 
 func main() {

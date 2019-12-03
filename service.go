@@ -9,7 +9,7 @@ type Repository interface {
 
 	WithTx(tx dbs.TX) Repository
 
-	// InitTable 初始化数据库
+	// InitTable 初始化数据库表
 	InitTable() error
 
 	// group
@@ -93,6 +93,15 @@ func NewService(repo Repository) Service {
 	var s = &odinService{}
 	s.repo = repo
 	return s
+}
+
+func (this *odinService) Init() error {
+	var tx, nRepo = this.repo.BeginTx()
+	if err := nRepo.InitTable(); err != nil {
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 // group

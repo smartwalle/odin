@@ -50,41 +50,37 @@ func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
 }
 
 func (this *odinRepository) InitTable() error {
-	var tx = dbs.MustTx(this.db)
+	var rb *dbs.RawBuilder
 
-	var cb *dbs.RawBuilder
-
-	cb = dbs.NewBuilder("")
-	cb.Format(odinGroupSQL, this.tblGroup)
-	if _, err := cb.Exec(tx); err != nil {
+	rb = dbs.NewBuilder("")
+	rb.Format(odinGroupSQL, this.tblGroup)
+	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
-	cb = dbs.NewBuilder("")
-	cb.Format(odinPermissionSQL, this.tblPermission)
-	if _, err := cb.Exec(tx); err != nil {
+	rb = dbs.NewBuilder("")
+	rb.Format(odinPermissionSQL, this.tblPermission)
+	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
-	cb = dbs.NewBuilder("")
-	cb.Format(odinRoleSQL, this.tblRole)
-	if _, err := cb.Exec(tx); err != nil {
+	rb = dbs.NewBuilder("")
+	rb.Format(odinRoleSQL, this.tblRole)
+	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
-	cb = dbs.NewBuilder("")
-	cb.Format(odinRolePermissionSQL, this.tblRolePermission)
-	if _, err := cb.Exec(tx); err != nil {
+	rb = dbs.NewBuilder("")
+	rb.Format(odinRolePermissionSQL, this.tblRolePermission)
+	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
-	cb = dbs.NewBuilder("")
-	cb.Format(odinGrantSQL, this.tblGrant)
-	if _, err := cb.Exec(tx); err != nil {
+	rb = dbs.NewBuilder("")
+	rb.Format(odinGrantSQL, this.tblGrant)
+	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
-
-	tx.Commit()
 	return nil
 }
 

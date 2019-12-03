@@ -72,6 +72,10 @@ type Grant struct {
 }
 
 type Service interface {
+
+	// Init 执行初始化操作
+	Init() error
+
 	// group
 
 	// GetPermissionGroups 获取权限组列表
