@@ -21,6 +21,8 @@ func main() {
 	var rRepo = redis.NewRepository(r, "v2", sRepo)
 	var s = odin.NewService(rRepo)
 
+	s.Init()
+
 	// 添加权限组
 	fmt.Println(s.AddPermissionGroup(1, "pg1", "权限组1", odin.Enable))
 	fmt.Println(s.AddPermissionGroup(1, "pg2", "权限组2", odin.Enable))

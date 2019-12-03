@@ -1102,7 +1102,7 @@ func (this *odinService) RevokeAllRole(ctx int64, targetId string) (err error) {
 	return this.repo.RevokeAllRole(ctx, targetId)
 }
 
-//
+// 其它
 
 func (this *odinService) GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error) {
 	role, err := this.repo.GetRoleWithId(ctx, roleId)

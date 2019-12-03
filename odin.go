@@ -202,12 +202,12 @@ type Service interface {
 	// RevokeAllRole 取消对 targetId 的所有角色授权
 	RevokeAllRole(ctx int64, targetId string) (err error)
 
-	//
+	// 其它
 
-	// GetPermissionsWithRoleId 根据 roleId 获取权限列表
+	// GetPermissionsWithRoleId 获取已授权给 roleId 的权限列表
 	GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
 
-	// GetPermissionsWithRole 根据 roleName 获取权限列表
+	// GetPermissionsWithRole 获取已授权给 roleName 的权限列表
 	GetPermissionsWithRole(ctx int64, roleName string) (result []*Permission, err error)
 
 	// GetGrantedRoles 获取已授权给 targetId 的角色列表
