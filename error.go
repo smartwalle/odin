@@ -13,4 +13,6 @@ var (
 	ErrGroupNotExist        = errors.New("组不存在")
 	ErrGroupNameExists      = errors.New("组名已存在")
 	ErrRevokeFailed         = errors.New("取消授权失败")
+	ErrInvalidParentRole    = errors.New("无效的父角色")
+	ErrPermissionDenied     = errors.New("没有操作权限")
 )

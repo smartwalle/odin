@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetRoles(ctx int64, targetId string, status odin.Status, keywords string) (result []*odin.Role, err error) {
+func (this *odinRepository) GetRoles(ctx int64, targetId string, withChildren bool, parentId int64, status odin.Status, keywords string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.created_on", "r.updated_on")
 	sb.From(this.tblRole, "AS r")
@@ -15,6 +15,9 @@ func (this *odinRepository) GetRoles(ctx int64, targetId string, status odin.Sta
 		sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id AND rg.target_id = ?", targetId)
 	}
 	sb.Where("r.ctx = ?", ctx)
+	if parentId >= 0 {
+		sb.Where("r.parent_id = ?", parentId)
+	}
 	if status != 0 {
 		sb.Where("r.status = ?", status)
 	}
@@ -29,6 +32,15 @@ func (this *odinRepository) GetRoles(ctx int64, targetId string, status odin.Sta
 	if err = sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}
+
+	if withChildren {
+		for _, role := range result {
+			if role.Children, err = this.GetRoles(ctx, targetId, withChildren, role.Id, status, keywords); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return result, nil
 }
 

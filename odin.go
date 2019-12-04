@@ -53,6 +53,7 @@ type Role struct {
 	CreatedOn      *time.Time    `json:"created_on"                      sql:"created_on"`
 	UpdatedOn      *time.Time    `json:"updated_on"                      sql:"updated_on"`
 	PermissionList []*Permission `json:"permission_list,omitempty"       sql:"-"`
+	Children       []*Role       `json:"children,omitempty"`
 }
 
 type RolePermission struct {
@@ -159,6 +160,12 @@ type Service interface {
 	// GetRoles 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
 	GetRoles(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
 
+	// GetRolesTreeWithParentId 获取角色 parentRoleId 的子角色列表
+	GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status) (result []*Role, err error)
+
+	// GetRolesTreeWithParent 获取角色 parentRoleName 的子角色列表
+	GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error)
+
 	// GetRoleWithId 根据 roleId 获取角色信息
 	GetRoleWithId(ctx, roleId int64) (result *Role, err error)
 
@@ -167,6 +174,12 @@ type Service interface {
 
 	// AddRole 添加角色
 	AddRole(ctx int64, roleName, aliasName, description string, status Status) (result int64, err error)
+
+	// AddRoleWithParent 添加角色，新添加的角色将作为 parentRoleName 的子角色，调用时应该确认操作者是否有访问 parentRoleName 的权限
+	AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error)
+
+	// AddRoleWithParentId 添加角色，新添加的角色将作为 parentRoleId 的子角色，调用时应该确认操作者是否有访问 parentRoleId 的权限
+	AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error)
 
 	// UpdateRoleWithId 根据 roleId 更新角色信息
 	UpdateRoleWithId(ctx, roleId int64, aliasName, description string, status Status) (err error)
@@ -212,14 +225,20 @@ type Service interface {
 	// GetGrantedRoles 获取已授权给 targetId 的角色列表
 	GetGrantedRoles(ctx int64, targetId string) (result []*Role, err error)
 
+	// GetRolesWithTargetId 获取已授权给 targetId 的角色列表，与方法 GetGrantedRoles 作用相同
+	GetRolesWithTargetId(ctx int64, targetId string) (result []*Role, err error)
+
 	// GetGrantedPermissions 获取已授权给 targetId 的权限列表
 	GetGrantedPermissions(ctx int64, targetId string) (result []*Permission, err error)
 
-	// GetPermissionTreeWithRole 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleId，则返回的权限数据中将附带该权限是否已授权给该 roleId
-	GetPermissionTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error)
+	// GetPermissionsWithTargetId 获取已授权给 targetId 的权限列表，与方法 GetGrantedPermissions 作用相同
+	GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error)
 
-	// GetPermissionTreeWithRole 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleName，则返回的权限数据中将附带该权限是否已授权给该 roleName
-	GetPermissionTreeWithRole(ctx int64, roleName string, status Status) (result []*Group, err error)
+	// GetPermissionsTreeWithRoleId 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleId，则返回的权限数据中将附带该权限是否已授权给该 roleId
+	GetPermissionsTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error)
+
+	// GetPermissionsTreeWithRole 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleName，则返回的权限数据中将附带该权限是否已授权给该 roleName
+	GetPermissionsTreeWithRole(ctx int64, roleName string, status Status) (result []*Group, err error)
 
 	// CheckPermission 验证 targetId 是否拥有指定权限
 	CheckPermission(ctx int64, targetId string, permissionName string) bool
@@ -235,18 +254,4 @@ type Service interface {
 
 	// CleanCache 清除缓存，如果 targetId 为空字符串或者 targetId 的值为星号(*)，则会清空所有缓存
 	CleanCache(ctx int64, targetId string)
-
-	// 角色继承
-
-	// AddRoleWithParent 添加角色，新添加的角色将作为 parentRoleName 的子角色，调用时应该确认操作者是否有访问 parentRoleName 的权限
-	AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error)
-
-	// AddRoleWithParentId 添加角色，新添加的角色将作为 parentRoleId 的子角色，调用时应该确认操作者是否有访问 parentRoleId 的权限
-	AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error)
-
-	// GetRolesWithTargetId 获取 targetId 已拥有的角色列表，与方法 GetGrantedRoles 作用相同
-	GetRolesWithTargetId(ctx int64, targetId string) (result []*Role, err error)
-
-	// GetPermissionsWithTargetId 获取 targetId 已拥有的权限列表，与方法 GetGrantedPermissions 作用相同
-	GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error)
 }

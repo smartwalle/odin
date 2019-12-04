@@ -177,6 +177,22 @@ func (this *odinRepository) RevokePermissionWithIds(ctx, roleId int64, permissio
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
 	}
+
+	// 处理子角色
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("r.id", "r.ctx", "r.parent_id")
+	sb.From(this.tblRole, "AS r")
+	sb.Where("r.ctx = ? AND r.parent_id = ?", ctx, roleId)
+	var roles []*odin.Role
+	if err = sb.Scan(this.db, &roles); err != nil {
+		return err
+	}
+	for _, role := range roles {
+		if err = this.RevokePermissionWithIds(ctx, role.Id, permissionIds...); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -187,6 +203,21 @@ func (this *odinRepository) RevokeAllPermission(ctx, roleId int64) (err error) {
 	rb.Where("role_id = ?", roleId)
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
+	}
+
+	// 处理子角色
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("r.id", "r.ctx", "r.parent_id")
+	sb.From(this.tblRole, "AS r")
+	sb.Where("r.ctx = ? AND r.parent_id = ?", ctx, roleId)
+	var roles []*odin.Role
+	if err = sb.Scan(this.db, &roles); err != nil {
+		return err
+	}
+	for _, role := range roles {
+		if err = this.RevokeAllPermission(ctx, role.Id); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -56,7 +56,8 @@ type Repository interface {
 
 	// role
 	// GetRoles 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
-	GetRoles(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
+	// parentId 大于等于 0 的时候，则表示查询 parentId 的子角色列表
+	GetRoles(ctx int64, targetId string, withChildren bool, parentId int64, status Status, keywords string) (result []*Role, err error)
 
 	GetRolesWithIds(ctx int64, roleIds ...int64) (result []*Role, err error)
 
@@ -501,6 +502,34 @@ func (this *odinService) GrantPermissionWithId(ctx int64, roleId int64, permissi
 		return ErrRoleNotExist
 	}
 
+	// 获取当前角色的父角色
+	if role.ParentId > 0 {
+		parent, err := nRepo.GetRoleWithId(ctx, role.ParentId)
+		if err != nil {
+			return err
+		}
+		if parent == nil || parent.Status != Enable {
+			return ErrInvalidParentRole
+		}
+
+		// 验证将要授权的权限是否超出父角色的权限
+		parentPermissions, err := nRepo.GetPermissionsWithRoleId(ctx, parent.Id)
+		if err != nil {
+			return err
+		}
+
+		var permissionMap = make(map[int64]struct{})
+		for _, p := range parentPermissions {
+			permissionMap[p.Id] = struct{}{}
+		}
+
+		for _, pId := range permissionIds {
+			if _, ok := permissionMap[pId]; ok == false {
+				return ErrPermissionDenied
+			}
+		}
+	}
+
 	permissionList, err := nRepo.GetPermissionsWithIds(ctx, permissionIds...)
 	if err != nil {
 		return err
@@ -544,6 +573,34 @@ func (this *odinService) GrantPermission(ctx int64, roleName string, permissionN
 	}
 	if role == nil {
 		return ErrRoleNotExist
+	}
+
+	// 获取当前角色的父角色
+	if role.ParentId > 0 {
+		parent, err := nRepo.GetRoleWithId(ctx, role.ParentId)
+		if err != nil {
+			return err
+		}
+		if parent == nil || parent.Status != Enable {
+			return ErrInvalidParentRole
+		}
+
+		// 验证将要授权的权限是否超出父角色的权限
+		parentPermissions, err := nRepo.GetPermissionsWithRoleId(ctx, parent.Id)
+		if err != nil {
+			return err
+		}
+
+		var permissionMap = make(map[string]struct{})
+		for _, p := range parentPermissions {
+			permissionMap[p.Name] = struct{}{}
+		}
+
+		for _, pName := range permissionNames {
+			if _, ok := permissionMap[pName]; ok == false {
+				return ErrPermissionDenied
+			}
+		}
 	}
 
 	permissionList, err := nRepo.GetPermissionsWithNames(ctx, permissionNames...)
@@ -591,21 +648,67 @@ func (this *odinService) ReGrantPermissionWithId(ctx int64, roleId int64, permis
 		return ErrRoleNotExist
 	}
 
-	permissionList, err := nRepo.GetPermissionsWithIds(ctx, permissionIds...)
+	// 获取当前角色的父角色
+	if role.ParentId > 0 {
+		parent, err := nRepo.GetRoleWithId(ctx, role.ParentId)
+		if err != nil {
+			return err
+		}
+		if parent == nil || parent.Status != Enable {
+			return ErrInvalidParentRole
+		}
+
+		// 验证将要授权的权限是否超出父角色的权限
+		parentPermissions, err := nRepo.GetPermissionsWithRoleId(ctx, parent.Id)
+		if err != nil {
+			return err
+		}
+
+		var permissionMap = make(map[int64]struct{})
+		for _, p := range parentPermissions {
+			permissionMap[p.Id] = struct{}{}
+		}
+
+		for _, pId := range permissionIds {
+			if _, ok := permissionMap[pId]; ok == false {
+				return ErrPermissionDenied
+			}
+		}
+	}
+
+	permissions, err := nRepo.GetPermissionsWithIds(ctx, permissionIds...)
 	if err != nil {
 		return err
 	}
 
-	var nIds = make([]int64, 0, len(permissionList))
-	for _, role := range permissionList {
+	var nIds = make([]int64, 0, len(permissions))
+	var nPermissionMap = make(map[int64]struct{})
+	for _, role := range permissions {
 		nIds = append(nIds, role.Id)
+		nPermissionMap[role.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
 	}
 
-	if err = nRepo.RevokeAllPermission(ctx, role.Id); err != nil {
+	// 查出原有的权限
+	rolePermissions, err := nRepo.GetPermissionsWithRoleId(ctx, roleId)
+	if err != nil {
 		return err
+	}
+
+	// 查出需要取消掉权限
+	var revokeIds = make([]int64, 0, len(rolePermissions))
+	for _, p := range rolePermissions {
+		if _, ok := nPermissionMap[p.Id]; ok == false {
+			revokeIds = append(revokeIds, p.Id)
+		}
+	}
+
+	if len(revokeIds) > 0 {
+		if err = nRepo.RevokePermissionWithIds(ctx, role.Id, revokeIds...); err != nil {
+			return err
+		}
 	}
 
 	if err = nRepo.GrantPermissionWithIds(ctx, role.Id, nIds...); err != nil {
@@ -640,21 +743,67 @@ func (this *odinService) ReGrantPermission(ctx int64, roleName string, permissio
 		return ErrRoleNotExist
 	}
 
+	// 获取当前角色的父角色
+	if role.ParentId > 0 {
+		parent, err := nRepo.GetRoleWithId(ctx, role.ParentId)
+		if err != nil {
+			return err
+		}
+		if parent == nil || parent.Status != Enable {
+			return ErrInvalidParentRole
+		}
+
+		// 验证将要授权的权限是否超出父角色的权限
+		parentPermissions, err := nRepo.GetPermissionsWithRoleId(ctx, parent.Id)
+		if err != nil {
+			return err
+		}
+
+		var permissionMap = make(map[string]struct{})
+		for _, p := range parentPermissions {
+			permissionMap[p.Name] = struct{}{}
+		}
+
+		for _, pName := range permissionNames {
+			if _, ok := permissionMap[pName]; ok == false {
+				return ErrPermissionDenied
+			}
+		}
+	}
+
 	permissionList, err := nRepo.GetPermissionsWithNames(ctx, permissionNames...)
 	if err != nil {
 		return err
 	}
 
 	var nIds = make([]int64, 0, len(permissionList))
+	var nPermissionMap = make(map[int64]struct{})
 	for _, role := range permissionList {
 		nIds = append(nIds, role.Id)
+		nPermissionMap[role.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
 	}
 
-	if err = nRepo.RevokeAllPermission(ctx, role.Id); err != nil {
+	// 查出原有的权限
+	rolePermissions, err := nRepo.GetPermissionsWithRoleId(ctx, role.Id)
+	if err != nil {
 		return err
+	}
+
+	// 查出需要取消掉权限
+	var revokeIds = make([]int64, 0, len(rolePermissions))
+	for _, p := range rolePermissions {
+		if _, ok := nPermissionMap[p.Id]; ok == false {
+			revokeIds = append(revokeIds, p.Id)
+		}
+	}
+
+	if len(revokeIds) > 0 {
+		if err = nRepo.RevokePermissionWithIds(ctx, role.Id, revokeIds...); err != nil {
+			return err
+		}
 	}
 
 	if err = nRepo.GrantPermissionWithIds(ctx, role.Id, nIds...); err != nil {
@@ -666,7 +815,18 @@ func (this *odinService) ReGrantPermission(ctx int64, roleName string, permissio
 }
 
 func (this *odinService) RevokePermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error) {
-	return this.repo.RevokePermissionWithIds(ctx, roleId, permissionIds...)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err = nRepo.RevokePermissionWithIds(ctx, roleId, permissionIds...); err != nil {
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 func (this *odinService) RevokePermission(ctx int64, roleName string, permissionNames ...string) (err error) {
@@ -715,7 +875,18 @@ func (this *odinService) RevokePermission(ctx int64, roleName string, permission
 }
 
 func (this *odinService) RevokeAllPermissionWithId(ctx, roleId int64) (err error) {
-	return this.repo.RevokeAllPermission(ctx, roleId)
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err = nRepo.RevokeAllPermission(ctx, roleId); err != nil {
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 func (this *odinService) RevokeAllPermission(ctx int64, roleName string) (err error) {
@@ -745,7 +916,41 @@ func (this *odinService) RevokeAllPermission(ctx int64, roleName string) (err er
 // role
 
 func (this *odinService) GetRoles(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error) {
-	return this.repo.GetRoles(ctx, targetId, status, keywords)
+	return this.repo.GetRoles(ctx, targetId, false, -1, status, keywords)
+}
+
+func (this *odinService) GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status) (result []*Role, err error) {
+	if parentRoleId < 0 {
+		parentRoleId = 0
+	}
+	if parentRoleId > 0 {
+		// 验证 parentRoleId 是否存在
+		role, err := this.repo.GetRoleWithId(ctx, parentRoleId)
+		if err != nil {
+			return nil, err
+		}
+		if role == nil {
+			return nil, ErrRoleNotExist
+		}
+		parentRoleId = role.Id
+	}
+	return this.repo.GetRoles(ctx, "", true, parentRoleId, status, "")
+}
+
+func (this *odinService) GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error) {
+	var parentRoleId int64 = 0
+	if parentRoleName != "" {
+		// 验证 parentRoleName 是否存在
+		role, err := this.repo.GetRoleWithName(ctx, parentRoleName)
+		if err != nil {
+			return nil, err
+		}
+		if role == nil {
+			return nil, ErrRoleNotExist
+		}
+		parentRoleId = role.Id
+	}
+	return this.repo.GetRoles(ctx, "", true, parentRoleId, status, "")
 }
 
 func (this *odinService) GetRoleWithId(ctx, roleId int64) (result *Role, err error) {
@@ -794,6 +999,84 @@ func (this *odinService) AddRole(ctx int64, roleName, aliasName, description str
 	}
 
 	if result, err = nRepo.AddRole(ctx, 0, roleName, aliasName, description, status); err != nil {
+		return 0, err
+	}
+
+	tx.Commit()
+	return result, nil
+}
+
+func (this *odinService) AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var parentRoleId int64 = 0
+	if parentRoleName != "" {
+		// 验证 parentRoleName 是否存在
+		parent, err := nRepo.GetRoleWithName(ctx, parentRoleName)
+		if err != nil {
+			return 0, err
+		}
+		if parent == nil {
+			return 0, ErrParentRoleNotExist
+		}
+		parentRoleId = parent.Id
+	}
+
+	// 验证 name 是否已经存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return 0, err
+	}
+	if role != nil {
+		return 0, ErrRoleNameExists
+	}
+
+	if result, err = nRepo.AddRole(ctx, parentRoleId, roleName, aliasName, description, status); err != nil {
+		return 0, err
+	}
+
+	tx.Commit()
+	return result, nil
+}
+
+func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if parentRoleId < 0 {
+		return 0, ErrParentRoleNotExist
+	}
+
+	if parentRoleId > 0 {
+		// 验证 parentRoleName 是否存在
+		parent, err := nRepo.GetRoleWithId(ctx, parentRoleId)
+		if err != nil {
+			return 0, err
+		}
+		if parent == nil {
+			return 0, ErrParentRoleNotExist
+		}
+	}
+
+	// 验证 name 是否已经存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return 0, err
+	}
+	if role != nil {
+		return 0, ErrRoleNameExists
+	}
+
+	if result, err = nRepo.AddRole(ctx, parentRoleId, roleName, aliasName, description, status); err != nil {
 		return 0, err
 	}
 
@@ -1136,11 +1419,19 @@ func (this *odinService) GetGrantedRoles(ctx int64, targetId string) (result []*
 	return this.repo.GetGrantedRoles(ctx, targetId)
 }
 
+func (this *odinService) GetRolesWithTargetId(ctx int64, targetId string) (result []*Role, err error) {
+	return this.repo.GetGrantedRoles(ctx, targetId)
+}
+
 func (this *odinService) GetGrantedPermissions(ctx int64, targetId string) (result []*Permission, err error) {
 	return this.repo.GetGrantedPermissions(ctx, targetId)
 }
 
-func (this *odinService) GetPermissionTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error) {
+func (this *odinService) GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error) {
+	return this.repo.GetGrantedPermissions(ctx, targetId)
+}
+
+func (this *odinService) GetPermissionsTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1193,7 +1484,7 @@ func (this *odinService) GetPermissionTreeWithRoleId(ctx, roleId int64, status S
 	return result, nil
 }
 
-func (this *odinService) GetPermissionTreeWithRole(ctx int64, roleName string, status Status) (result []*Group, err error) {
+func (this *odinService) GetPermissionsTreeWithRole(ctx int64, roleName string, status Status) (result []*Group, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1265,90 +1556,4 @@ func (this *odinService) CheckRoleWithId(ctx int64, targetId string, roleId int6
 
 func (this *odinService) CleanCache(ctx int64, targetId string) {
 	this.repo.CleanCache(ctx, targetId)
-}
-
-// 角色继承
-
-func (this *odinService) AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error) {
-	var tx, nRepo = this.repo.BeginTx()
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	if parentRoleName == "" {
-		return 0, ErrParentRoleNotExist
-	}
-
-	// 验证 parentRoleName 不为存在
-	parent, err := nRepo.GetRoleWithName(ctx, parentRoleName)
-	if err != nil {
-		return 0, err
-	}
-	if parent == nil {
-		return 0, ErrParentRoleNotExist
-	}
-
-	// 验证 name 是否已经存在
-	role, err := nRepo.GetRoleWithName(ctx, roleName)
-	if err != nil {
-		return 0, err
-	}
-	if role != nil {
-		return 0, ErrRoleNameExists
-	}
-
-	if result, err = nRepo.AddRole(ctx, parent.Id, roleName, aliasName, description, status); err != nil {
-		return 0, err
-	}
-
-	tx.Commit()
-	return result, nil
-}
-
-func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
-	var tx, nRepo = this.repo.BeginTx()
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	if parentRoleId <= 0 {
-		return 0, ErrParentRoleNotExist
-	}
-
-	// 验证 parentRoleName 不为存在
-	parent, err := nRepo.GetRoleWithId(ctx, parentRoleId)
-	if err != nil {
-		return 0, err
-	}
-	if parent == nil {
-		return 0, ErrParentRoleNotExist
-	}
-
-	// 验证 name 是否已经存在
-	role, err := nRepo.GetRoleWithName(ctx, roleName)
-	if err != nil {
-		return 0, err
-	}
-	if role != nil {
-		return 0, ErrRoleNameExists
-	}
-
-	if result, err = nRepo.AddRole(ctx, parent.Id, roleName, aliasName, description, status); err != nil {
-		return 0, err
-	}
-
-	tx.Commit()
-	return result, nil
-}
-
-func (this *odinService) GetRolesWithTargetId(ctx int64, targetId string) (result []*Role, err error) {
-	return this.repo.GetGrantedRoles(ctx, targetId)
-}
-
-func (this *odinService) GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error) {
-	return this.repo.GetGrantedPermissions(ctx, targetId)
 }
