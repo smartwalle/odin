@@ -134,7 +134,7 @@ type Service interface {
 	// GrantPermissionWithId 授予权限给角色
 	GrantPermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error)
 
-	// GrantPermissionWithId 授予权限给角色
+	// GrantPermission 授予权限给角色
 	GrantPermission(ctx int64, roleName string, permissionNames ...string) (err error)
 
 	// ReGrantPermissionWithId 授予权限给角色，会将原有的权限先取消掉
