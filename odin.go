@@ -244,9 +244,9 @@ type Service interface {
 	// AddRoleWithParentId 添加角色，新添加的角色将作为 parentRoleId 的子角色，调用时应该确认操作者是否有访问 parentRoleId 的权限
 	AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error)
 
-	// GetRolesWithTargetId 获取 targetId 已拥有的角色列表，和方法 GetGrantedRoles 作用相同
+	// GetRolesWithTargetId 获取 targetId 已拥有的角色列表，与方法 GetGrantedRoles 作用相同
 	GetRolesWithTargetId(ctx int64, targetId string) (result []*Role, err error)
 
-	// GetPermissionsWithTargetId 获取 targetId 已拥有的权限列表，和方法 GetGrantedPermissions 作用相同
+	// GetPermissionsWithTargetId 获取 targetId 已拥有的权限列表，与方法 GetGrantedPermissions 作用相同
 	GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error)
 }
