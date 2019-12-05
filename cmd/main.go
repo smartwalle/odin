@@ -88,9 +88,14 @@ func main() {
 	//
 	//s.RevokeAllPermission(1, "yfzj")
 
-	roles, _ :=s.GetRolesTreeWithParent(1, "admin", odin.Enable, "")
+	roles, _ :=s.GetRolesTreeWithParent(1, "admin", odin.Enable)
 	printroles(0, roles)
 
+	fmt.Println("------")
+	s.GrantRole(1, "t1", "yfzj")
+	s.GrantRole(1, "t1", "cwzj")
+	roles, _ = s.GetRolesTreeWithTarget(1, "t1", odin.Enable)
+	printroles(0, roles)
 	//// 添加角色信息
 	//fmt.Println(s.AddRole(1, "r1", "角色1", "", odin.Enable))
 	//fmt.Println(s.AddRole(1, "r2", "角色2", "", odin.Enable))
@@ -150,7 +155,7 @@ func printroles(level int, roles []*odin.Role) {
 			fmt.Print("-")
 		}
 
-		fmt.Println("  ", role.ParentId, role.Id, role.Name)
+		fmt.Println("  ", role.ParentId, role.Id, role.Name, role.Granted)
 		if role.Children != nil {
 			printroles(level+1, role.Children)
 		}

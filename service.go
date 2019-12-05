@@ -924,40 +924,6 @@ func (this *odinService) GetRoles(ctx int64, status Status, keywords string, isG
 	return this.repo.GetRoles(ctx, -1, status, keywords, isGrantedToTarget, false)
 }
 
-func (this *odinService) GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status, keywords string) (result []*Role, err error) {
-	if parentRoleId < 0 {
-		parentRoleId = 0
-	}
-	if parentRoleId > 0 {
-		// 验证 parentRoleId 是否存在
-		role, err := this.repo.GetRoleWithId(ctx, parentRoleId)
-		if err != nil {
-			return nil, err
-		}
-		if role == nil {
-			return nil, ErrRoleNotExist
-		}
-		parentRoleId = role.Id
-	}
-	return this.repo.GetRoles(ctx, parentRoleId, status, keywords, "", true)
-}
-
-func (this *odinService) GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status, keywords string) (result []*Role, err error) {
-	var parentRoleId int64 = 0
-	if parentRoleName != "" {
-		// 验证 parentRoleName 是否存在
-		role, err := this.repo.GetRoleWithName(ctx, parentRoleName)
-		if err != nil {
-			return nil, err
-		}
-		if role == nil {
-			return nil, ErrRoleNotExist
-		}
-		parentRoleId = role.Id
-	}
-	return this.repo.GetRoles(ctx, parentRoleId, status, keywords, "", true)
-}
-
 func (this *odinService) GetRoleWithId(ctx, roleId int64) (result *Role, err error) {
 	result, err = this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
@@ -1398,6 +1364,79 @@ func (this *odinService) RevokeAllRole(ctx int64, target string) (err error) {
 
 // 其它
 
+func (this *odinService) GetGrantedRoles(ctx int64, target string) (result []*Role, err error) {
+	return this.repo.GetGrantedRoles(ctx, target)
+}
+
+func (this *odinService) GetRolesWithTarget(ctx int64, target string) (result []*Role, err error) {
+	return this.repo.GetGrantedRoles(ctx, target)
+}
+
+func (this *odinService) GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status) (result []*Role, err error) {
+	if parentRoleId < 0 {
+		parentRoleId = 0
+	}
+	if parentRoleId > 0 {
+		// 验证 parentRoleId 是否存在
+		role, err := this.repo.GetRoleWithId(ctx, parentRoleId)
+		if err != nil {
+			return nil, err
+		}
+		if role == nil {
+			return nil, ErrRoleNotExist
+		}
+		parentRoleId = role.Id
+	}
+	return this.repo.GetRoles(ctx, parentRoleId, status, "", "", true)
+}
+
+func (this *odinService) GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error) {
+	var parentRoleId int64 = 0
+	if parentRoleName != "" {
+		// 验证 parentRoleName 是否存在
+		role, err := this.repo.GetRoleWithName(ctx, parentRoleName)
+		if err != nil {
+			return nil, err
+		}
+		if role == nil {
+			return nil, ErrRoleNotExist
+		}
+		parentRoleId = role.Id
+	}
+	return this.repo.GetRoles(ctx, parentRoleId, status, "", "", true)
+}
+
+func (this *odinService) GetRolesTreeWithTarget(ctx int64, target string, status Status) (result []*Role, err error) {
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	result, err = nRepo.GetGrantedRoles(ctx, target)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, role := range result {
+		if role.Children, err = nRepo.GetRoles(ctx, role.Id, status, "", target, true); err != nil {
+			return nil, err
+		}
+	}
+
+	tx.Commit()
+	return result, nil
+}
+
+func (this *odinService) CheckRole(ctx int64, target string, roleName string) bool {
+	return this.repo.CheckRole(ctx, target, roleName)
+}
+
+func (this *odinService) CheckRoleWithId(ctx int64, target string, roleId int64) bool {
+	return this.repo.CheckRoleWithId(ctx, target, roleId)
+}
+
 func (this *odinService) GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error) {
 	role, err := this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
@@ -1418,14 +1457,6 @@ func (this *odinService) GetPermissionsWithRole(ctx int64, roleName string) (res
 		return nil, ErrRoleNotExist
 	}
 	return this.repo.GetPermissionsWithRoleId(ctx, role.Id)
-}
-
-func (this *odinService) GetGrantedRoles(ctx int64, target string) (result []*Role, err error) {
-	return this.repo.GetGrantedRoles(ctx, target)
-}
-
-func (this *odinService) GetRolesWithTarget(ctx int64, target string) (result []*Role, err error) {
-	return this.repo.GetGrantedRoles(ctx, target)
 }
 
 func (this *odinService) GetGrantedPermissions(ctx int64, target string) (result []*Permission, err error) {
@@ -1557,14 +1588,6 @@ func (this *odinService) CheckPermission(ctx int64, target string, permissionNam
 
 func (this *odinService) CheckPermissionWithId(ctx int64, target string, permissionId int64) bool {
 	return this.repo.CheckPermissionWithId(ctx, target, permissionId)
-}
-
-func (this *odinService) CheckRole(ctx int64, target string, roleName string) bool {
-	return this.repo.CheckRole(ctx, target, roleName)
-}
-
-func (this *odinService) CheckRoleWithId(ctx int64, target string, roleId int64) bool {
-	return this.repo.CheckRoleWithId(ctx, target, roleId)
 }
 
 func (this *odinService) CleanCache(ctx int64, target string) {

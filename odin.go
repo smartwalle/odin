@@ -162,12 +162,6 @@ type Service interface {
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
 	GetRoles(ctx int64, status Status, keywords string, isGrantedToTarget string) (result []*Role, err error)
 
-	// GetRolesTreeWithParentId 获取角色树
-	GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status, keywords string) (result []*Role, err error)
-
-	// GetRolesTreeWithParent 获取角色树
-	GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status, keywords string) (result []*Role, err error)
-
 	// GetRoleWithId 根据 roleId 获取角色信息
 	GetRoleWithId(ctx, roleId int64) (result *Role, err error)
 
@@ -218,17 +212,32 @@ type Service interface {
 
 	// 其它
 
-	// GetPermissionsWithRoleId 获取已授权给 roleId 的权限列表
-	GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
-
-	// GetPermissionsWithRole 获取已授权给 roleName 的权限列表
-	GetPermissionsWithRole(ctx int64, roleName string) (result []*Permission, err error)
-
 	// GetGrantedRoles 获取已授权给 target 的角色列表
 	GetGrantedRoles(ctx int64, target string) (result []*Role, err error)
 
 	// GetRolesWithTarget 获取已授权给 target 的角色列表，与方法 GetGrantedRoles 作用相同
 	GetRolesWithTarget(ctx int64, target string) (result []*Role, err error)
+
+	// GetRolesTreeWithParentId 获取角色树
+	GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status) (result []*Role, err error)
+
+	// GetRolesTreeWithParent 获取角色树
+	GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error)
+
+	// GetRolesTreeWithTarget 获取已授权给 target 的角色，及其角色的子角色，返回树状结构
+	GetRolesTreeWithTarget(ctx int64, target string, status Status) (result []*Role, err error)
+
+	// CheckRole 验证 target 是否拥有指定角色
+	CheckRole(ctx int64, target string, roleName string) bool
+
+	// CheckRoleWithId 验证 target 是否拥有指定角色
+	CheckRoleWithId(ctx int64, target string, roleId int64) bool
+
+	// GetPermissionsWithRoleId 获取已授权给 roleId 的权限列表
+	GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
+
+	// GetPermissionsWithRole 获取已授权给 roleName 的权限列表
+	GetPermissionsWithRole(ctx int64, roleName string) (result []*Permission, err error)
 
 	// GetGrantedPermissions 获取已授权给 target 的权限列表
 	GetGrantedPermissions(ctx int64, target string) (result []*Permission, err error)
@@ -251,12 +260,6 @@ type Service interface {
 
 	// CheckPermissionWithId 验证 target 是否拥有指定权限
 	CheckPermissionWithId(ctx int64, target string, permissionId int64) bool
-
-	// CheckRole 验证 target 是否拥有指定角色
-	CheckRole(ctx int64, target string, roleName string) bool
-
-	// CheckRoleWithId 验证 target 是否拥有指定角色
-	CheckRoleWithId(ctx int64, target string, roleId int64) bool
 
 	// CleanCache 清除缓存，如果 target 为空字符串或者 target 的值为星号(*)，则会清空所有缓存
 	CleanCache(ctx int64, target string)
