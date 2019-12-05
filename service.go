@@ -959,28 +959,7 @@ func (this *odinService) GetRole(ctx int64, name string) (result *Role, err erro
 }
 
 func (this *odinService) AddRole(ctx int64, roleName, aliasName, description string, status Status) (result int64, err error) {
-	var tx, nRepo = this.repo.BeginTx()
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	// 验证 name 是否已经存在
-	role, err := nRepo.GetRoleWithName(ctx, roleName)
-	if err != nil {
-		return 0, err
-	}
-	if role != nil {
-		return 0, ErrRoleNameExists
-	}
-
-	if result, err = nRepo.AddRole(ctx, 0, roleName, aliasName, description, status); err != nil {
-		return 0, err
-	}
-
-	tx.Commit()
-	return result, nil
+	return this.AddRoleWithParentId(ctx, 0, roleName, aliasName, description, status)
 }
 
 func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
