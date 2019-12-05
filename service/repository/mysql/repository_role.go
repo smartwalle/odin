@@ -35,7 +35,47 @@ func (this *odinRepository) GetRoles(ctx int64, parentId int64, status odin.Stat
 
 	if withChildren {
 		for _, role := range result {
-			if role.Children, err = this.GetRoles(ctx, role.Id, status, keywords, isGrantedToTarget, withChildren); err != nil {
+			children, err := this.GetRoles(ctx, role.Id, status, keywords, isGrantedToTarget, withChildren)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, children...)
+		}
+	}
+
+	return result, nil
+}
+
+func (this *odinRepository) GetRolesTree(ctx int64, parentId int64, status odin.Status, keywords string, isGrantedToTarget string, withChildren bool) (result []*odin.Role, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.created_on", "r.updated_on")
+	sb.From(this.tblRole, "AS r")
+	if isGrantedToTarget != "" {
+		sb.Selects("IF(rg.target IS NULL, false, true) AS granted")
+		sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id AND rg.target = ?", isGrantedToTarget)
+	}
+	sb.Where("r.ctx = ?", ctx)
+	if parentId >= 0 {
+		sb.Where("r.parent_id = ?", parentId)
+	}
+	if status != 0 {
+		sb.Where("r.status = ?", status)
+	}
+	if keywords != "" {
+		var or = dbs.OR()
+		or.Append(dbs.Like("r.name", "%", keywords, "%"))
+		or.Append(dbs.Like("r.alias_name", "%", keywords, "%"))
+		sb.Where(or)
+	}
+	sb.OrderBy("r.ctx", "r.id")
+
+	if err = sb.Scan(this.db, &result); err != nil {
+		return nil, err
+	}
+
+	if withChildren {
+		for _, role := range result {
+			if role.Children, err = this.GetRolesTree(ctx, role.Id, status, keywords, isGrantedToTarget, withChildren); err != nil {
 				return nil, err
 			}
 		}

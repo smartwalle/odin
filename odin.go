@@ -171,10 +171,12 @@ type Service interface {
 	// AddRole 添加角色
 	AddRole(ctx int64, roleName, aliasName, description string, status Status) (result int64, err error)
 
-	// AddRoleWithParentId 添加角色，新添加的角色将作为 parentRoleId 的子角色，调用时应该确认操作者是否有访问 parentRoleId 的权限
+	// AddRoleWithParentId 添加角色，新添加的角色将作为 parentRoleId 的子角色
+	// 调用时应该确认操作者是否有访问 parentRoleId 的权限，即 parentRoleId 是否为当前操作者拥有的角色及其子角色
 	AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error)
 
-	// AddRoleWithParent 添加角色，新添加的角色将作为 parentRoleName 的子角色，调用时应该确认操作者是否有访问 parentRoleName 的权限
+	// AddRoleWithParent 添加角色，新添加的角色将作为 parentRoleName 的子角色
+	// 调用时应该确认操作者是否有访问 parentRoleName 的权限，即 parentRoleName 是否为当前操作者拥有的角色及其子角色
 	AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error)
 
 	// UpdateRoleWithId 根据 roleId 更新角色信息
@@ -227,11 +229,19 @@ type Service interface {
 	// GetRolesTreeWithTarget 获取已授权给 target 的角色，及其角色的子角色，返回树状结构
 	GetRolesTreeWithTarget(ctx int64, target string, status Status) (result []*Role, err error)
 
+	// CheckRoleWithId 验证 target 是否拥有指定角色
+	CheckRoleWithId(ctx int64, target string, roleId int64) bool
+
 	// CheckRole 验证 target 是否拥有指定角色
 	CheckRole(ctx int64, target string, roleName string) bool
 
-	// CheckRoleWithId 验证 target 是否拥有指定角色
-	CheckRoleWithId(ctx int64, target string, roleId int64) bool
+	// CheckRoleAccessibleWithId 验证 target 是否可以操作指定角色
+	// target 可以操作授权给它的角色的子角色，但是不能操作授权给它的角色
+	CheckRoleAccessibleWithId(ctx int64, target string, roleId int64) bool
+
+	// CheckRoleAccessible 验证 target 是否可以操作指定角色
+	// target 可以操作授权给它的角色的子角色，但是不能操作授权给它的角色
+	CheckRoleAccessible(ctx int64, target string, roleName string) bool
 
 	// GetPermissionsWithRoleId 获取已授权给 roleId 的权限列表
 	GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
@@ -255,11 +265,11 @@ type Service interface {
 	// 如果参数 limitedInParentRole 的值为 true，并且 roleName 的值不为空字符串，则返回的权限数据将限定在 roleName 的父角色拥有的权限范围内
 	GetPermissionsTreeWithRole(ctx int64, roleName string, status Status, limitedInParentRole bool) (result []*Group, err error)
 
-	// CheckPermission 验证 target 是否拥有指定权限
-	CheckPermission(ctx int64, target string, permissionName string) bool
-
 	// CheckPermissionWithId 验证 target 是否拥有指定权限
 	CheckPermissionWithId(ctx int64, target string, permissionId int64) bool
+
+	// CheckPermission 验证 target 是否拥有指定权限
+	CheckPermission(ctx int64, target string, permissionName string) bool
 
 	// CleanCache 清除缓存，如果 target 为空字符串或者 target 的值为星号(*)，则会清空所有缓存
 	CleanCache(ctx int64, target string)

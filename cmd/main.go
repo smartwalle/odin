@@ -88,12 +88,20 @@ func main() {
 	//
 	//s.RevokeAllPermission(1, "yfzj")
 
-	roles, _ :=s.GetRolesTreeWithParent(1, "admin", odin.Enable)
-	printroles(0, roles)
-
 	fmt.Println("------")
-	s.GrantRole(1, "t1", "yfzj")
-	s.GrantRole(1, "t1", "cwzj")
+	roles, _ := s.GetRoles(1, odin.Enable, "", "")
+	printroles(0, roles)
+	fmt.Println("------")
+
+	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 2))
+	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 3))
+	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 10))
+	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 11))
+	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 8))
+	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 6))
+
+	//s.GrantRole(1, "t1", "yfzj")
+	//s.GrantRole(1, "t1", "cwzj")
 	roles, _ = s.GetRolesTreeWithTarget(1, "t1", odin.Enable)
 	printroles(0, roles)
 	//// 添加角色信息

@@ -64,6 +64,12 @@ type Repository interface {
 	// 如果参数 ￿withChildren 的值为 true，则会递归查询出相关的子角色
 	GetRoles(ctx int64, parentId int64, status Status, keywords string, isGrantedToTarget string, withChildren bool) (result []*Role, err error)
 
+	// GetRolesTree 获取角色树状列表
+	// 如果参数 parentId 的值大于等于 0，则表示查询 parentId 的子角色列表
+	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
+	// 如果参数 ￿withChildren 的值为 true，则会递归查询出相关的子角色
+	GetRolesTree(ctx int64, parentId int64, status Status, keywords string, isGrantedToTarget string, withChildren bool) (result []*Role, err error)
+
 	GetRolesWithIds(ctx int64, roleIds ...int64) (result []*Role, err error)
 
 	GetRolesWithNames(ctx int64, names ...string) (result []*Role, err error)
@@ -1387,7 +1393,7 @@ func (this *odinService) GetRolesTreeWithParentId(ctx, parentRoleId int64, statu
 		}
 		parentRoleId = role.Id
 	}
-	return this.repo.GetRoles(ctx, parentRoleId, status, "", "", true)
+	return this.repo.GetRolesTree(ctx, parentRoleId, status, "", "", true)
 }
 
 func (this *odinService) GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error) {
@@ -1403,7 +1409,7 @@ func (this *odinService) GetRolesTreeWithParent(ctx int64, parentRoleName string
 		}
 		parentRoleId = role.Id
 	}
-	return this.repo.GetRoles(ctx, parentRoleId, status, "", "", true)
+	return this.repo.GetRolesTree(ctx, parentRoleId, status, "", "", true)
 }
 
 func (this *odinService) GetRolesTreeWithTarget(ctx int64, target string, status Status) (result []*Role, err error) {
@@ -1420,7 +1426,7 @@ func (this *odinService) GetRolesTreeWithTarget(ctx int64, target string, status
 	}
 
 	for _, role := range result {
-		if role.Children, err = nRepo.GetRoles(ctx, role.Id, status, "", target, true); err != nil {
+		if role.Children, err = nRepo.GetRolesTree(ctx, role.Id, status, "", target, true); err != nil {
 			return nil, err
 		}
 	}
@@ -1429,12 +1435,48 @@ func (this *odinService) GetRolesTreeWithTarget(ctx int64, target string, status
 	return result, nil
 }
 
+func (this *odinService) CheckRoleWithId(ctx int64, target string, roleId int64) bool {
+	return this.repo.CheckRoleWithId(ctx, target, roleId)
+}
+
 func (this *odinService) CheckRole(ctx int64, target string, roleName string) bool {
 	return this.repo.CheckRole(ctx, target, roleName)
 }
 
-func (this *odinService) CheckRoleWithId(ctx int64, target string, roleId int64) bool {
-	return this.repo.CheckRoleWithId(ctx, target, roleId)
+func (this *odinService) CheckRoleAccessibleWithId(ctx int64, target string, roleId int64) bool {
+	// 先判断该角色是否直接授予给该 target
+	if this.repo.CheckRoleWithId(ctx, target, roleId) == true {
+		return false
+	}
+
+	// 查询出 target 拥有的角色
+	roles, err := this.repo.GetGrantedRoles(ctx, target)
+	if err != nil {
+		return false
+	}
+	for _, role := range roles {
+		children, err := this.repo.GetRoles(ctx, role.Id, Enable, "", target, true)
+		if err != nil {
+			return false
+		}
+		for _, child := range children {
+			if child.Id == roleId {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (this *odinService) CheckRoleAccessible(ctx int64, target string, roleName string) bool {
+	role, err := this.repo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return false
+	}
+	if role == nil {
+		return false
+	}
+	return this.CheckRoleAccessibleWithId(ctx, target, role.Id)
 }
 
 func (this *odinService) GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error) {
@@ -1582,12 +1624,12 @@ func (this *odinService) GetPermissionsTreeWithRole(ctx int64, roleName string, 
 	return result, nil
 }
 
-func (this *odinService) CheckPermission(ctx int64, target string, permissionName string) bool {
-	return this.repo.CheckPermission(ctx, target, permissionName)
-}
-
 func (this *odinService) CheckPermissionWithId(ctx int64, target string, permissionId int64) bool {
 	return this.repo.CheckPermissionWithId(ctx, target, permissionId)
+}
+
+func (this *odinService) CheckPermission(ctx int64, target string, permissionName string) bool {
+	return this.repo.CheckPermission(ctx, target, permissionName)
 }
 
 func (this *odinService) CleanCache(ctx int64, target string) {
