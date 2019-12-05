@@ -73,7 +73,8 @@ type Grant struct {
 }
 
 type Service interface {
-	// Init 执行初始化操作
+	// Init 执行初始化操作，目前主要功能为初始化数据库表。
+	// 虽然此方法可以被重复调用，但是外部应该尽量控制此方法只在需要的时候调用。
 	Init() error
 
 	// group
@@ -85,7 +86,7 @@ type Service interface {
 	GetPermissionGroupWithId(ctx, groupId int64) (result *Group, err error)
 
 	// GetPermissionGroup 根据 groupName 获取组信息
-	GetPermissionGroup(ctx int64, gType GroupType, groupName string) (result *Group, err error)
+	GetPermissionGroup(ctx int64, groupName string) (result *Group, err error)
 
 	// AddPermissionGroup 添加组信息
 	AddPermissionGroup(ctx int64, groupName, aliasName string, status Status) (result int64, err error)
@@ -105,7 +106,7 @@ type Service interface {
 	// permission
 
 	// GetPermissions 获取权限列表
-	GetPermissions(ctx int64, status Status, keywords string, groupIds ...int64) (result []*Permission, err error)
+	GetPermissions(ctx int64, status Status, keywords string, groupIds []int64) (result []*Permission, err error)
 
 	// GetPermissionWithId 根据 permissionId 获取权限信息
 	GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error)
@@ -116,8 +117,8 @@ type Service interface {
 	// AddPermissionWithGroupId 添加权限
 	AddPermissionWithGroupId(ctx, groupId int64, permissionName, aliasName, description string, status Status) (result int64, err error)
 
-	// AddPermission 添加权限
-	AddPermission(ctx int64, groupName, permissionName, aliasName, description string, status Status) (result int64, err error)
+	// AddPermissionWithGroup 添加权限
+	AddPermissionWithGroup(ctx int64, groupName, permissionName, aliasName, description string, status Status) (result int64, err error)
 
 	// UpdatePermissionWithId 根据 permissionId 更新权限信息
 	UpdatePermissionWithId(ctx, permissionId, groupId int64, aliasName, description string, status Status) (err error)
@@ -157,13 +158,14 @@ type Service interface {
 
 	// role
 
-	// GetRoles 获取角色列表，如果有传递 targetId 参数，则返回的角色数据中将附带该角色是否已授权给该 targetId
-	GetRoles(ctx int64, targetId string, status Status, keywords string) (result []*Role, err error)
+	// GetRoles 获取角色列表
+	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
+	GetRoles(ctx int64, status Status, keywords string, isGrantedToTarget string) (result []*Role, err error)
 
-	// GetRolesTreeWithParentId 获取角色 parentRoleId 的子角色列表
+	// GetRolesTreeWithParentId 获取角色树
 	GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status) (result []*Role, err error)
 
-	// GetRolesTreeWithParent 获取角色 parentRoleName 的子角色列表
+	// GetRolesTreeWithParent 获取角色树
 	GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error)
 
 	// GetRoleWithId 根据 roleId 获取角色信息
@@ -175,11 +177,11 @@ type Service interface {
 	// AddRole 添加角色
 	AddRole(ctx int64, roleName, aliasName, description string, status Status) (result int64, err error)
 
-	// AddRoleWithParent 添加角色，新添加的角色将作为 parentRoleName 的子角色，调用时应该确认操作者是否有访问 parentRoleName 的权限
-	AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error)
-
 	// AddRoleWithParentId 添加角色，新添加的角色将作为 parentRoleId 的子角色，调用时应该确认操作者是否有访问 parentRoleId 的权限
 	AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error)
+
+	// AddRoleWithParent 添加角色，新添加的角色将作为 parentRoleName 的子角色，调用时应该确认操作者是否有访问 parentRoleName 的权限
+	AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error)
 
 	// UpdateRoleWithId 根据 roleId 更新角色信息
 	UpdateRoleWithId(ctx, roleId int64, aliasName, description string, status Status) (err error)
@@ -234,11 +236,15 @@ type Service interface {
 	// GetPermissionsWithTargetId 获取已授权给 targetId 的权限列表，与方法 GetGrantedPermissions 作用相同
 	GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error)
 
-	// GetPermissionsTreeWithRoleId 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleId，则返回的权限数据中将附带该权限是否已授权给该 roleId
-	GetPermissionsTreeWithRoleId(ctx, roleId int64, status Status) (result []*Group, err error)
+	// GetPermissionsTreeWithRoleId 获取权限组列表，组中包含该组所有的权限信息
+	// 如果参数 roleId 的值大于 0，则返回的权限数据中将附带该权限是否已授权给该 roleId
+	// 如果参数 limitedInParentRole 的值为 true，并且 roleId 的值大于 0，则返回的权限数据将限定在 roleId 的父角色拥有的权限范围内
+	GetPermissionsTreeWithRoleId(ctx, roleId int64, status Status, limitedInParentRole bool) (result []*Group, err error)
 
-	// GetPermissionsTreeWithRole 获取权限组列表，组中包含该组所有的权限信息，如果有传递 roleName，则返回的权限数据中将附带该权限是否已授权给该 roleName
-	GetPermissionsTreeWithRole(ctx int64, roleName string, status Status) (result []*Group, err error)
+	// GetPermissionsTreeWithRole 获取权限组列表，组中包含该组所有的权限信息
+	// 如果参数 roleName 的值不为空字符串，则返回的权限数据中将附带该权限是否已授权给该 roleName
+	// 如果参数 limitedInParentRole 的值为 true，并且 roleName 的值不为空字符串，则返回的权限数据将限定在 roleName 的父角色拥有的权限范围内
+	GetPermissionsTreeWithRole(ctx int64, roleName string, status Status, limitedInParentRole bool) (result []*Group, err error)
 
 	// CheckPermission 验证 targetId 是否拥有指定权限
 	CheckPermission(ctx int64, targetId string, permissionName string) bool

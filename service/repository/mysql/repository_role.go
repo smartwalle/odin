@@ -6,13 +6,13 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetRoles(ctx int64, targetId string, withChildren bool, parentId int64, status odin.Status, keywords string) (result []*odin.Role, err error) {
+func (this *odinRepository) GetRoles(ctx int64, parentId int64, status odin.Status, keywords string, isGrantedToTarget string, withChildren bool) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.created_on", "r.updated_on")
 	sb.From(this.tblRole, "AS r")
-	if targetId != "" {
+	if isGrantedToTarget != "" {
 		sb.Selects("IF(rg.target_id IS NULL, false, true) AS granted")
-		sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id AND rg.target_id = ?", targetId)
+		sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id AND rg.target_id = ?", isGrantedToTarget)
 	}
 	sb.Where("r.ctx = ?", ctx)
 	if parentId >= 0 {
@@ -35,7 +35,7 @@ func (this *odinRepository) GetRoles(ctx int64, targetId string, withChildren bo
 
 	if withChildren {
 		for _, role := range result {
-			if role.Children, err = this.GetRoles(ctx, targetId, withChildren, role.Id, status, keywords); err != nil {
+			if role.Children, err = this.GetRoles(ctx, role.Id, status, keywords, isGrantedToTarget, withChildren); err != nil {
 				return nil, err
 			}
 		}

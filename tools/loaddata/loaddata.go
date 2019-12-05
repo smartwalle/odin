@@ -56,7 +56,7 @@ func LoadData(repo odin.Repository, configFile string) error {
 		for _, group := range role.PermissionGroups {
 			service.AddPermissionGroup(role.Ctx, group.Name, group.AliasName, odin.Enable)
 			for _, permission := range group.Permissions {
-				service.AddPermission(role.Ctx, group.Name, permission.Name, permission.AliasName, permission.Description, odin.Enable)
+				service.AddPermissionWithGroup(role.Ctx, group.Name, permission.Name, permission.AliasName, permission.Description, odin.Enable)
 				service.GrantPermission(role.Ctx, role.Name, permission.Name)
 			}
 		}

@@ -6,13 +6,18 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetPermissions(ctx, roleId int64, status odin.Status, keywords string, groupIds ...int64) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetPermissions(ctx int64, status odin.Status, keywords string, groupIds []int64, limitedInRole, isGrantedToRole int64) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.From(this.tblPermission, "AS p")
-	if roleId > 0 {
+	if isGrantedToRole > 0 {
 		sb.Selects("IF(rp.role_id IS NULL, false , true) AS granted")
-		sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.permission_id = p.id AND rp.role_id = ?", roleId)
+		sb.LeftJoin(this.tblRolePermission, "AS rp ON rp.permission_id = p.id AND rp.role_id = ?", isGrantedToRole)
+	}
+	if limitedInRole > 0 {
+		sb.LeftJoin(this.tblRolePermission, "AS rpl ON rpl.permission_id = p.id")
+		sb.Where("rpl.ctx = ?", ctx)
+		sb.Where("rpl.role_id = ?", limitedInRole)
 	}
 	sb.Where("p.ctx = ?", ctx)
 	if len(groupIds) > 0 {
