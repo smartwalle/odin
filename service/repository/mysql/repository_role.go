@@ -190,6 +190,7 @@ func (this *odinRepository) GetGrantedRoles(ctx int64, target string) (result []
 	sb.Where("rg.target = ?", target)
 	sb.Where("r.ctx = ?", ctx)
 	sb.Where("r.status = ?", odin.Enable)
+	sb.OrderBy("r.ctx", "r.id")
 	if err := sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}
