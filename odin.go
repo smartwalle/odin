@@ -163,10 +163,10 @@ type Service interface {
 	GetRoles(ctx int64, status Status, keywords string, isGrantedToTarget string) (result []*Role, err error)
 
 	// GetRolesTreeWithParentId 获取角色树
-	GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status) (result []*Role, err error)
+	GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status, keywords string) (result []*Role, err error)
 
 	// GetRolesTreeWithParent 获取角色树
-	GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error)
+	GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status, keywords string) (result []*Role, err error)
 
 	// GetRoleWithId 根据 roleId 获取角色信息
 	GetRoleWithId(ctx, roleId int64) (result *Role, err error)
