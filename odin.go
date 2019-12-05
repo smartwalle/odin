@@ -65,7 +65,7 @@ type RolePermission struct {
 
 type Grant struct {
 	Ctx            int64  `json:"ctx"                sql:"ctx"`
-	TargetId       string `json:"target_id"          sql:"target_id"`
+	Target         string `json:"target"             sql:"target"`
 	RoleId         int64  `json:"role_id"            sql:"role_id"`
 	RoleName       string `json:"role_name"          sql:"role_name"`
 	PermissionId   int64  `json:"permission_id"      sql:"permission_id"`
@@ -195,26 +195,26 @@ type Service interface {
 	// UpdateRoleStatus 根据 roleName 更新角色的状态
 	UpdateRoleStatus(ctx int64, roleName string, status Status) (err error)
 
-	// GrantRoleWithId 授权角色给 targetId
-	GrantRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error)
+	// GrantRoleWithId 授权角色给 target
+	GrantRoleWithId(ctx int64, target string, roleIds ...int64) (err error)
 
-	// GrantRole 授权角色给 targetId
-	GrantRole(ctx int64, targetId string, roleNames ...string) (err error)
+	// GrantRole 授权角色给 target
+	GrantRole(ctx int64, target string, roleNames ...string) (err error)
 
-	// ReGrantRoleWithId 授权角色给 targetId，会将原有的角色授权先取消掉
-	ReGrantRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error)
+	// ReGrantRoleWithId 授权角色给 target，会将原有的角色授权先取消掉
+	ReGrantRoleWithId(ctx int64, target string, roleIds ...int64) (err error)
 
-	// ReGrantRole 授权角色给 targetId，会将原有的角色授权先取消掉
-	ReGrantRole(ctx int64, targetId string, roleNames ...string) (err error)
+	// ReGrantRole 授权角色给 target，会将原有的角色授权先取消掉
+	ReGrantRole(ctx int64, target string, roleNames ...string) (err error)
 
-	// RevokeRoleWithId 取消对 targetId 的角色授权
-	RevokeRoleWithId(ctx int64, targetId string, roleIds ...int64) (err error)
+	// RevokeRoleWithId 取消对 target 的角色授权
+	RevokeRoleWithId(ctx int64, target string, roleIds ...int64) (err error)
 
-	// RevokeRole 取消对 targetId 的角色授权
-	RevokeRole(ctx int64, targetId string, roleNames ...string) (err error)
+	// RevokeRole 取消对 target 的角色授权
+	RevokeRole(ctx int64, target string, roleNames ...string) (err error)
 
-	// RevokeAllRole 取消对 targetId 的所有角色授权
-	RevokeAllRole(ctx int64, targetId string) (err error)
+	// RevokeAllRole 取消对 target 的所有角色授权
+	RevokeAllRole(ctx int64, target string) (err error)
 
 	// 其它
 
@@ -224,17 +224,17 @@ type Service interface {
 	// GetPermissionsWithRole 获取已授权给 roleName 的权限列表
 	GetPermissionsWithRole(ctx int64, roleName string) (result []*Permission, err error)
 
-	// GetGrantedRoles 获取已授权给 targetId 的角色列表
-	GetGrantedRoles(ctx int64, targetId string) (result []*Role, err error)
+	// GetGrantedRoles 获取已授权给 target 的角色列表
+	GetGrantedRoles(ctx int64, target string) (result []*Role, err error)
 
-	// GetRolesWithTargetId 获取已授权给 targetId 的角色列表，与方法 GetGrantedRoles 作用相同
-	GetRolesWithTargetId(ctx int64, targetId string) (result []*Role, err error)
+	// GetRolesWithTarget 获取已授权给 target 的角色列表，与方法 GetGrantedRoles 作用相同
+	GetRolesWithTarget(ctx int64, target string) (result []*Role, err error)
 
-	// GetGrantedPermissions 获取已授权给 targetId 的权限列表
-	GetGrantedPermissions(ctx int64, targetId string) (result []*Permission, err error)
+	// GetGrantedPermissions 获取已授权给 target 的权限列表
+	GetGrantedPermissions(ctx int64, target string) (result []*Permission, err error)
 
-	// GetPermissionsWithTargetId 获取已授权给 targetId 的权限列表，与方法 GetGrantedPermissions 作用相同
-	GetPermissionsWithTargetId(ctx int64, targetId string) (result []*Permission, err error)
+	// GetPermissionsWithTarget 获取已授权给 target 的权限列表，与方法 GetGrantedPermissions 作用相同
+	GetPermissionsWithTarget(ctx int64, target string) (result []*Permission, err error)
 
 	// GetPermissionsTreeWithRoleId 获取权限组列表，组中包含该组所有的权限信息
 	// 如果参数 roleId 的值大于 0，则返回的权限数据中将附带该权限是否已授权给该 roleId
@@ -246,18 +246,18 @@ type Service interface {
 	// 如果参数 limitedInParentRole 的值为 true，并且 roleName 的值不为空字符串，则返回的权限数据将限定在 roleName 的父角色拥有的权限范围内
 	GetPermissionsTreeWithRole(ctx int64, roleName string, status Status, limitedInParentRole bool) (result []*Group, err error)
 
-	// CheckPermission 验证 targetId 是否拥有指定权限
-	CheckPermission(ctx int64, targetId string, permissionName string) bool
+	// CheckPermission 验证 target 是否拥有指定权限
+	CheckPermission(ctx int64, target string, permissionName string) bool
 
-	// CheckPermissionWithId 验证 targetId 是否拥有指定权限
-	CheckPermissionWithId(ctx int64, targetId string, permissionId int64) bool
+	// CheckPermissionWithId 验证 target 是否拥有指定权限
+	CheckPermissionWithId(ctx int64, target string, permissionId int64) bool
 
-	// CheckRole 验证 targetId 是否拥有指定角色
-	CheckRole(ctx int64, targetId string, roleName string) bool
+	// CheckRole 验证 target 是否拥有指定角色
+	CheckRole(ctx int64, target string, roleName string) bool
 
-	// CheckRoleWithId 验证 targetId 是否拥有指定角色
-	CheckRoleWithId(ctx int64, targetId string, roleId int64) bool
+	// CheckRoleWithId 验证 target 是否拥有指定角色
+	CheckRoleWithId(ctx int64, target string, roleId int64) bool
 
-	// CleanCache 清除缓存，如果 targetId 为空字符串或者 targetId 的值为星号(*)，则会清空所有缓存
-	CleanCache(ctx int64, targetId string)
+	// CleanCache 清除缓存，如果 target 为空字符串或者 target 的值为星号(*)，则会清空所有缓存
+	CleanCache(ctx int64, target string)
 }

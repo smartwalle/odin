@@ -227,7 +227,7 @@ func (this *odinRepository) RevokeAllPermission(ctx, roleId int64) (err error) {
 	return nil
 }
 
-func (this *odinRepository) GetGrantedPermissions(ctx int64, targetId string) (result []*odin.Permission, err error) {
+func (this *odinRepository) GetGrantedPermissions(ctx int64, target string) (result []*odin.Permission, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.id", "p.group_id", "p.ctx", "p.name", "p.alias_name", "p.status", "p.description", "p.created_on", "p.updated_on")
 	sb.Selects("IF(p.id IS NULL, false, true) AS granted")
@@ -235,7 +235,7 @@ func (this *odinRepository) GetGrantedPermissions(ctx int64, targetId string) (r
 	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
 	sb.LeftJoin(this.tblGrant, "AS g ON g.role_id = rp.role_id")
 	sb.Where("rp.ctx = ?", ctx)
-	sb.Where("g.ctx = ? AND g.target_id = ?", ctx, targetId)
+	sb.Where("g.ctx = ? AND g.target = ?", ctx, target)
 	sb.Where("p.ctx = ? AND p.status = ?", ctx, odin.Enable)
 	sb.GroupBy("p.id")
 	if err = sb.Scan(this.db, &result); err != nil {

@@ -73,20 +73,23 @@ func main() {
 	fmt.Println(s.GrantPermission(1, "yfzg", "yf1", "yf2", "yf3", "yf4", "yf5", "yf6", "yf7", "yf8", "yf9"))
 	fmt.Println(s.GrantPermission(1, "yfry", "yf1", "yf2", "yf3", "yf4", "yf5", "yf6", "yf7", "yf8", "yf9"))
 
-	//fmt.Println(s.AddRoleWithParent(1, "admin", "yxzj", "营销总监", "", odin.Enable))
-	//fmt.Println(s.AddRoleWithParent(1, "yxzj", "yxjl", "营销经理", "", odin.Enable))
-	//fmt.Println(s.AddRoleWithParent(1, "yxjl", "yxzg", "营销主管", "", odin.Enable))
-	//fmt.Println(s.AddRoleWithParent(1, "yxzg", "yxry", "营销人员", "", odin.Enable))
-	//fmt.Println(s.GrantPermission(1, "yxzj", "yx1", "yx2", "yx3", "yx4", "yx5", "yx6", "yx7", "yx8", "yx9"))
+	fmt.Println(s.AddRoleWithParent(1, "admin", "yxzj", "营销总监", "", odin.Enable))
+	fmt.Println(s.AddRoleWithParent(1, "yxzj", "yxjl", "营销经理", "", odin.Enable))
+	fmt.Println(s.AddRoleWithParent(1, "yxjl", "yxzg", "营销主管", "", odin.Enable))
+	fmt.Println(s.AddRoleWithParent(1, "yxzg", "yxry", "营销人员", "", odin.Enable))
+	fmt.Println(s.GrantPermission(1, "yxzj", "yx1", "yx2", "yx3", "yx4", "yx5", "yx6", "yx7", "yx8", "yx9"))
 	//
-	//fmt.Println(s.AddRoleWithParent(1, "admin", "cwzj", "财务总监", "", odin.Enable))
-	//fmt.Println(s.AddRoleWithParent(1, "cwzj", "cwjl", "财务经理", "", odin.Enable))
-	//fmt.Println(s.AddRoleWithParent(1, "cwjl", "cwzg", "财务主管", "", odin.Enable))
-	//fmt.Println(s.AddRoleWithParent(1, "cwzg", "cwry", "财务人员", "", odin.Enable))
-	//fmt.Println(s.GrantPermission(1, "cwzj", "cw1", "cw2", "cw3", "cw4", "cw5", "cw6", "cw7", "cw8", "cw9"))
+	fmt.Println(s.AddRoleWithParent(1, "admin", "cwzj", "财务总监", "", odin.Enable))
+	fmt.Println(s.AddRoleWithParent(1, "cwzj", "cwjl", "财务经理", "", odin.Enable))
+	fmt.Println(s.AddRoleWithParent(1, "cwjl", "cwzg", "财务主管", "", odin.Enable))
+	fmt.Println(s.AddRoleWithParent(1, "cwzg", "cwry", "财务人员", "", odin.Enable))
+	fmt.Println(s.GrantPermission(1, "cwzj", "cw1", "cw2", "cw3", "cw4", "cw5", "cw6", "cw7", "cw8", "cw9"))
 	//
 	//
 	//s.RevokeAllPermission(1, "yfzj")
+
+	roles, _ :=s.GetRolesTreeWithParent(1, "admin", odin.Enable, "")
+	printroles(0, roles)
 
 	//// 添加角色信息
 	//fmt.Println(s.AddRole(1, "r1", "角色1", "", odin.Enable))

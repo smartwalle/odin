@@ -64,9 +64,9 @@ const odinGrantSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`ctx` bigint(20) DEFAULT NULL," +
 	"`role_id` bigint(20) DEFAULT NULL," +
-	"`target_id` varchar(64) DEFAULT NULL," +
+	"`target` varchar(64) DEFAULT NULL," +
 	"`created_on` datetime DEFAULT NULL," +
-	"UNIQUE KEY `odin_grant_pk` (`ctx`,`role_id`,`target_id`)," +
+	"UNIQUE KEY `odin_grant_pk` (`ctx`,`role_id`,`target`)," +
 	"KEY `odin_grant_role_id_index` (`role_id`)," +
-	"KEY `odin_grant_target_id_index` (`target_id`)" +
+	"KEY `odin_grant_target_index` (`target`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"

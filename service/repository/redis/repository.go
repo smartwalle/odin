@@ -42,16 +42,16 @@ func (this *odinRepository) buildTargetKey(ctx int64, target string) (result str
 	return fmt.Sprintf("%s:odin:grant:%d:%s", this.tPrefix, ctx, target)
 }
 
-func (this *odinRepository) CheckPermission(ctx int64, targetId string, permissionName string) bool {
+func (this *odinRepository) CheckPermission(ctx int64, target string, permissionName string) bool {
 	var rSess = this.rPool.GetSession()
 	defer rSess.Close()
 
-	var key = this.buildTargetKey(ctx, targetId)
+	var key = this.buildTargetKey(ctx, target)
 	var result = rSess.SISMEMBER(key, permissionName).MustBool()
 
 	if result == false {
 		if rSess.EXISTS(key).MustBool() == false {
-			pList, err := this.Repository.GetGrantedPermissions(ctx, targetId)
+			pList, err := this.Repository.GetGrantedPermissions(ctx, target)
 			if err != nil {
 				return false
 			}
@@ -94,11 +94,11 @@ func (this *odinRepository) grantPermissions(ctx int64, key string, permissionNa
 	rSess.Do("EXEC")
 }
 
-func (this *odinRepository) CleanCache(ctx int64, targetId string) {
+func (this *odinRepository) CleanCache(ctx int64, target string) {
 	var rSess = this.rPool.GetSession()
 	defer rSess.Close()
 
-	if targetId == "" || targetId == "*" {
+	if target == "" || target == "*" {
 		var key = this.buildGrantListKey(ctx)
 		var items = rSess.SMEMBERS(key).MustStrings()
 		if rSess.Send("MULTI").Error != nil {
@@ -110,7 +110,7 @@ func (this *odinRepository) CleanCache(ctx int64, targetId string) {
 		}
 		rSess.Do("EXEC")
 	} else {
-		var key = this.buildTargetKey(ctx, targetId)
+		var key = this.buildTargetKey(ctx, target)
 		rSess.DEL(key)
 	}
 }
