@@ -50,6 +50,9 @@ type Role struct {
 	Description    string        `json:"description"                     sql:"description"`
 	Granted        bool          `json:"granted"                         sql:"granted"`
 	ParentId       int64         `json:"parent_id"                       sql:"parent_id"`
+	LeftValue      int           `json:"left_value"                      sql:"left_value"`
+	RightValue     int           `json:"right_value"                     sql:"right_value"`
+	Depth          int           `json:"depth"                           sql:"depth"`
 	CreatedOn      *time.Time    `json:"created_on"                      sql:"created_on"`
 	UpdatedOn      *time.Time    `json:"updated_on"                      sql:"updated_on"`
 	PermissionList []*Permission `json:"permission_list,omitempty"       sql:"-"`
@@ -220,10 +223,10 @@ type Service interface {
 	// GetRolesWithTarget 获取已授权给 target 的角色列表，与方法 GetGrantedRoles 作用相同
 	GetRolesWithTarget(ctx int64, target string) (result []*Role, err error)
 
-	// GetRolesTreeWithParentId 获取角色树
+	// GetRolesTreeWithParentId 获取角色列表
 	GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status) (result []*Role, err error)
 
-	// GetRolesTreeWithParent 获取角色树
+	// GetRolesTreeWithParent 获取角色列表
 	GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error)
 
 	// GetRolesTreeWithTarget 获取已授权给 target 的角色，及其角色的子角色，返回树状结构

@@ -42,13 +42,18 @@ const odinRoleSQL = "" +
 	"`status` int(2) DEFAULT '1'," +
 	"`description` varchar(1024) DEFAULT NULL," +
 	"`parent_id` bigint(20) DEFAULT NULL," +
+	"`left_value` int(11) DEFAULT NULL," +
+	"`right_value` int(11) DEFAULT NULL," +
+	"`depth` int(11) DEFAULT NULL," +
 	"`created_on` datetime DEFAULT NULL," +
 	"`updated_on` datetime DEFAULT NULL," +
 	"PRIMARY KEY (`id`)," +
 	"UNIQUE KEY `odin_role_id_uindex` (`id`)," +
 	"UNIQUE KEY `odin_role_ctx_name_uindex` (`ctx`,`name`)," +
 	"KEY `odin_role_ctx_index` (`ctx`)," +
-	"KEY `odin_role_ctx_parent_id_index` (`ctx`,`parent_id`)" +
+	"KEY `odin_role_ctx_parent_id_index` (`ctx`,`parent_id`)," +
+	"KEY `odin_role_ctx_left_value_index` (`ctx`,`left_value`)," +
+	"KEY `odin_role_ctx_right_value_index` (`ctx`,`right_value`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
 const odinRolePermissionSQL = "" +

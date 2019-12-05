@@ -91,21 +91,23 @@ func main() {
 	fmt.Println("------")
 	roles, _ := s.GetRoles(1, odin.Enable, "", "")
 	printroles(0, roles)
-	fmt.Println("------")
 
-	s.GrantRole(1, "t1", "admin")
+	////s.GrantRole(1, "t1", "admin")
 	s.GrantRole(1, "t1", "yfzj")
 	s.GrantRole(1, "t1", "cwzj")
 
-	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 2))
-	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 3))
-	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 10))
-	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 11))
-	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 8))
-	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 6))
-
+	fmt.Println("------")
 	roles, _ = s.GetRolesTreeWithTarget(1, "t1", odin.Enable)
 	printroles(0, roles)
+	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 2))
+	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 3))
+	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 10))
+	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 11))
+	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 8))
+	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 6))
+	//
+	//roles, _ = s.GetRolesTreeWithTarget(1, "t1", odin.Enable)
+	//printroles(0, roles)
 	//// 添加角色信息
 	//fmt.Println(s.AddRole(1, "r1", "角色1", "", odin.Enable))
 	//fmt.Println(s.AddRole(1, "r2", "角色2", "", odin.Enable))
