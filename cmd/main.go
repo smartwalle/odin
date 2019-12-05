@@ -93,6 +93,10 @@ func main() {
 	printroles(0, roles)
 	fmt.Println("------")
 
+	s.GrantRole(1, "t1", "admin")
+	s.GrantRole(1, "t1", "yfzj")
+	s.GrantRole(1, "t1", "cwzj")
+
 	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 2))
 	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 3))
 	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 10))
@@ -100,8 +104,6 @@ func main() {
 	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 8))
 	fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 6))
 
-	//s.GrantRole(1, "t1", "yfzj")
-	//s.GrantRole(1, "t1", "cwzj")
 	roles, _ = s.GetRolesTreeWithTarget(1, "t1", odin.Enable)
 	printroles(0, roles)
 	//// 添加角色信息
@@ -163,7 +165,7 @@ func printroles(level int, roles []*odin.Role) {
 			fmt.Print("-")
 		}
 
-		fmt.Println("  ", role.ParentId, role.Id, role.Name, role.Granted)
+		fmt.Println(role.Id, role.AliasName, role.Granted)
 		if role.Children != nil {
 			printroles(level+1, role.Children)
 		}
