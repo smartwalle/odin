@@ -98,7 +98,7 @@ func main() {
 	printroles(0, roles)
 
 	fmt.Println("=========")
-	roles, _ = s.GetRoles(1, 0, "", "")
+	roles, _ = s.GetRolesLimitedInTarget(1, "t1", 0, "", "t2")
 	printroles(0, roles)
 }
 

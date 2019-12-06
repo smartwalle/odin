@@ -63,6 +63,8 @@ type Repository interface {
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
 	GetRoles(ctx int64, parentId int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
 
+	GetRolesInTarget(ctx int64, limitedInTarget string, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
+
 	GetRolesWithIds(ctx int64, roleIds ...int64) (result []*Role, err error)
 
 	GetRolesWithNames(ctx int64, names ...string) (result []*Role, err error)
@@ -925,6 +927,13 @@ func (this *odinService) RevokeAllPermission(ctx int64, roleName string) (err er
 
 func (this *odinService) GetRoles(ctx int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {
 	return this.repo.GetRoles(ctx, -1, status, keywords, isGrantedToTarget)
+}
+
+func (this *odinService) GetRolesLimitedInTarget(ctx int64, limitedInTarget string, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {
+	if limitedInTarget == "" {
+		return nil, nil
+	}
+	return this.repo.GetRolesInTarget(ctx, limitedInTarget, status, keywords, isGrantedToTarget)
 }
 
 func (this *odinService) GetRolesWithParentId(ctx, parentRoleId int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {

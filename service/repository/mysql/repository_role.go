@@ -37,6 +37,44 @@ func (this *odinRepository) GetRoles(ctx int64, parentId int64, status odin.Stat
 	return result, nil
 }
 
+func (this *odinRepository) GetRolesInTarget(ctx int64, limitedInTarget string, status odin.Status, keywords, isGrantedToTarget string) (result []*odin.Role, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
+	sb.From(this.tblRole, "AS r")
+
+	if isGrantedToTarget != "" {
+		sb.Selects("IF(rgg.target IS NULL, false, true) AS granted")
+		sb.LeftJoin(this.tblGrant, "AS rgg ON rgg.role_id = r.id AND rgg.target = ?", isGrantedToTarget)
+	}
+
+	sb.Selects("MAX(IF(rg.role_id = r.id, false, true)) AS can_access")
+	sb.LeftJoin(this.tblRole, "AS rp ON rp.left_value <= r.left_value AND rp.right_value >= r.right_value")
+	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = rp.id")
+
+	sb.Where("rg.ctx = ?", ctx)
+	sb.Where("rg.target = ?", limitedInTarget)
+	sb.Where("rp.ctx = ?", ctx)
+	if status > 0 {
+		sb.Where("rp.status = ?", status)
+	}
+	sb.Where("r.ctx = ?", ctx)
+	if status > 0 {
+		sb.Where("r.status = ?", status)
+	}
+	if keywords != "" {
+		var or = dbs.OR()
+		or.Append(dbs.Like("r.name", "%", keywords, "%"))
+		or.Append(dbs.Like("r.alias_name", "%", keywords, "%"))
+		sb.Where(or)
+	}
+	sb.GroupBy("r.ctx", "r.id")
+	sb.OrderBy("r.ctx", "r.id")
+	if err := sb.Scan(this.db, &result); err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
 func (this *odinRepository) GetRolesWithIds(ctx int64, roleIds ...int64) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")

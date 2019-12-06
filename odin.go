@@ -166,6 +166,11 @@ type Service interface {
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
 	GetRoles(ctx int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
 
+	// GetRolesLimitedInTarget 获取角色列表，返回的角色数据将限定在 limitedInTarget 已拥有的角色及其子角色范围内
+	// 返回的角色数据的 Granted 字段参照的是 isGrantedToTarget
+	// 返回的角色数据的 Accessible 字段参照的是 limitedInTarget
+	GetRolesLimitedInTarget(ctx int64, limitedInTarget string, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
+
 	// GetRolesWithParentId 获取角色列表
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
 	GetRolesWithParentId(ctx, parentRoleId int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
