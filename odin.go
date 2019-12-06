@@ -36,7 +36,7 @@ type Permission struct {
 	AliasName   string     `json:"alias_name"      sql:"alias_name"`
 	Status      Status     `json:"status"          sql:"status"`
 	Description string     `json:"description"     sql:"description"`
-	Granted     bool       `json:"granted"         sql:"granted"`
+	Granted     bool       `json:"granted"         sql:"granted"` // 权限是否授予给指定角色
 	CreatedOn   *time.Time `json:"created_on"      sql:"created_on"`
 	UpdatedOn   *time.Time `json:"updated_on"      sql:"updated_on"`
 }
@@ -48,7 +48,8 @@ type Role struct {
 	AliasName      string        `json:"alias_name"                      sql:"alias_name"`
 	Status         Status        `json:"status"                          sql:"status"`
 	Description    string        `json:"description"                     sql:"description"`
-	Granted        bool          `json:"granted"                         sql:"granted"`
+	Granted        bool          `json:"granted"                         sql:"granted"`    // 角色是否授予给指定 target
+	Accessible     bool          `json:"accessible"                      sql:"can_access"` // 角色是否能够被指定 target 操作访问
 	ParentId       int64         `json:"parent_id"                       sql:"parent_id"`
 	LeftValue      int           `json:"left_value"                      sql:"left_value"`
 	RightValue     int           `json:"right_value"                     sql:"right_value"`
@@ -56,7 +57,7 @@ type Role struct {
 	CreatedOn      *time.Time    `json:"created_on"                      sql:"created_on"`
 	UpdatedOn      *time.Time    `json:"updated_on"                      sql:"updated_on"`
 	PermissionList []*Permission `json:"permission_list,omitempty"       sql:"-"`
-	Children       []*Role       `json:"children,omitempty"`
+	Children       []*Role       `json:"children,omitempty"              sql:"-"`
 }
 
 type RolePermission struct {
@@ -163,7 +164,15 @@ type Service interface {
 
 	// GetRoles 获取角色列表
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
-	GetRoles(ctx int64, status Status, keywords string, isGrantedToTarget string) (result []*Role, err error)
+	GetRoles(ctx int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
+
+	// GetRolesWithParentId 获取角色列表
+	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
+	GetRolesWithParentId(ctx, parentRoleId int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
+
+	// GetRolesWithParent 获取角色列表
+	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
+	GetRolesWithParent(ctx int64, parentRoleName string, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
 
 	// GetRoleWithId 根据 roleId 获取角色信息
 	GetRoleWithId(ctx, roleId int64) (result *Role, err error)
@@ -220,17 +229,8 @@ type Service interface {
 	// GetGrantedRoles 获取已授权给 target 的角色列表
 	GetGrantedRoles(ctx int64, target string) (result []*Role, err error)
 
-	// GetRolesWithTarget 获取已授权给 target 的角色列表，与方法 GetGrantedRoles 作用相同
+	// GetRolesWithTarget 获取已授权给 target 的角色，及其角色的子角色
 	GetRolesWithTarget(ctx int64, target string) (result []*Role, err error)
-
-	// GetRolesTreeWithParentId 获取角色列表
-	GetRolesTreeWithParentId(ctx, parentRoleId int64, status Status) (result []*Role, err error)
-
-	// GetRolesTreeWithParent 获取角色列表
-	GetRolesTreeWithParent(ctx int64, parentRoleName string, status Status) (result []*Role, err error)
-
-	// GetRolesTreeWithTarget 获取已授权给 target 的角色，及其角色的子角色，返回树状结构
-	GetRolesTreeWithTarget(ctx int64, target string, status Status) (result []*Role, err error)
 
 	// CheckRoleWithId 验证 target 是否拥有指定角色
 	CheckRoleWithId(ctx int64, target string, roleId int64) bool
@@ -238,12 +238,10 @@ type Service interface {
 	// CheckRole 验证 target 是否拥有指定角色
 	CheckRole(ctx int64, target string, roleName string) bool
 
-	// CheckRoleAccessibleWithId 验证 target 是否可以操作指定角色
-	// target 可以操作授权给它的角色的子角色，但是不能操作授权给它的角色
+	// CheckRoleAccessibleWithId 验证 target 是否拥有操作访问 roleId 的权限
 	CheckRoleAccessibleWithId(ctx int64, target string, roleId int64) bool
 
-	// CheckRoleAccessible 验证 target 是否可以操作指定角色
-	// target 可以操作授权给它的角色的子角色，但是不能操作授权给它的角色
+	// CheckRoleAccessible 验证 target 是否拥有操作访问 roleName 的权限
 	CheckRoleAccessible(ctx int64, target string, roleName string) bool
 
 	// GetPermissionsWithRoleId 获取已授权给 roleId 的权限列表
@@ -254,9 +252,6 @@ type Service interface {
 
 	// GetGrantedPermissions 获取已授权给 target 的权限列表
 	GetGrantedPermissions(ctx int64, target string) (result []*Permission, err error)
-
-	// GetPermissionsWithTarget 获取已授权给 target 的权限列表，与方法 GetGrantedPermissions 作用相同
-	GetPermissionsWithTarget(ctx int64, target string) (result []*Permission, err error)
 
 	// GetPermissionsTreeWithRoleId 获取权限组列表，组中包含该组所有的权限信息
 	// 如果参数 roleId 的值大于 0，则返回的权限数据中将附带该权限是否已授权给该 roleId

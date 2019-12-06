@@ -11,6 +11,7 @@ func (this *odinRepository) GetGroups(ctx int64, gType odin.GroupType, status od
 	sb.Selects("g.id", "g.ctx", "g.type", "g.name", "g.alias_name", "g.status", "g.created_on", "g.updated_on")
 	sb.From(this.tblGroup, "AS g")
 	sb.Where("g.ctx = ?", ctx)
+	sb.Where("g.type = ?", gType)
 	if status != 0 {
 		sb.Where("g.status = ?", status)
 	}

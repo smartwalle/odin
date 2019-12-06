@@ -170,5 +170,59 @@ func (this *odinRepository) CheckRoleWithId(ctx int64, target string, roleId int
 	return false
 }
 
+func (this *odinRepository) CheckRoleAccessible(ctx int64, target string, roleName string) bool {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
+	sb.Selects("MAX(IF(rg.role_id = r.id, false, true)) AS can_access")
+	sb.From(this.tblRole, "AS r")
+	sb.LeftJoin(this.tblRole, "AS rp ON rp.left_value < r.left_value AND rp.right_value > r.right_value")
+	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = rp.id")
+	sb.Where("rg.ctx = ?", ctx)
+	sb.Where("rg.target = ?", target)
+	sb.Where("rp.ctx = ?", ctx)
+	sb.Where("rp.status = ?", odin.Enable)
+	sb.Where("r.ctx = ?", ctx)
+	sb.Where("r.status = ?", odin.Enable)
+	sb.Where("r.name = ?", roleName)
+	sb.GroupBy("r.ctx", "r.id")
+	sb.OrderBy("r.ctx", "r.id")
+	sb.Limit(1)
+	var role *odin.Role
+	if err := sb.Scan(this.db, &role); err != nil {
+		return false
+	}
+	if role == nil {
+		return false
+	}
+	return role.Accessible
+}
+
+func (this *odinRepository) CheckRoleAccessibleWithId(ctx int64, target string, roleId int64) bool {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
+	sb.Selects("MAX(IF(rg.role_id = r.id, false, true)) AS can_access")
+	sb.From(this.tblRole, "AS r")
+	sb.LeftJoin(this.tblRole, "AS rp ON rp.left_value < r.left_value AND rp.right_value > r.right_value")
+	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = rp.id")
+	sb.Where("rg.ctx = ?", ctx)
+	sb.Where("rg.target = ?", target)
+	sb.Where("rp.ctx = ?", ctx)
+	sb.Where("rp.status = ?", odin.Enable)
+	sb.Where("r.ctx = ?", ctx)
+	sb.Where("r.status = ?", odin.Enable)
+	sb.Where("r.id = ?", roleId)
+	sb.GroupBy("r.ctx", "r.id")
+	sb.OrderBy("r.ctx", "r.id")
+	sb.Limit(1)
+	var role *odin.Role
+	if err := sb.Scan(this.db, &role); err != nil {
+		return false
+	}
+	if role == nil {
+		return false
+	}
+	return role.Accessible
+}
+
 func (this *odinRepository) CleanCache(ctx int64, target string) {
 }

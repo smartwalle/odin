@@ -89,16 +89,36 @@ func main() {
 	//s.RevokeAllPermission(1, "yfzj")
 
 	fmt.Println("------")
-	roles, _ := s.GetRoles(1, odin.Enable, "", "")
+	roles, _ := s.GetRoles(1, odin.Enable, "", "t1")
 	printroles(0, roles)
 
 	////s.GrantRole(1, "t1", "admin")
 	s.GrantRole(1, "t1", "yfzj")
-	s.GrantRole(1, "t1", "cwzj")
+	//s.GrantRole(1, "t1", "cwzj")
 
-	fmt.Println("------")
-	roles, _ = s.GetRolesTreeWithTarget(1, "t1", odin.Enable)
+	fmt.Println(s.CheckRoleAccessible(1, "t1", "admin"))
+	fmt.Println(s.CheckRoleAccessible(1, "t1", "yfzj"))
+	fmt.Println(s.CheckRoleAccessible(1, "t1", "yfjl"))
+	fmt.Println(s.CheckRoleAccessible(1, "t1", "yfzg"))
+
+	fmt.Println("========================= GetRolesWithTarget")
+	roles, err := s.GetRolesWithTarget(1, "t1")
+	fmt.Println(err)
 	printroles(0, roles)
+
+	//s.ReGrantPermissionWithId(1, 2, 1,2)
+
+	fmt.Println("=========================GetPermissionsWithRole yfzj")
+	ps, _ := s.GetPermissionsWithRole(1, "yfzj")
+	for _, p := range ps {
+		fmt.Println(p.Name, p.AliasName)
+	}
+
+	fmt.Println("=========================GetPermissionsWithRole yfjl")
+	ps, _ = s.GetPermissionsWithRole(1, "yfjl")
+	for _, p := range ps {
+		fmt.Println(p.Name, p.AliasName)
+	}
 	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 2))
 	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 3))
 	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 10))
@@ -106,7 +126,7 @@ func main() {
 	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 8))
 	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 6))
 	//
-	//roles, _ = s.GetRolesTreeWithTarget(1, "t1", odin.Enable)
+	//roles, _ = s.GetRolesWithTarget(1, "t1", odin.Enable)
 	//printroles(0, roles)
 	//// 添加角色信息
 	//fmt.Println(s.AddRole(1, "r1", "角色1", "", odin.Enable))
@@ -163,11 +183,11 @@ func main() {
 
 func printroles(level int, roles []*odin.Role) {
 	for _, role := range roles {
-		for i := 0; i < level; i++ {
+		for i := 0; i < role.Depth; i++ {
 			fmt.Print("-")
 		}
 
-		fmt.Println(role.Id, role.AliasName, role.Granted)
+		fmt.Println(role.Id, role.AliasName, role.Granted, role.Accessible)
 		if role.Children != nil {
 			printroles(level+1, role.Children)
 		}

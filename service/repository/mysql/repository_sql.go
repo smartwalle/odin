@@ -72,6 +72,7 @@ const odinGrantSQL = "" +
 	"`target` varchar(64) DEFAULT NULL," +
 	"`created_on` datetime DEFAULT NULL," +
 	"UNIQUE KEY `odin_grant_pk` (`ctx`,`role_id`,`target`)," +
+	"KEY `odin_grant_ctx_target_index` (`ctx`,`target`)," +
 	"KEY `odin_grant_role_id_index` (`role_id`)," +
 	"KEY `odin_grant_target_index` (`target`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"

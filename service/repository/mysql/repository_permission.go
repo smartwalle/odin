@@ -151,7 +151,7 @@ func (this *odinRepository) UpdatePermissionStatus(ctx, permissionId int64, stat
 	return err
 }
 
-func (this *odinRepository) GrantPermissionWithIds(ctx, roleId int64, permissionIds ...int64) (err error) {
+func (this *odinRepository) GrantPermissionWithIds(ctx, roleId int64, permissionIds []int64) (err error) {
 	if len(permissionIds) == 0 {
 		return nil
 	}
@@ -169,60 +169,40 @@ func (this *odinRepository) GrantPermissionWithIds(ctx, roleId int64, permission
 	return nil
 }
 
-func (this *odinRepository) RevokePermissionWithIds(ctx, roleId int64, permissionIds ...int64) (err error) {
+func (this *odinRepository) RevokePermissionWithIds(ctx, roleId int64, permissionIds []int64) (err error) {
 	if len(permissionIds) == 0 {
 		return nil
 	}
+	// TODO 优化
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.tblRolePermission)
-	rb.Where("ctx = ?", ctx)
-	rb.Where("role_id = ?", roleId)
+	rb.Alias("p")
+	rb.Table(this.tblRolePermission, "AS p")
+	rb.LeftJoin(this.tblRole, "AS r ON r.id = p.role_id")
+	rb.LeftJoin(this.tblRole, "AS rp ON rp.left_value <= r.left_value AND r.right_value >= r.right_value")
+	rb.Where("p.ctx = ?", ctx)
+	rb.Where("rp.ctx = ?", ctx)
+	rb.Where("rp.id = ?", roleId)
+	rb.Where("r.ctx = ?", ctx)
 	rb.Where(dbs.IN("permission_id", permissionIds))
-	rb.Limit(int64(len(permissionIds)))
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
 	}
-
-	// 处理子角色
-	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.ctx", "r.parent_id")
-	sb.From(this.tblRole, "AS r")
-	sb.Where("r.ctx = ? AND r.parent_id = ?", ctx, roleId)
-	var roles []*odin.Role
-	if err = sb.Scan(this.db, &roles); err != nil {
-		return err
-	}
-	for _, role := range roles {
-		if err = this.RevokePermissionWithIds(ctx, role.Id, permissionIds...); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
 func (this *odinRepository) RevokeAllPermission(ctx, roleId int64) (err error) {
+	// TODO 优化
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.tblRolePermission)
-	rb.Where("ctx = ?", ctx)
-	rb.Where("role_id = ?", roleId)
+	rb.Alias("p")
+	rb.Table(this.tblRolePermission, "AS p")
+	rb.LeftJoin(this.tblRole, "AS r ON r.id = p.role_id")
+	rb.LeftJoin(this.tblRole, "AS rp ON rp.left_value <= r.left_value AND r.right_value >= r.right_value")
+	rb.Where("p.ctx = ?", ctx)
+	rb.Where("rp.ctx = ?", ctx)
+	rb.Where("rp.id = ?", roleId)
+	rb.Where("r.ctx = ?", ctx)
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
-	}
-
-	// 处理子角色
-	var sb = dbs.NewSelectBuilder()
-	sb.Selects("r.id", "r.ctx", "r.parent_id")
-	sb.From(this.tblRole, "AS r")
-	sb.Where("r.ctx = ? AND r.parent_id = ?", ctx, roleId)
-	var roles []*odin.Role
-	if err = sb.Scan(this.db, &roles); err != nil {
-		return err
-	}
-	for _, role := range roles {
-		if err = this.RevokeAllPermission(ctx, role.Id); err != nil {
-			return err
-		}
 	}
 	return nil
 }
