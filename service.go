@@ -61,7 +61,7 @@ type Repository interface {
 	// GetRoles 获取角色列表
 	// 如果参数 parentId 的值大于等于 0，则表示查询 parentId 的子角色列表
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
-	GetRoles(ctx int64, parentId int64, status Status, keywords string, isGrantedToTarget string) (result []*Role, err error)
+	GetRoles(ctx int64, parentId int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
 
 	GetRolesWithIds(ctx int64, roleIds ...int64) (result []*Role, err error)
 

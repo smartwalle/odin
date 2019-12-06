@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetRoles(ctx int64, parentId int64, status odin.Status, keywords string, isGrantedToTarget string) (result []*odin.Role, err error) {
+func (this *odinRepository) GetRoles(ctx int64, parentId int64, status odin.Status, keywords, isGrantedToTarget string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
 	sb.From(this.tblRole, "AS r")

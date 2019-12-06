@@ -84,101 +84,22 @@ func main() {
 	fmt.Println(s.AddRoleWithParent(1, "cwjl", "cwzg", "财务主管", "", odin.Enable))
 	fmt.Println(s.AddRoleWithParent(1, "cwzg", "cwry", "财务人员", "", odin.Enable))
 	fmt.Println(s.GrantPermission(1, "cwzj", "cw1", "cw2", "cw3", "cw4", "cw5", "cw6", "cw7", "cw8", "cw9"))
-	//
-	//
-	//s.RevokeAllPermission(1, "yfzj")
 
-	fmt.Println("------")
-	roles, _ := s.GetRoles(1, odin.Enable, "", "t1")
-	printroles(0, roles)
-
-	////s.GrantRole(1, "t1", "admin")
 	s.GrantRole(1, "t1", "yfzj")
-	//s.GrantRole(1, "t1", "cwzj")
+	s.GrantRole(1, "t1", "yfjl")
+	s.GrantRole(1, "t2", "yfzg")
 
-	fmt.Println(s.CheckRoleAccessible(1, "t1", "admin"))
-	fmt.Println(s.CheckRoleAccessible(1, "t1", "yfzj"))
-	fmt.Println(s.CheckRoleAccessible(1, "t1", "yfjl"))
-	fmt.Println(s.CheckRoleAccessible(1, "t1", "yfzg"))
-
-	fmt.Println("========================= GetRolesWithTarget")
-	roles, err := s.GetRolesWithTarget(1, "t1")
-	fmt.Println(err)
+	fmt.Println("=========")
+	roles, _ := s.GetRolesWithTarget(1, "t1")
 	printroles(0, roles)
 
-	//s.ReGrantPermissionWithId(1, 2, 1,2)
+	fmt.Println("=========")
+	roles, _ = s.GetRolesWithTarget(1, "t2")
+	printroles(0, roles)
 
-	fmt.Println("=========================GetPermissionsWithRole yfzj")
-	ps, _ := s.GetPermissionsWithRole(1, "yfzj")
-	for _, p := range ps {
-		fmt.Println(p.Name, p.AliasName)
-	}
-
-	fmt.Println("=========================GetPermissionsWithRole yfjl")
-	ps, _ = s.GetPermissionsWithRole(1, "yfjl")
-	for _, p := range ps {
-		fmt.Println(p.Name, p.AliasName)
-	}
-	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 2))
-	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 3))
-	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 10))
-	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 11))
-	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 8))
-	//fmt.Println(s.CheckRoleAccessibleWithId(1, "t1", 6))
-	//
-	//roles, _ = s.GetRolesWithTarget(1, "t1", odin.Enable)
-	//printroles(0, roles)
-	//// 添加角色信息
-	//fmt.Println(s.AddRole(1, "r1", "角色1", "", odin.Enable))
-	//fmt.Println(s.AddRole(1, "r2", "角色2", "", odin.Enable))
-	//fmt.Println(s.AddRole(1, "r3", "角色3", "", odin.Enable))
-	//fmt.Println(s.AddRole(1, "r4", "角色4", "", odin.Enable))
-	//
-	//// 授予权限给角色
-	//fmt.Println(s.GrantPermission(1, "r1", "pg1-p1", "pg2-p2", "pg3-p3"))
-	//fmt.Println(s.GrantPermission(1, "r4", "pg1-p1", "pg2-p2", "pg3-p3"))
-	//
-	//fmt.Println("---")
-	//groupList, _ := s.GetPermissionsTreeWithRole(1, "r1", odin.Enable)
-	//for _, group := range groupList {
-	//	fmt.Println("-", group.Name, group.AliasName)
-	//	for _, p := range group.PermissionList {
-	//		fmt.Println("--", p.Name, p.AliasName, p.Granted)
-	//	}
-	//}
-	//fmt.Println("---")
-	//groupList, _ = s.GetPermissionsTreeWithRoleId(1, 4, odin.Enable)
-	//for _, group := range groupList {
-	//	fmt.Println("-", group.Name, group.AliasName)
-	//	for _, p := range group.PermissionList {
-	//		fmt.Println("--", p.Name, p.AliasName, p.Granted)
-	//	}
-	//}
-	//
-	//s.GrantRole(1, "1", "r1", "r2", "r4")
-	//
-	//permissions, err := s.GetGrantedPermissions(1, "1")
-	//fmt.Println(err)
-	//for _, p := range permissions {
-	//	fmt.Println(p.Name, p.AliasName, p.Granted)
-	//}
-	//
-	//roles, err := s.GetGrantedRoles(1, "1")
-	//for _, r := range roles {
-	//	fmt.Println(r.Name, r.AliasName, r.Granted)
-	//}
-	//
-	//fmt.Println("1", "pg1-p1", s.CheckPermission(1, "1", "pg1-p1"))
-	//fmt.Println("2", "pg1-p1", s.CheckPermission(1, "2", "pg1-p1"))
-	//fmt.Println("1", "pg2-p2", s.CheckPermission(1, "1", "pg2-p2"))
-	//fmt.Println("1", "pg3-p3", s.CheckPermission(1, "1", "pg3-p3"))
-	//fmt.Println("1", "pg3-p1", s.CheckPermission(1, "1", "pg3-p1"))
-	//fmt.Println("1", "pg3-p2", s.CheckPermission(1, "1", "pg3-p2"))
-	//fmt.Println("1", "r1", s.CheckRole(1, "1", "r1"))
-	//fmt.Println("1", "r2", s.CheckRole(1, "1", "r3"))
-	//fmt.Println("2", "r1", s.CheckRole(1, "2", "r1"))
-	//
-	//s.CleanCache(1, "*")
+	fmt.Println("=========")
+	roles, _ = s.GetRoles(1, 0, "", "")
+	printroles(0, roles)
 }
 
 func printroles(level int, roles []*odin.Role) {
