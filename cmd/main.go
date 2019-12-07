@@ -97,8 +97,8 @@ func main() {
 	roles, _ = s.GetRolesWithTarget(1, "t2")
 	printroles(0, roles)
 
-	fmt.Println("========= GetRolesLimitedInTarget")
-	roles, _ = s.GetRolesLimitedInTarget(1, "t1", 0, "", "t2")
+	fmt.Println("========= GetRoles")
+	roles, _ = s.GetRoles(1, 0, "", "t2", "t1")
 	printroles(0, roles)
 
 	fmt.Println("========= GetGrantedRoles")

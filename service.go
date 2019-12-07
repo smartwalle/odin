@@ -925,13 +925,9 @@ func (this *odinService) RevokeAllPermission(ctx int64, roleName string) (err er
 
 // role
 
-func (this *odinService) GetRoles(ctx int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {
-	return this.repo.GetRoles(ctx, -1, status, keywords, isGrantedToTarget)
-}
-
-func (this *odinService) GetRolesLimitedInTarget(ctx int64, limitedInTarget string, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {
+func (this *odinService) GetRoles(ctx int64, status Status, keywords, isGrantedToTarget, limitedInTarget string) (result []*Role, err error) {
 	if limitedInTarget == "" {
-		return nil, nil
+		return this.repo.GetRoles(ctx, -1, status, keywords, isGrantedToTarget)
 	}
 	return this.repo.GetRolesInTarget(ctx, limitedInTarget, status, keywords, isGrantedToTarget)
 }
