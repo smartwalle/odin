@@ -69,6 +69,10 @@ func (this *odinRepository) GetRolesInTarget(ctx int64, limitedInTarget string, 
 	}
 	sb.GroupBy("r.ctx", "r.id")
 	sb.OrderBy("r.ctx", "r.id")
+	if isGrantedToTarget != "" {
+		sb.GroupBy("rgg.target")
+		sb.OrderBy("rgg.target")
+	}
 	if err := sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}

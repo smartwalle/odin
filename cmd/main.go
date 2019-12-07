@@ -89,16 +89,20 @@ func main() {
 	s.GrantRole(1, "t1", "yfjl")
 	s.GrantRole(1, "t2", "yfzg")
 
-	fmt.Println("=========")
+	fmt.Println("========= GetRolesWithTarget")
 	roles, _ := s.GetRolesWithTarget(1, "t1")
 	printroles(0, roles)
 
-	fmt.Println("=========")
+	fmt.Println("========= GetRolesWithTarget")
 	roles, _ = s.GetRolesWithTarget(1, "t2")
 	printroles(0, roles)
 
-	fmt.Println("=========")
+	fmt.Println("========= GetRolesLimitedInTarget")
 	roles, _ = s.GetRolesLimitedInTarget(1, "t1", 0, "", "t2")
+	printroles(0, roles)
+
+	fmt.Println("========= GetGrantedRoles")
+	roles, _ = s.GetGrantedRoles(1, "t1")
 	printroles(0, roles)
 }
 
