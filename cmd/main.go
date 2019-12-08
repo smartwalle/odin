@@ -89,32 +89,32 @@ func main() {
 	s.GrantRole(1, "t1", "yfjl")
 	s.GrantRole(1, "t2", "yfzg")
 
-	fmt.Println("========= GetRolesWithTarget")
+	fmt.Println("========= GetRolesWithTarget - t1")
 	roles, _ := s.GetRolesWithTarget(1, "t1")
-	printroles(0, roles)
+	printRoles(0, roles)
 
-	fmt.Println("========= GetRolesWithTarget")
+	fmt.Println("========= GetRolesWithTarget - t2")
 	roles, _ = s.GetRolesWithTarget(1, "t2")
-	printroles(0, roles)
+	printRoles(0, roles)
 
-	fmt.Println("========= GetRoles")
-	roles, _ = s.GetRoles(1, 0, "", "t2", "t1")
-	printroles(0, roles)
+	fmt.Println("========= GetRoles - t2")
+	roles, _ = s.GetRoles(1, 0, "", "t2", "")
+	printRoles(0, roles)
 
-	fmt.Println("========= GetGrantedRoles")
+	fmt.Println("========= GetGrantedRoles - t1")
 	roles, _ = s.GetGrantedRoles(1, "t1")
-	printroles(0, roles)
+	printRoles(0, roles)
 }
 
-func printroles(level int, roles []*odin.Role) {
+func printRoles(level int, roles []*odin.Role) {
 	for _, role := range roles {
 		for i := 0; i < role.Depth; i++ {
 			fmt.Print("-")
 		}
 
-		fmt.Println(role.Id, role.AliasName, role.Granted, role.Accessible)
+		fmt.Println("Id:", role.Id, "Alias name:", role.AliasName, "Granted:", role.Granted, "Accessible:", role.Accessible)
 		if role.Children != nil {
-			printroles(level+1, role.Children)
+			printRoles(level+1, role.Children)
 		}
 	}
 }
