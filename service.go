@@ -79,6 +79,8 @@ type Repository interface {
 
 	UpdateRoleStatus(ctx, roleId int64, status Status) (err error)
 
+	// GetGrantedRoles 获取已授权给 target 的角色列表
+	// 如果参数 withChildren 的值为 true，则返回的角色数据中将包含该角色的子角色列表（子角色列表不一定授权给 target）
 	GetGrantedRoles(ctx int64, target string, withChildren bool) (result []*Role, err error)
 
 	GrantRoleWithIds(ctx int64, target string, roleIds ...int64) (err error)
