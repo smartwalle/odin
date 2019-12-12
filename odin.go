@@ -272,6 +272,12 @@ type Service interface {
 	// CheckPermission 验证 target 是否拥有指定权限
 	CheckPermission(ctx int64, target string, permissionName string) bool
 
+	// CheckRolePermissionWithId 验证角色是否拥有指定权限
+	CheckRolePermissionWithId(ctx, roleId, permissionId int64) bool
+
+	// CheckRolePermission 验证角色是否拥有指定权限
+	CheckRolePermission(ctx int64, roleName, permissionName string) bool
+
 	// CleanCache 清除缓存，如果 target 为空字符串或者 target 的值为星号(*)，则会清空所有缓存
 	CleanCache(ctx int64, target string)
 }

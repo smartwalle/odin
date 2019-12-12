@@ -101,6 +101,10 @@ type Repository interface {
 
 	CheckRoleAccessibleWithId(ctx int64, target string, roleId int64) bool
 
+	CheckRolePermission(ctx int64, roleName, permissionName string) bool
+
+	CheckRolePermissionWithId(ctx, roleId, permissionId int64) bool
+
 	CleanCache(ctx int64, target string)
 }
 
@@ -1571,6 +1575,14 @@ func (this *odinService) CheckPermissionWithId(ctx int64, target string, permiss
 
 func (this *odinService) CheckPermission(ctx int64, target string, permissionName string) bool {
 	return this.repo.CheckPermission(ctx, target, permissionName)
+}
+
+func (this *odinService) CheckRolePermissionWithId(ctx, roleId, permissionId int64) bool {
+	return this.repo.CheckRolePermissionWithId(ctx, roleId, permissionId)
+}
+
+func (this *odinService) CheckRolePermission(ctx int64, roleName, permissionName string) bool {
+	return this.repo.CheckRolePermission(ctx, roleName, permissionName)
 }
 
 func (this *odinService) CleanCache(ctx int64, target string) {

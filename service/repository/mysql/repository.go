@@ -224,5 +224,45 @@ func (this *odinRepository) CheckRoleAccessibleWithId(ctx int64, target string, 
 	return role.Accessible
 }
 
+func (this *odinRepository) CheckRolePermission(ctx int64, roleName, permissionName string) bool {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("rp.ctx", "rp.role_id", "rp.permission_id")
+	sb.From(this.tblRolePermission, "AS rp")
+	sb.LeftJoin(this.tblRole, "AS r ON r.id = rp.role_id")
+	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
+	sb.Where("rp.ctx = ?", ctx)
+	sb.Where("r.ctx = ? AND r.name = ?", ctx, roleName)
+	sb.Where("p.ctx = ? AND p.name = ?", ctx, permissionName)
+	sb.Limit(1)
+	var rp *odin.RolePermission
+	if err := sb.Scan(this.db, &rp); err != nil {
+		return false
+	}
+	if rp == nil {
+		return false
+	}
+	return true
+}
+
+func (this *odinRepository) CheckRolePermissionWithId(ctx, roleId, permissionId int64) bool {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("rp.ctx", "rp.role_id", "rp.permission_id")
+	sb.From(this.tblRolePermission, "AS rp")
+	sb.LeftJoin(this.tblRole, "AS r ON r.id = rp.role_id")
+	sb.LeftJoin(this.tblPermission, "AS p ON p.id = rp.permission_id")
+	sb.Where("rp.ctx = ?", ctx)
+	sb.Where("r.ctx = ? AND r.id = ?", ctx, roleId)
+	sb.Where("p.ctx = ? AND p.id = ?", ctx, permissionId)
+	sb.Limit(1)
+	var rp *odin.RolePermission
+	if err := sb.Scan(this.db, &rp); err != nil {
+		return false
+	}
+	if rp == nil {
+		return false
+	}
+	return true
+}
+
 func (this *odinRepository) CleanCache(ctx int64, target string) {
 }
