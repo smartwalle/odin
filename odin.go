@@ -262,6 +262,12 @@ type Service interface {
 	// GetMutexRolesWithId 获取与该角色互斥的角色列表
 	GetMutexRolesWithId(ctx, roleId int64) (result []*RoleMutex, err error)
 
+	// CheckRoleMutex 验证两个角色是否互斥
+	CheckRoleMutex(ctx int64, roleName, mutexRoleName string) bool
+
+	// CheckRoleMutexWithId 验证两个角色是否互斥
+	CheckRoleMutexWithId(ctx, roleId, mutexRoleId int64) bool
+
 	// 其它
 
 	// GetGrantedRoles 获取已授权给 target 的角色列表

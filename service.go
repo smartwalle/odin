@@ -89,6 +89,8 @@ type Repository interface {
 
 	GetMutexRoles(ctx, roleId int64) (result []*RoleMutex, err error)
 
+	CheckRoleMutex(ctx, roleId, mutexRoleId int64) bool
+
 	// GetGrantedRoles 获取已授权给 target 的角色列表
 	// 如果参数 withChildren 的值为 true，则返回的角色数据中将包含该角色的子角色列表（子角色列表不一定授权给 target）
 	GetGrantedRoles(ctx int64, target string, withChildren bool) (result []*Role, err error)
@@ -1615,6 +1617,42 @@ func (this *odinService) GetMutexRolesWithId(ctx, roleId int64) (result []*RoleM
 		return nil, ErrRoleNotExist
 	}
 	return this.repo.GetMutexRoles(ctx, roleId)
+}
+
+func (this *odinService) CheckRoleMutex(ctx int64, roleName, mutexRoleName string) bool {
+	var tx, nRepo = this.repo.BeginTx()
+	var err error
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return true
+	}
+	if role == nil {
+		return false
+	}
+
+	// 验证角色是否存在
+	mutexRole, err := nRepo.GetRoleWithName(ctx, mutexRoleName)
+	if err != nil {
+		return true
+	}
+	if mutexRole == nil {
+		return false
+	}
+
+	var ok = nRepo.CheckRoleMutex(ctx, role.Id, mutexRole.Id)
+	tx.Commit()
+	return ok
+}
+
+func (this *odinService) CheckRoleMutexWithId(ctx, roleId, mutexRoleId int64) bool {
+	return this.repo.CheckRoleMutex(ctx, roleId, mutexRoleId)
 }
 
 // 其它
