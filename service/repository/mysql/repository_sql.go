@@ -76,3 +76,15 @@ const odinGrantSQL = "" +
 	"KEY `odin_grant_role_id_index` (`role_id`)," +
 	"KEY `odin_grant_target_index` (`target`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+
+const odinRoleMutexSQL = "" +
+	"CREATE TABLE IF NOT EXISTS `%s` (" +
+	"`ctx` bigint(20) DEFAULT NULL," +
+	"`role_id` bigint(20) DEFAULT NULL," +
+	"`mutex_role_id` bigint(20) DEFAULT NULL," +
+	"`created_on` datetime DEFAULT NULL," +
+	"UNIQUE KEY `odin_role_mutex_pk` (`ctx`,`role_id`,`mutex_role_id`)," +
+	"KEY `odin_role_mutex_ctx_mutex_role_id_index` (`ctx`,`mutex_role_id`)," +
+	"KEY `odin_role_mutex_ctx_role_id_index` (`ctx`,`role_id`)" +
+	"KEY `odin_role_mutex_ctx_mutex_role_id_role_id_index` (`ctx`,`mutex_role_id`,`role_id`)" +
+	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"

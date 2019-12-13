@@ -12,7 +12,7 @@ type Repository interface {
 	// InitTable 初始化数据库表
 	InitTable() error
 
-	// group
+	// 组
 	GetGroups(ctx int64, gType GroupType, status Status, keywords string) (result []*Group, err error)
 
 	GetGroupWithId(ctx int64, gType GroupType, groupId int64) (result *Group, err error)
@@ -25,7 +25,7 @@ type Repository interface {
 
 	UpdateGroupStatus(ctx int64, gType GroupType, groupId int64, status Status) (err error)
 
-	// permission
+	// 权限
 
 	// GetPermissions 获取角色列表
 	// 如果参数 limitedInRole 的值大于 0，则返回的权限数据将限定在已授权给 limitedInRole 的权限范围之内
@@ -56,7 +56,7 @@ type Repository interface {
 
 	GetGrantedPermissions(ctx int64, target string) (result []*Permission, err error)
 
-	// role
+	// 角色
 
 	// GetRoles 获取角色列表
 	// 如果参数 parentId 的值大于等于 0，则表示查询 parentId 的子角色列表
@@ -78,6 +78,16 @@ type Repository interface {
 	UpdateRole(ctx, roleId int64, aliasName, description string, status Status) (err error)
 
 	UpdateRoleStatus(ctx, roleId int64, status Status) (err error)
+
+	// 角色互斥
+
+	AddRoleMutex(ctx, roleId int64, mutexRoleIds []int64) (err error)
+
+	RemoveRoleMutex(ctx, roleId int64, mutexRoleIds []int64) (err error)
+
+	CleanRoleMutex(ctx, roleId int64) (err error)
+
+	GetMutexRoles(ctx, roleId int64) (result []*RoleMutex, err error)
 
 	// GetGrantedRoles 获取已授权给 target 的角色列表
 	// 如果参数 withChildren 的值为 true，则返回的角色数据中将包含该角色的子角色列表（子角色列表不一定授权给 target）
@@ -127,7 +137,7 @@ func (this *odinService) Init() error {
 	return nil
 }
 
-// group
+// 组
 
 func (this *odinService) GetPermissionGroups(ctx int64, status Status, keywords string) (result []*Group, err error) {
 	return this.repo.GetGroups(ctx, GroupPermission, status, keywords)
@@ -286,7 +296,7 @@ func (this *odinService) UpdatePermissionGroupStatus(ctx int64, groupName string
 	return this.updateGroupStatus(ctx, GroupPermission, groupName, status)
 }
 
-// permission
+// 权限
 
 func (this *odinService) GetPermissions(ctx int64, status Status, keywords string, groupIds []int64) (result []*Permission, err error) {
 	return this.repo.GetPermissions(ctx, status, keywords, groupIds, 0, 0)
@@ -929,7 +939,7 @@ func (this *odinService) RevokeAllPermission(ctx int64, roleName string) (err er
 	return nil
 }
 
-// role
+// 角色
 
 func (this *odinService) GetRoles(ctx int64, status Status, keywords, isGrantedToTarget, limitedInTarget string) (result []*Role, err error) {
 	if limitedInTarget == "" {
@@ -1387,6 +1397,224 @@ func (this *odinService) RevokeRole(ctx int64, target string, roleNames ...strin
 
 func (this *odinService) RevokeAllRole(ctx int64, target string) (err error) {
 	return this.repo.RevokeAllRole(ctx, target)
+}
+
+// 角色互斥
+
+func (this *odinService) AddRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error) {
+	if len(mutexRoleNames) == 0 {
+		return ErrMutexRoleNotExist
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	mutexRoleList, err := nRepo.GetRolesWithNames(ctx, mutexRoleNames...)
+	if err != nil {
+		return err
+	}
+
+	var mutexIds = make([]int64, 0, len(mutexRoleList))
+	for _, role := range mutexRoleList {
+		mutexIds = append(mutexIds, role.Id)
+	}
+	if len(mutexIds) == 0 {
+		return ErrMutexRoleNotExist
+	}
+
+	if err = nRepo.AddRoleMutex(ctx, role.Id, mutexIds); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) AddRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...int64) (err error) {
+	if len(mutexRoleIds) == 0 {
+		return ErrMutexRoleNotExist
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	mutexRoleList, err := nRepo.GetRolesWithIds(ctx, mutexRoleIds...)
+	if err != nil {
+		return err
+	}
+
+	var mutexIds = make([]int64, 0, len(mutexRoleList))
+	for _, role := range mutexRoleList {
+		mutexIds = append(mutexIds, role.Id)
+	}
+	if len(mutexIds) == 0 {
+		return ErrMutexRoleNotExist
+	}
+
+	if err = nRepo.AddRoleMutex(ctx, role.Id, mutexIds); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) RemoveRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error) {
+	if len(mutexRoleNames) == 0 {
+		return ErrMutexRoleNotExist
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	mutexRoleList, err := nRepo.GetRolesWithNames(ctx, mutexRoleNames...)
+	if err != nil {
+		return err
+	}
+
+	var mutexIds = make([]int64, 0, len(mutexRoleList))
+	for _, role := range mutexRoleList {
+		mutexIds = append(mutexIds, role.Id)
+	}
+	if len(mutexIds) == 0 {
+		return ErrMutexRoleNotExist
+	}
+
+	if err = nRepo.RemoveRoleMutex(ctx, role.Id, mutexIds); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) RemoveRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...int64) (err error) {
+	if len(mutexRoleIds) == 0 {
+		return ErrMutexRoleNotExist
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	mutexRoleList, err := nRepo.GetRolesWithIds(ctx, mutexRoleIds...)
+	if err != nil {
+		return err
+	}
+
+	var mutexIds = make([]int64, 0, len(mutexRoleList))
+	for _, role := range mutexRoleList {
+		mutexIds = append(mutexIds, role.Id)
+	}
+	if len(mutexIds) == 0 {
+		return ErrMutexRoleNotExist
+	}
+
+	if err = nRepo.RemoveRoleMutex(ctx, role.Id, mutexIds); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (this *odinService) RemoveAllRoleMutex(ctx int64, roleName string) (err error) {
+	// 验证角色是否存在
+	role, err := this.repo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+	return this.repo.CleanRoleMutex(ctx, role.Id)
+}
+
+func (this *odinService) RemoveAllRoleMutexWithId(ctx, roleId int64) (err error) {
+	// 验证角色是否存在
+	role, err := this.repo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+	return this.repo.CleanRoleMutex(ctx, role.Id)
+}
+
+func (this *odinService) GetMutexRoles(ctx int64, roleName string) (result []*RoleMutex, err error) {
+	// 验证角色是否存在
+	role, err := this.repo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, ErrRoleNotExist
+	}
+	return this.repo.GetMutexRoles(ctx, role.Id)
+}
+
+func (this *odinService) GetMutexRolesWithId(ctx, roleId int64) (result []*RoleMutex, err error) {
+	// 验证角色是否存在
+	role, err := this.repo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, ErrRoleNotExist
+	}
+	return this.repo.GetMutexRoles(ctx, roleId)
 }
 
 // 其它

@@ -15,4 +15,5 @@ var (
 	ErrRevokeFailed         = errors.New("取消授权失败")
 	ErrInvalidParentRole    = errors.New("无效的父角色")
 	ErrPermissionDenied     = errors.New("没有操作权限")
+	ErrMutexRoleNotExist    = errors.New("互斥角色不存在")
 )

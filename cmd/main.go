@@ -104,6 +104,8 @@ func main() {
 	fmt.Println("========= GetGrantedRoles - t1")
 	roles, _ = s.GetGrantedRoles(1, "t1")
 	printRoles(0, roles)
+
+	s.AddRoleMutex(1, "yfzj", "yfjl", "yfzg")
 }
 
 func printRoles(level int, roles []*odin.Role) {

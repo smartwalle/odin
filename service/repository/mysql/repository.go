@@ -14,6 +14,7 @@ type odinRepository struct {
 	tblRole           string
 	tblRolePermission string
 	tblGrant          string
+	tblRoleMutex      string
 }
 
 func NewRepository(db dbs.DB, tblPrefix string) odin.Repository {
@@ -32,6 +33,7 @@ func NewRepository(db dbs.DB, tblPrefix string) odin.Repository {
 	r.tblRole = tblPrefix + "_role"
 	r.tblRolePermission = tblPrefix + "_role_permission"
 	r.tblGrant = tblPrefix + "_grant"
+	r.tblRoleMutex = tblPrefix + "_role_mutex"
 
 	return r
 }
@@ -78,6 +80,12 @@ func (this *odinRepository) InitTable() error {
 
 	rb = dbs.NewBuilder("")
 	rb.Format(odinGrantSQL, this.tblGrant)
+	if _, err := rb.Exec(this.db); err != nil {
+		return err
+	}
+
+	rb = dbs.NewBuilder("")
+	rb.Format(odinRoleMutexSQL, this.tblRoleMutex)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}

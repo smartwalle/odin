@@ -67,6 +67,15 @@ type RolePermission struct {
 	CreatedOn    *time.Time `json:"created_on"      sql:"created_on"`
 }
 
+type RoleMutex struct {
+	Ctx           int64      `json:"ctx"                 sql:"ctx"`
+	RoleId        int64      `json:"role_id"             sql:"role_id"`
+	RoleName      string     `json:"role_name"           sql:"role_name"`
+	MutexRoleId   int64      `json:"mutex_role_id"       sql:"mutex_role_id"`
+	MutexRoleName string     `json:"mutex_role_name"     sql:"mutex_role_name"`
+	CreatedOn     *time.Time `json:"created_on"          sql:"created_on"`
+}
+
 type Grant struct {
 	Ctx            int64  `json:"ctx"                sql:"ctx"`
 	Target         string `json:"target"             sql:"target"`
@@ -81,7 +90,7 @@ type Service interface {
 	// 虽然此方法可以被重复调用，但是外部应该尽量控制此方法只在需要的时候调用。
 	Init() error
 
-	// group
+	// 权限组
 
 	// GetPermissionGroups 获取权限组列表
 	GetPermissionGroups(ctx int64, status Status, keywords string) (result []*Group, err error)
@@ -107,7 +116,7 @@ type Service interface {
 	// UpdatePermissionGroupStatus 根据 groupName 更新组状态
 	UpdatePermissionGroupStatus(ctx int64, groupName string, status Status) (err error)
 
-	// permission
+	// 极限
 
 	// GetPermissions 获取权限列表
 	GetPermissions(ctx int64, status Status, keywords string, groupIds []int64) (result []*Permission, err error)
@@ -160,7 +169,7 @@ type Service interface {
 	// RevokeAllPermission 取消对角色的所有权限授权
 	RevokeAllPermission(ctx int64, roleName string) (err error)
 
-	// role
+	// 角色
 
 	// GetRoles 获取角色列表
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
@@ -226,6 +235,32 @@ type Service interface {
 
 	// RevokeAllRole 取消对 target 的所有角色授权
 	RevokeAllRole(ctx int64, target string) (err error)
+
+	// 角色互斥
+
+	// AddRoleMutex 添加角色互斥关系
+	AddRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error)
+
+	// AddRoleMutexWithId 添加角色互斥关系
+	AddRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...int64) (err error)
+
+	// RemoveRoleMutex 删除角色互斥关系
+	RemoveRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error)
+
+	// RemoveRoleMutexWithId 删除角色互斥关系
+	RemoveRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...int64) (err error)
+
+	// RemoveAllRoleMutex 删除该角色所有的互斥关系
+	RemoveAllRoleMutex(ctx int64, roleName string) (err error)
+
+	// RemoveAllRoleMutexWithId 删除该角色所有的互斥关系
+	RemoveAllRoleMutexWithId(ctx, roleId int64) (err error)
+
+	// GetMutexRoles 获取与该角色互斥的角色列表
+	GetMutexRoles(ctx int64, roleName string) (result []*RoleMutex, err error)
+
+	// GetMutexRolesWithId 获取与该角色互斥的角色列表
+	GetMutexRolesWithId(ctx, roleId int64) (result []*RoleMutex, err error)
 
 	// 其它
 
