@@ -69,8 +69,8 @@ func (this *odinRepository) CleanRoleMutex(ctx, roleId int64) (err error) {
 func (this *odinRepository) GetMutexRoles(ctx, roleId int64) (result []*odin.RoleMutex, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("m.ctx", "m.role_id", "m.mutex_role_id", "m.created_on")
-	sb.Selects("r.name AS role_name")
-	sb.Selects("rm.name AS mutex_role_name")
+	sb.Selects("r.name AS role_name", "r.alias_name AS role_alias_name")
+	sb.Selects("rm.name AS mutex_role_name", "rm.alias_name AS mutex_role_alias_name")
 	sb.From(this.tblRoleMutex, "AS m")
 	sb.LeftJoin(this.tblRole, "AS r ON r.id = m.role_id")
 	sb.LeftJoin(this.tblRole, "AS rm ON rm.id = m.mutex_role_id")

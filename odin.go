@@ -69,12 +69,14 @@ type RolePermission struct {
 }
 
 type RoleMutex struct {
-	Ctx           int64      `json:"ctx"                 sql:"ctx"`
-	RoleId        int64      `json:"role_id"             sql:"role_id"`
-	RoleName      string     `json:"role_name"           sql:"role_name"`
-	MutexRoleId   int64      `json:"mutex_role_id"       sql:"mutex_role_id"`
-	MutexRoleName string     `json:"mutex_role_name"     sql:"mutex_role_name"`
-	CreatedOn     *time.Time `json:"created_on"          sql:"created_on"`
+	Ctx                int64      `json:"ctx"                       sql:"ctx"`
+	RoleId             int64      `json:"role_id"                   sql:"role_id"`
+	RoleName           string     `json:"role_name"                 sql:"role_name"`
+	RoleAliasName      string     `json:"role_alias_name"           sql:"role_alias_name"`
+	MutexRoleId        int64      `json:"mutex_role_id"             sql:"mutex_role_id"`
+	MutexRoleName      string     `json:"mutex_role_name"           sql:"mutex_role_name"`
+	MutexRoleAliasName string     `json:"mutex_role_alias_name"     sql:"mutex_role_alias_name"`
+	CreatedOn          *time.Time `json:"created_on"                sql:"created_on"`
 }
 
 type Grant struct {
