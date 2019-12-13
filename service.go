@@ -990,8 +990,10 @@ func (this *odinService) GetRoleWithId(ctx, roleId int64) (result *Role, err err
 		return nil, err
 	}
 	if result != nil {
-		result.PermissionList, err = this.repo.GetPermissionsWithRoleId(ctx, result.Id)
-		if err != nil {
+		if result.PermissionList, err = this.repo.GetPermissionsWithRoleId(ctx, result.Id); err != nil {
+			return nil, err
+		}
+		if result.MutexRoleList, err = this.repo.GetMutexRoles(ctx, result.Id); err != nil {
 			return nil, err
 		}
 	}
@@ -1004,8 +1006,10 @@ func (this *odinService) GetRole(ctx int64, name string) (result *Role, err erro
 		return nil, err
 	}
 	if result != nil {
-		result.PermissionList, err = this.repo.GetPermissionsWithRoleId(ctx, result.Id)
-		if err != nil {
+		if result.PermissionList, err = this.repo.GetPermissionsWithRoleId(ctx, result.Id); err != nil {
+			return nil, err
+		}
+		if result.MutexRoleList, err = this.repo.GetMutexRoles(ctx, result.Id); err != nil {
 			return nil, err
 		}
 	}
