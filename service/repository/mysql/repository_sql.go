@@ -78,13 +78,24 @@ const odinGrantSQL = "" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
 const odinRoleMutexSQL = "" +
-	"CREATE TABLE IF NOT EXISTS `%s` (" +
-	"`ctx` bigint(20) DEFAULT NULL," +
-	"`role_id` bigint(20) DEFAULT NULL," +
-	"`mutex_role_id` bigint(20) DEFAULT NULL," +
+	"CREATE TABLE `%s` (" +
+	"`ctx` bigint(20) NOT NULL," +
+	"`role_id` bigint(20) NOT NULL," +
+	"`mutex_role_id` bigint(20) NOT NULL," +
 	"`created_on` datetime DEFAULT NULL," +
-	"UNIQUE KEY `odin_role_mutex_pk` (`ctx`,`role_id`,`mutex_role_id`)," +
+	"PRIMARY KEY (`ctx`,`role_id`,`mutex_role_id`)," +
 	"KEY `odin_role_mutex_ctx_mutex_role_id_index` (`ctx`,`mutex_role_id`)," +
 	"KEY `odin_role_mutex_ctx_role_id_index` (`ctx`,`role_id`)," +
 	"KEY `odin_role_mutex_ctx_mutex_role_id_role_id_index` (`ctx`,`mutex_role_id`,`role_id`)" +
+	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+
+const odinPreRoleSQL = "" +
+	"CREATE TABLE `%s` (" +
+	"`ctx` bigint(20) NOT NULL," +
+	"`role_id` bigint(20) NOT NULL," +
+	"`pre_role_id` bigint(20) NOT NULL," +
+	"`created_on` datetime DEFAULT NULL," +
+	"PRIMARY KEY (`ctx`,`role_id`,`pre_role_id`)," +
+	"KEY `odin_pre_role_ctx_role_id_pre_role_id_index` (`ctx`,`role_id`,`pre_role_id`)," +
+	"KEY `odin_pre_role_ctx_role_id_index` (`ctx`,`role_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
