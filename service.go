@@ -1241,7 +1241,7 @@ func (this *odinService) GrantRoleWithId(ctx int64, target string, roleIds ...in
 		mIds = append(mIds, role.Id)
 	}
 
-	// 获取冲突关系
+	// 获取互斥关系
 	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, mIds)
 	if err != nil {
 		return err
@@ -1298,7 +1298,7 @@ func (this *odinService) GrantRole(ctx int64, target string, roleNames ...string
 		mIds = append(mIds, role.Id)
 	}
 
-	// 获取冲突关系
+	// 获取互斥关系
 	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, mIds)
 	if err != nil {
 		return err
@@ -1344,7 +1344,7 @@ func (this *odinService) ReGrantRoleWithId(ctx int64, target string, roleIds ...
 		return ErrGrantFailed
 	}
 
-	// 获取冲突关系
+	// 获取互斥关系
 	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, nIds)
 	if err != nil {
 		return err
@@ -1394,7 +1394,7 @@ func (this *odinService) ReGrantRole(ctx int64, target string, roleNames ...stri
 		return ErrGrantFailed
 	}
 
-	// 获取冲突关系
+	// 获取互斥关系
 	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, nIds)
 	if err != nil {
 		return err
