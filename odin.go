@@ -282,6 +282,32 @@ type Service interface {
 	// CheckRoleMutexWithId 验证两个角色是否互斥
 	CheckRoleMutexWithId(ctx, roleId, mutexRoleId int64) bool
 
+	// 角色先决条件
+
+	// AddPreRole 添加授予该角色时需要的先决条件
+	AddPreRole(ctx int64, roleName string, preRoleNames ...string) (err error)
+
+	// AddPreRoleWithId 添加授予该角色时需要的先决条件
+	AddPreRoleWithId(ctx, roleId int64, preRoleIds ...int64) (err error)
+
+	// RemovePreRole 删除授予该角色时需要的先决条件
+	RemovePreRole(ctx int64, roleName string, preRoleNames ...string) (err error)
+
+	// RemovePreRoleWithId 删除授予该角色时需要的先决条件
+	RemovePreRoleWithId(ctx, roleId int64, preRoleIds ...int64) (err error)
+
+	// RemoveAllPreRole 删除授予该角色时需要的所有先决条件
+	RemoveAllPreRole(ctx int64, roleName string) (err error)
+
+	// RemoveAllPreRoleWithId 删除授予该角色时需要的所有先决条件
+	RemoveAllPreRoleWithId(ctx, roleId int64) (err error)
+
+	// GetPreRoles 获取授予该角色时需要的所有先决条件
+	GetPreRoles(ctx int64, roleName string) (result []*PreRole, err error)
+
+	// GetPreRolesWithId 获取授予该角色时需要的所有先决条件
+	GetPreRolesWithId(ctx, roleId int64) (result []*PreRole, err error)
+
 	// 其它
 
 	// GetGrantedRoles 获取已授权给 target 的角色列表

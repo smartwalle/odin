@@ -16,4 +16,5 @@ var (
 	ErrInvalidParentRole    = errors.New("无效的父角色")
 	ErrPermissionDenied     = errors.New("没有操作权限")
 	ErrMutexRoleNotExist    = errors.New("互斥角色不存在")
+	ErrPreRoleNotExist      = errors.New("前置角色不存在")
 )

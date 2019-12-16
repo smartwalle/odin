@@ -1691,7 +1691,7 @@ func (this *odinService) GetMutexRolesWithId(ctx, roleId int64) (result []*RoleM
 	if role == nil {
 		return nil, ErrRoleNotExist
 	}
-	return this.repo.GetMutexRoles(ctx, roleId)
+	return this.repo.GetMutexRoles(ctx, role.Id)
 }
 
 func (this *odinService) CheckRoleMutex(ctx int64, roleName, mutexRoleName string) bool {
@@ -1728,6 +1728,232 @@ func (this *odinService) CheckRoleMutex(ctx int64, roleName, mutexRoleName strin
 
 func (this *odinService) CheckRoleMutexWithId(ctx, roleId, mutexRoleId int64) bool {
 	return this.repo.CheckRoleMutex(ctx, roleId, mutexRoleId)
+}
+
+// 授予角色先决条件
+
+// AddPreRole 添加授予该角色时需要的先决条件
+func (this *odinService) AddPreRole(ctx int64, roleName string, preRoleNames ...string) (err error) {
+	if len(preRoleNames) == 0 {
+		return ErrPreRoleNotExist
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	preRoleList, err := nRepo.GetRolesWithNames(ctx, preRoleNames...)
+	if err != nil {
+		return err
+	}
+
+	var preIds = make([]int64, 0, len(preRoleList))
+	for _, role := range preRoleList {
+		preIds = append(preIds, role.Id)
+	}
+	if len(preIds) == 0 {
+		return ErrPreRoleNotExist
+	}
+
+	if err = nRepo.AddPreRole(ctx, role.Id, preIds); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+// AddPreRoleWithId 添加授予该角色时需要的先决条件
+func (this *odinService) AddPreRoleWithId(ctx, roleId int64, preRoleIds ...int64) (err error) {
+	if len(preRoleIds) == 0 {
+		return ErrPreRoleNotExist
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	preRoleList, err := nRepo.GetRolesWithIds(ctx, preRoleIds...)
+	if err != nil {
+		return err
+	}
+
+	var preIds = make([]int64, 0, len(preRoleList))
+	for _, role := range preRoleList {
+		preIds = append(preIds, role.Id)
+	}
+	if len(preIds) == 0 {
+		return ErrPreRoleNotExist
+	}
+
+	if err = nRepo.AddPreRole(ctx, role.Id, preIds); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+// RemovePreRole 删除授予该角色时需要的先决条件
+func (this *odinService) RemovePreRole(ctx int64, roleName string, preRoleNames ...string) (err error) {
+	if len(preRoleNames) == 0 {
+		return ErrPreRoleNotExist
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	preRoleList, err := nRepo.GetRolesWithNames(ctx, preRoleNames...)
+	if err != nil {
+		return err
+	}
+
+	var preIds = make([]int64, 0, len(preRoleList))
+	for _, role := range preRoleList {
+		preIds = append(preIds, role.Id)
+	}
+	if len(preIds) == 0 {
+		return ErrPreRoleNotExist
+	}
+
+	if err = nRepo.RemovePreRole(ctx, role.Id, preIds); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+// RemovePreRoleWithId 删除授予该角色时需要的先决条件
+func (this *odinService) RemovePreRoleWithId(ctx, roleId int64, preRoleIds ...int64) (err error) {
+	if len(preRoleIds) == 0 {
+		return ErrPreRoleNotExist
+	}
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 验证角色是否存在
+	role, err := nRepo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	preRoleList, err := nRepo.GetRolesWithIds(ctx, preRoleIds...)
+	if err != nil {
+		return err
+	}
+
+	var preIds = make([]int64, 0, len(preRoleList))
+	for _, role := range preRoleList {
+		preIds = append(preIds, role.Id)
+	}
+	if len(preIds) == 0 {
+		return ErrPreRoleNotExist
+	}
+
+	if err = nRepo.RemovePreRole(ctx, role.Id, preIds); err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
+// RemoveAllPreRole 删除授予该角色时需要的所有先决条件
+func (this *odinService) RemoveAllPreRole(ctx int64, roleName string) (err error) {
+	// 验证角色是否存在
+	role, err := this.repo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+	return this.repo.CleanPreRole(ctx, role.Id)
+}
+
+// RemoveAllPreRoleWithId 删除授予该角色时需要的所有先决条件
+func (this *odinService) RemoveAllPreRoleWithId(ctx, roleId int64) (err error) {
+	// 验证角色是否存在
+	role, err := this.repo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+	return this.repo.CleanPreRole(ctx, role.Id)
+}
+
+// GetPreRoles 获取授予该角色时需要的所有先决条件
+func (this *odinService) GetPreRoles(ctx int64, roleName string) (result []*PreRole, err error) {
+	// 验证角色是否存在
+	role, err := this.repo.GetRoleWithName(ctx, roleName)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, ErrRoleNotExist
+	}
+	return this.repo.GetPreRoles(ctx, role.Id)
+}
+
+// GetPreRolesWithId 获取授予该角色时需要的所有先决条件
+func (this *odinService) GetPreRolesWithId(ctx, roleId int64) (result []*PreRole, err error) {
+	// 验证角色是否存在
+	role, err := this.repo.GetRoleWithId(ctx, roleId)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, ErrRoleNotExist
+	}
+	return this.repo.GetPreRoles(ctx, roleId)
 }
 
 // 其它
