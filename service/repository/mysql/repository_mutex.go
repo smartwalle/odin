@@ -30,6 +30,7 @@ func (this *odinRepository) RemoveRoleMutex(ctx, roleId int64, mutexRoleIds []in
 	rb.Where("ctx = ?", ctx)
 	rb.Where("role_id = ?", roleId)
 	rb.Where(dbs.IN("mutex_role_id", mutexRoleIds))
+	rb.Limit(int64(len(mutexRoleIds)))
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
 	}
@@ -39,6 +40,7 @@ func (this *odinRepository) RemoveRoleMutex(ctx, roleId int64, mutexRoleIds []in
 	rb.Where("ctx = ?", ctx)
 	rb.Where("mutex_role_id = ?", roleId)
 	rb.Where(dbs.IN("role_id", mutexRoleIds))
+	rb.Limit(int64(len(mutexRoleIds)))
 	if _, err = rb.Exec(this.db); err != nil {
 		return err
 	}
