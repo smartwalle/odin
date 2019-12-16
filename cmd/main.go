@@ -21,7 +21,7 @@ func main() {
 	var rRepo = redis.NewRepository(r, "v2", sRepo)
 	var s = odin.NewService(rRepo)
 
-	s.Init()
+	fmt.Println("Init", s.Init())
 
 	// 添加权限组
 	fmt.Println(s.AddPermissionGroup(1, "yf", "研发组", odin.Enable))
@@ -85,9 +85,12 @@ func main() {
 	fmt.Println(s.AddRoleWithParent(1, "cwzg", "cwry", "财务人员", "", odin.Enable))
 	fmt.Println(s.GrantPermission(1, "cwzj", "cw1", "cw2", "cw3", "cw4", "cw5", "cw6", "cw7", "cw8", "cw9"))
 
-	s.GrantRole(1, "t1", "yfzj")
-	s.GrantRole(1, "t1", "yfjl")
-	s.GrantRole(1, "t2", "yfzg")
+	s.AddRoleMutex(1, "yfzj", "yfjl", "yfzg")
+
+	fmt.Println(s.GrantRole(1, "t1", "yfzj"))
+	fmt.Println(s.GrantRole(1, "t1", "yfjl"))
+	fmt.Println(s.GrantRole(1, "t1", "yfzg"))
+	fmt.Println(s.GrantRole(1, "t2", "yfzg"))
 
 	fmt.Println("========= GetRolesWithTarget - t1")
 	roles, _ := s.GetRolesWithTarget(1, "t1")
@@ -105,7 +108,6 @@ func main() {
 	roles, _ = s.GetGrantedRoles(1, "t1")
 	printRoles(0, roles)
 
-	s.AddRoleMutex(1, "yfzj", "yfjl", "yfzg")
 }
 
 func printRoles(level int, roles []*odin.Role) {

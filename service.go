@@ -1,6 +1,7 @@
 package odin
 
 import (
+	"fmt"
 	"github.com/smartwalle/dbs"
 )
 
@@ -88,6 +89,8 @@ type Repository interface {
 	CleanRoleMutex(ctx, roleId int64) (err error)
 
 	GetMutexRoles(ctx, roleId int64) (result []*RoleMutex, err error)
+
+	GetMutesRolesWithIds(ctx int64, roleIds []int64) (result []*RoleMutex, err error)
 
 	CheckRoleMutex(ctx, roleId, mutexRoleId int64) bool
 
@@ -1219,12 +1222,32 @@ func (this *odinService) GrantRoleWithId(ctx int64, target string, roleIds ...in
 		return err
 	}
 
+	var mIds = make([]int64, 0, len(roleList))
 	var nIds = make([]int64, 0, len(roleList))
 	for _, role := range roleList {
+		mIds = append(mIds, role.Id)
 		nIds = append(nIds, role.Id)
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
+	}
+
+	// 查询出已授予给 target 的角色
+	grantedRoleList, err := nRepo.GetGrantedRoles(ctx, target, false)
+	if err != nil {
+		return err
+	}
+	for _, role := range grantedRoleList {
+		mIds = append(mIds, role.Id)
+	}
+
+	// 获取冲突关系
+	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, mIds)
+	if err != nil {
+		return err
+	}
+	for _, role := range mutexRoleList {
+		return fmt.Errorf("角色 %s 与角色 %s 互斥", role.RoleAliasName, role.MutexRoleAliasName)
 	}
 
 	if err = nRepo.GrantRoleWithIds(ctx, target, nIds...); err != nil {
@@ -1256,12 +1279,32 @@ func (this *odinService) GrantRole(ctx int64, target string, roleNames ...string
 		return err
 	}
 
+	var mIds = make([]int64, 0, len(roleList))
 	var nIds = make([]int64, 0, len(roleList))
 	for _, role := range roleList {
+		mIds = append(mIds, role.Id)
 		nIds = append(nIds, role.Id)
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
+	}
+
+	// 查询出已授予给 target 的角色
+	grantedRoleList, err := nRepo.GetGrantedRoles(ctx, target, false)
+	if err != nil {
+		return err
+	}
+	for _, role := range grantedRoleList {
+		mIds = append(mIds, role.Id)
+	}
+
+	// 获取冲突关系
+	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, mIds)
+	if err != nil {
+		return err
+	}
+	for _, role := range mutexRoleList {
+		return fmt.Errorf("角色 %s 与角色 %s 互斥", role.RoleAliasName, role.MutexRoleAliasName)
 	}
 
 	if err = nRepo.GrantRoleWithIds(ctx, target, nIds...); err != nil {
@@ -1299,6 +1342,15 @@ func (this *odinService) ReGrantRoleWithId(ctx int64, target string, roleIds ...
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
+	}
+
+	// 获取冲突关系
+	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, nIds)
+	if err != nil {
+		return err
+	}
+	for _, role := range mutexRoleList {
+		return fmt.Errorf("角色 %s 与角色 %s 互斥", role.RoleAliasName, role.MutexRoleAliasName)
 	}
 
 	if err = nRepo.RevokeAllRole(ctx, target); err != nil {
@@ -1340,6 +1392,15 @@ func (this *odinService) ReGrantRole(ctx int64, target string, roleNames ...stri
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
+	}
+
+	// 获取冲突关系
+	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, nIds)
+	if err != nil {
+		return err
+	}
+	for _, role := range mutexRoleList {
+		return fmt.Errorf("角色 %s 与角色 %s 互斥", role.RoleAliasName, role.MutexRoleAliasName)
 	}
 
 	if err = nRepo.RevokeAllRole(ctx, target); err != nil {

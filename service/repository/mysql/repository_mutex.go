@@ -84,6 +84,26 @@ func (this *odinRepository) GetMutexRoles(ctx, roleId int64) (result []*odin.Rol
 	return result, nil
 }
 
+// GetMutesRolesWithIds 获取角色之间的互斥关系
+func (this *odinRepository) GetMutesRolesWithIds(ctx int64, roleIds []int64) (result []*odin.RoleMutex, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("m.ctx", "m.role_id", "m.mutex_role_id", "m.created_on")
+	sb.Selects("r.name AS role_name", "r.alias_name AS role_alias_name")
+	sb.Selects("rm.name AS mutex_role_name", "rm.alias_name AS mutex_role_alias_name")
+	sb.From(this.tblRoleMutex, "AS m")
+	sb.LeftJoin(this.tblRole, "AS r ON r.id = m.role_id")
+	sb.LeftJoin(this.tblRole, "AS rm ON rm.id = m.mutex_role_id")
+	sb.Where("m.ctx = ?", ctx)
+	sb.Where(dbs.IN("m.role_id", roleIds))
+	sb.Where(dbs.IN("m.mutex_role_id", roleIds))
+	sb.Where("r.ctx = ?", ctx)
+	sb.Where("rm.ctx = ?", ctx)
+	if err = sb.Scan(this.db, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // CheckRoleMutex 检测两个角色是否互斥
 func (this *odinRepository) CheckRoleMutex(ctx, roleId, mutexRoleId int64) bool {
 	var sb = dbs.NewSelectBuilder()
