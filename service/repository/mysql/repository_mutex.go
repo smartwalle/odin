@@ -86,8 +86,8 @@ func (this *odinRepository) GetMutexRoles(ctx, roleId int64) (result []*odin.Rol
 	return result, nil
 }
 
-// GetMutesRolesWithIds 获取角色之间的互斥关系
-func (this *odinRepository) GetMutesRolesWithIds(ctx int64, roleIds []int64) (result []*odin.RoleMutex, err error) {
+// GetMutexRolesWithIds 获取角色之间的互斥关系
+func (this *odinRepository) GetMutexRolesWithIds(ctx int64, roleIds []int64) (result []*odin.RoleMutex, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("m.ctx", "m.role_id", "m.mutex_role_id", "m.created_on")
 	sb.Selects("r.name AS role_name", "r.alias_name AS role_alias_name")

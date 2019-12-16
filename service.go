@@ -90,7 +90,7 @@ type Repository interface {
 
 	GetMutexRoles(ctx, roleId int64) (result []*RoleMutex, err error)
 
-	GetMutesRolesWithIds(ctx int64, roleIds []int64) (result []*RoleMutex, err error)
+	GetMutexRolesWithIds(ctx int64, roleIds []int64) (result []*RoleMutex, err error)
 
 	CheckRoleMutex(ctx, roleId, mutexRoleId int64) bool
 
@@ -1251,8 +1251,8 @@ func (this *odinService) GrantRoleWithId(ctx int64, target string, roleIds ...in
 		mIds = append(mIds, role.Id)
 	}
 
-	// 获取互斥关系
-	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, mIds)
+	// 获取并验证互斥关系
+	mutexRoleList, err := nRepo.GetMutexRolesWithIds(ctx, mIds)
 	if err != nil {
 		return err
 	}
@@ -1308,8 +1308,8 @@ func (this *odinService) GrantRole(ctx int64, target string, roleNames ...string
 		mIds = append(mIds, role.Id)
 	}
 
-	// 获取互斥关系
-	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, mIds)
+	// 获取并验证互斥关系
+	mutexRoleList, err := nRepo.GetMutexRolesWithIds(ctx, mIds)
 	if err != nil {
 		return err
 	}
@@ -1354,8 +1354,8 @@ func (this *odinService) ReGrantRoleWithId(ctx int64, target string, roleIds ...
 		return ErrGrantFailed
 	}
 
-	// 获取互斥关系
-	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, nIds)
+	// 获取并验证互斥关系
+	mutexRoleList, err := nRepo.GetMutexRolesWithIds(ctx, nIds)
 	if err != nil {
 		return err
 	}
@@ -1404,8 +1404,8 @@ func (this *odinService) ReGrantRole(ctx int64, target string, roleNames ...stri
 		return ErrGrantFailed
 	}
 
-	// 获取互斥关系
-	mutexRoleList, err := nRepo.GetMutesRolesWithIds(ctx, nIds)
+	// 获取并验证互斥关系
+	mutexRoleList, err := nRepo.GetMutexRolesWithIds(ctx, nIds)
 	if err != nil {
 		return err
 	}
