@@ -94,6 +94,16 @@ type Repository interface {
 
 	CheckRoleMutex(ctx, roleId, mutexRoleId int64) bool
 
+	// 角色先决条件
+
+	AddPreRole(ctx, roleId int64, preRoleIds []int64) (err error)
+
+	RemovePreRole(ctx, roleId int64, preRoleIds []int64) (err error)
+
+	CleanPreRole(ctx, roleId int64) (err error)
+
+	GetPreRoles(ctx, roleId int64) (result []*PreRole, err error)
+
 	// GetGrantedRoles 获取已授权给 target 的角色列表
 	// 如果参数 withChildren 的值为 true，则返回的角色数据中将包含该角色的子角色列表（子角色列表不一定授权给 target）
 	GetGrantedRoles(ctx int64, target string, withChildren bool) (result []*Role, err error)

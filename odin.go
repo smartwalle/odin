@@ -79,6 +79,17 @@ type RoleMutex struct {
 	CreatedOn          *time.Time `json:"created_on"                sql:"created_on"`
 }
 
+type PreRole struct {
+	Ctx              int64      `json:"ctx"                       sql:"ctx"`
+	RoleId           int64      `json:"role_id"                   sql:"role_id"`
+	RoleName         string     `json:"role_name"                 sql:"role_name"`
+	RoleAliasName    string     `json:"role_alias_name"           sql:"role_alias_name"`
+	PreRoleId        int64      `json:"pre_role_id"               sql:"pre_role_id"`
+	PreRoleName      string     `json:"pre_role_name"             sql:"pre_role_name"`
+	PreRoleAliasName string     `json:"pre_role_alias_name"       sql:"pre_role_alias_name"`
+	CreatedOn        *time.Time `json:"created_on"                sql:"created_on"`
+}
+
 type Grant struct {
 	Ctx            int64  `json:"ctx"                sql:"ctx"`
 	Target         string `json:"target"             sql:"target"`
