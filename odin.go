@@ -59,6 +59,7 @@ type Role struct {
 	PermissionList []*Permission `json:"permission_list,omitempty"       sql:"-"`
 	Children       []*Role       `json:"children,omitempty"              sql:"-"`
 	MutexRoleList  []*RoleMutex  `json:"mutex_role_list,omitempty"       sql:"-"`
+	PreRoleList    []*PreRole    `json:"pre_role_list,omitempty"         sql:"-"`
 }
 
 type RolePermission struct {

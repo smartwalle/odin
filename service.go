@@ -1009,6 +1009,9 @@ func (this *odinService) GetRoleWithId(ctx, roleId int64) (result *Role, err err
 		if result.MutexRoleList, err = this.repo.GetMutexRoles(ctx, result.Id); err != nil {
 			return nil, err
 		}
+		if result.PreRoleList, err = this.repo.GetPreRoles(ctx, result.Id); err != nil {
+			return nil, err
+		}
 	}
 	return result, nil
 }
@@ -1023,6 +1026,9 @@ func (this *odinService) GetRole(ctx int64, name string) (result *Role, err erro
 			return nil, err
 		}
 		if result.MutexRoleList, err = this.repo.GetMutexRoles(ctx, result.Id); err != nil {
+			return nil, err
+		}
+		if result.PreRoleList, err = this.repo.GetPreRoles(ctx, result.Id); err != nil {
 			return nil, err
 		}
 	}
