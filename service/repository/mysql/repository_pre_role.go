@@ -51,12 +51,12 @@ func (this *odinRepository) CleanPreRole(ctx, roleId int64) (err error) {
 // GetPreRoles 获取先决角色条件
 func (this *odinRepository) GetPreRoles(ctx, roleId int64) (result []*odin.PreRole, err error) {
 	var sb = dbs.NewSelectBuilder()
-	sb.Selects("p.ctx", "p.role_id", "p.pro_role_id", "p.created_on")
+	sb.Selects("p.ctx", "p.role_id", "p.pre_role_id", "p.created_on")
 	sb.Selects("r.name AS role_name", "r.alias_name AS role_alias_name")
-	sb.Selects("pr.name AS pro_role_name", "pr.alias_name AS pro_role_alias_name")
+	sb.Selects("pr.name AS pre_role_name", "pr.alias_name AS pre_role_alias_name")
 	sb.From(this.tblPreRole, "AS p")
 	sb.LeftJoin(this.tblRole, "AS r ON r.id = p.role_id")
-	sb.LeftJoin(this.tblRole, "AS pr ON pr.id = p.pro_role_id")
+	sb.LeftJoin(this.tblRole, "AS pr ON pr.id = p.pre_role_id")
 	sb.Where("p.ctx = ?", ctx)
 	sb.Where("p.role_id = ?", roleId)
 	sb.Where("r.ctx = ?", ctx)

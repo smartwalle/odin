@@ -86,6 +86,9 @@ func main() {
 	fmt.Println(s.GrantPermission(1, "cwzj", "cw1", "cw2", "cw3", "cw4", "cw5", "cw6", "cw7", "cw8", "cw9"))
 
 	s.AddRoleMutex(1, "yfzj", "yfjl", "yfzg")
+	s.AddPreRole(1, "yfzj", "yfjl")
+	s.AddPreRole(1, "yfjl", "yfzg")
+	s.AddPreRole(1, "yfzg", "yfry")
 
 	fmt.Println(s.GrantRole(1, "t1", "yfzj"))
 	fmt.Println(s.GrantRole(1, "t1", "yfjl"))
