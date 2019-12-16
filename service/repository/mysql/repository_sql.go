@@ -85,6 +85,6 @@ const odinRoleMutexSQL = "" +
 	"`created_on` datetime DEFAULT NULL," +
 	"UNIQUE KEY `odin_role_mutex_pk` (`ctx`,`role_id`,`mutex_role_id`)," +
 	"KEY `odin_role_mutex_ctx_mutex_role_id_index` (`ctx`,`mutex_role_id`)," +
-	"KEY `odin_role_mutex_ctx_role_id_index` (`ctx`,`role_id`)" +
+	"KEY `odin_role_mutex_ctx_role_id_index` (`ctx`,`role_id`)," +
 	"KEY `odin_role_mutex_ctx_mutex_role_id_role_id_index` (`ctx`,`mutex_role_id`,`role_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
