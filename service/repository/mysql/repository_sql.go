@@ -105,6 +105,7 @@ const odinPrePermissionSQL = "" +
 	"`ctx` bigint(20) NOT NULL," +
 	"`permission_id` bigint(20) NOT NULL," +
 	"`pre_permission_id` bigint(20) NOT NULL," +
+	"`auto_grant` tinyint(1) DEFAULT '0'," +
 	"`created_on` datetime DEFAULT NULL," +
 	"PRIMARY KEY (`ctx`,`permission_id`,`pre_permission_id`)," +
 	"KEY `odin_pre_permission_ctx_permission_id_index` (`ctx`,`permission_id`)," +

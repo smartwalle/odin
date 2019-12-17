@@ -91,6 +91,18 @@ type PreRole struct {
 	CreatedOn        *time.Time `json:"created_on"                sql:"created_on"`
 }
 
+type PrePermission struct {
+	Ctx                    int64      `json:"ctx"                           sql:"ctx"`
+	PermissionId           int64      `json:"permission_id"                 sql:"permission_id"`
+	PermissionName         string     `json:"permission_name"               sql:"permission_name"`
+	PermissionAliasName    string     `json:"permission_alias_name"         sql:"permission_alias_name"`
+	PrePermissionId        int64      `json:"pre_permission_id"             sql:"pre_permission_id"`
+	PrePermissionName      string     `json:"pre_permission_name"           sql:"pre_permission_name"`
+	PrePermissionAliasName string     `json:"pre_permission_alias_name"     sql:"pre_permission_alias_name"`
+	AutoGrant              bool       `json:"auto_grant"                    sql:"auto_grant"`
+	CreatedOn              *time.Time `json:"created_on"                    sql:"created_on"`
+}
+
 type Grant struct {
 	Ctx            int64  `json:"ctx"                sql:"ctx"`
 	Target         string `json:"target"             sql:"target"`
