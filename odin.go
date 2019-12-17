@@ -131,7 +131,7 @@ type Service interface {
 	// UpdatePermissionGroupStatus 根据 groupName 更新组状态
 	UpdatePermissionGroupStatus(ctx int64, groupName string, status Status) (err error)
 
-	// 极限
+	// 权限
 
 	// GetPermissions 获取权限列表
 	GetPermissions(ctx int64, status Status, keywords string, groupIds []int64) (result []*Permission, err error)
