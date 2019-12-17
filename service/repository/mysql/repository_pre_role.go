@@ -48,7 +48,7 @@ func (this *odinRepository) CleanPreRole(ctx, roleId int64) (err error) {
 	return nil
 }
 
-// GetPreRoles 获取先决角色条件
+// GetPreRoles 获取授予角色的先决角色条件
 func (this *odinRepository) GetPreRoles(ctx, roleId int64) (result []*odin.PreRole, err error) {
 	var sb = dbs.NewSelectBuilder()
 	sb.Selects("p.ctx", "p.role_id", "p.pre_role_id", "p.created_on")
@@ -61,6 +61,26 @@ func (this *odinRepository) GetPreRoles(ctx, roleId int64) (result []*odin.PreRo
 	sb.Where("p.role_id = ?", roleId)
 	sb.Where("r.ctx = ?", ctx)
 	sb.Where("pr.ctx = ?", ctx)
+	if err = sb.Scan(this.db, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetPreRolesWithIds 获取授予角色列表的先决角色条件
+func (this *odinRepository) GetPreRolesWithIds(ctx int64, roleIds []int64) (result []*odin.PreRole, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("p.ctx", "p.role_id", "p.pre_role_id", "p.created_on")
+	sb.Selects("r.name AS role_name", "r.alias_name AS role_alias_name")
+	sb.Selects("pr.name AS pre_role_name", "pr.alias_name AS pre_role_alias_name")
+	sb.From(this.tblPreRole, "AS p")
+	sb.LeftJoin(this.tblRole, "AS r ON r.id = p.role_id")
+	sb.LeftJoin(this.tblRole, "AS pr ON pr.id = p.pre_role_id")
+	sb.Where("p.ctx = ?", ctx)
+	sb.Where(dbs.IN("p.role_id", roleIds))
+	sb.Where("r.ctx = ?", ctx)
+	sb.Where("pr.ctx = ?", ctx)
+	sb.GroupBy("p.pre_role_id")
 	if err = sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}

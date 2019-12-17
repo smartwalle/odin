@@ -85,15 +85,16 @@ func main() {
 	fmt.Println(s.AddRoleWithParent(1, "cwzg", "cwry", "财务人员", "", odin.Enable))
 	fmt.Println(s.GrantPermission(1, "cwzj", "cw1", "cw2", "cw3", "cw4", "cw5", "cw6", "cw7", "cw8", "cw9"))
 
-	s.AddRoleMutex(1, "yfzj", "yfjl", "yfzg")
+	s.AddRoleMutex(1, "yfzj", "yxzj", "cwzj")
 	s.AddPreRole(1, "yfzj", "yfjl")
 	s.AddPreRole(1, "yfjl", "yfzg")
 	s.AddPreRole(1, "yfzg", "yfry")
 
-	fmt.Println(s.GrantRole(1, "t1", "yfzj"))
-	fmt.Println(s.GrantRole(1, "t1", "yfjl"))
-	fmt.Println(s.GrantRole(1, "t1", "yfzg"))
-	fmt.Println(s.GrantRole(1, "t2", "yfzg"))
+	fmt.Println("3", s.GrantRole(1, "t1", "yfry"))
+	fmt.Println("3", s.GrantRole(1, "t1", "yfzg"))
+	fmt.Println("2", s.GrantRole(1, "t1", "yfjl"))
+	fmt.Println("1", s.GrantRole(1, "t1", "yfzj"))
+	fmt.Println("4", s.GrantRole(1, "t2", "yfzg"))
 
 	fmt.Println("========= GetRolesWithTarget - t1")
 	roles, _ := s.GetRolesWithTarget(1, "t1")

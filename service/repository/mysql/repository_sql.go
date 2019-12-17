@@ -78,7 +78,7 @@ const odinGrantSQL = "" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
 const odinRoleMutexSQL = "" +
-	"CREATE TABLE `%s` (" +
+	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`ctx` bigint(20) NOT NULL," +
 	"`role_id` bigint(20) NOT NULL," +
 	"`mutex_role_id` bigint(20) NOT NULL," +
@@ -90,7 +90,7 @@ const odinRoleMutexSQL = "" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
 const odinPreRoleSQL = "" +
-	"CREATE TABLE `%s` (" +
+	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`ctx` bigint(20) NOT NULL," +
 	"`role_id` bigint(20) NOT NULL," +
 	"`pre_role_id` bigint(20) NOT NULL," +
