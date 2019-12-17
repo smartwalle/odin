@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
 	"time"
@@ -134,18 +135,19 @@ func (this *odinRepository) GetRoleWithName(ctx int64, name string) (result *odi
 }
 
 func (this *odinRepository) AddRole(ctx int64, parent *odin.Role, name, aliasName, description string, status odin.Status) (result int64, err error) {
+	fmt.Println(parent)
 	if parent == nil {
 		if parent, err = this.getMaxRightRole(ctx); err != nil {
 			return 0, err
 		}
 		if parent == nil {
 			parent = &odin.Role{}
-			parent.Id = 0
 			parent.Ctx = ctx
 			parent.LeftValue = 0
 			parent.RightValue = 0
 			parent.Depth = 1
 		}
+		parent.Id = 0
 		return this.insertRoleToRoot(parent, name, aliasName, description, status)
 	}
 	return this.insertRoleToLast(parent, name, aliasName, description, status)
