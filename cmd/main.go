@@ -112,6 +112,8 @@ func main() {
 	roles, _ = s.GetGrantedRoles(1, "t1")
 	printRoles(0, roles)
 
+	s.AddRole(1, "test", "测试权限", "xx", odin.Enable)
+	fmt.Println(s.GrantPermission(1, "test", "yf3", "yf2", "yf1"))
 }
 
 func printRoles(level int, roles []*odin.Role) {

@@ -67,6 +67,8 @@ type Repository interface {
 
 	GetPrePermissions(ctx, permissionId int64) (result []*PrePermission, err error)
 
+	GetPrePermissionsWithIds(ctx int64, permissionIds []int64) (result []*PrePermission, err error)
+
 	// 角色
 
 	// GetRoles 获取角色列表
@@ -588,7 +590,7 @@ func (this *odinService) GrantPermission(ctx int64, roleName string, permissionN
 
 		for _, pName := range permissionNames {
 			if _, ok := permissionMap[pName]; ok == false {
-				return ErrPermissionDenied
+				return ErrPermissionOutOfParent
 			}
 		}
 	}
@@ -598,12 +600,37 @@ func (this *odinService) GrantPermission(ctx int64, roleName string, permissionN
 		return err
 	}
 
-	var nIds = make([]int64, 0, len(permissionList))
+	var gIds = make([]int64, 0, len(permissionList)) // 本次新授权权限 id 列表加上原来已授权权限 id 列表
+	var nIds = make([]int64, 0, len(permissionList)) // 本次新授权权限 id 列表
+	var gIdm = make(map[int64]struct{})              // 本次新授权权限 id 加上原来已授权权限 id 组成的 map
 	for _, permission := range permissionList {
+		gIds = append(gIds, permission.Id)
 		nIds = append(nIds, permission.Id)
+		gIdm[permission.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
+	}
+
+	// 查询出已授予给该角色的权限
+	grantedPermissionList, err := nRepo.GetPermissionsWithRoleId(ctx, role.Id)
+	if err != nil {
+		return err
+	}
+	for _, permission := range grantedPermissionList {
+		gIds = append(gIds, permission.Id)
+		gIdm[permission.Id] = struct{}{}
+	}
+
+	// 获取并验证所有权限所需要的权限先决条件
+	prePermissionList, err := nRepo.GetPrePermissionsWithIds(ctx, gIds)
+	if err != nil {
+		return err
+	}
+	for _, pPermission := range prePermissionList {
+		if _, ok := gIdm[pPermission.PrePermissionId]; ok == false {
+			return fmt.Errorf("授予权限 %s 时需要先授予权限 %s", pPermission.PermissionAliasName, pPermission.PrePermissionAliasName)
+		}
 	}
 
 	if err = nRepo.GrantPermissionWithIds(ctx, role.Id, nIds); err != nil {
@@ -661,7 +688,7 @@ func (this *odinService) GrantPermissionWithId(ctx int64, roleId int64, permissi
 
 		for _, pId := range permissionIds {
 			if _, ok := permissionMap[pId]; ok == false {
-				return ErrPermissionDenied
+				return ErrPermissionOutOfParent
 			}
 		}
 	}
@@ -671,12 +698,37 @@ func (this *odinService) GrantPermissionWithId(ctx int64, roleId int64, permissi
 		return err
 	}
 
+	var gIds = make([]int64, 0, len(permissionList))
 	var nIds = make([]int64, 0, len(permissionList))
-	for _, role := range permissionList {
-		nIds = append(nIds, role.Id)
+	var gIdm = make(map[int64]struct{})
+	for _, permission := range permissionList {
+		gIds = append(gIds, permission.Id)
+		nIds = append(nIds, permission.Id)
+		gIdm[permission.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
+	}
+
+	// 查询出已授予给该角色的权限
+	grantedPermissionList, err := nRepo.GetPermissionsWithRoleId(ctx, role.Id)
+	if err != nil {
+		return err
+	}
+	for _, permission := range grantedPermissionList {
+		gIds = append(gIds, permission.Id)
+		gIdm[permission.Id] = struct{}{}
+	}
+
+	// 获取并验证所有权限所需要的权限先决条件
+	prePermissionList, err := nRepo.GetPrePermissionsWithIds(ctx, gIds)
+	if err != nil {
+		return err
+	}
+	for _, pPermission := range prePermissionList {
+		if _, ok := gIdm[pPermission.PrePermissionId]; ok == false {
+			return fmt.Errorf("授予权限 %s 时需要先授予权限 %s", pPermission.PermissionAliasName, pPermission.PrePermissionAliasName)
+		}
 	}
 
 	if err = nRepo.GrantPermissionWithIds(ctx, roleId, nIds); err != nil {
@@ -734,7 +786,7 @@ func (this *odinService) ReGrantPermission(ctx int64, roleName string, permissio
 
 		for _, pName := range permissionNames {
 			if _, ok := permissionMap[pName]; ok == false {
-				return ErrPermissionDenied
+				return ErrPermissionOutOfParent
 			}
 		}
 	}
@@ -745,10 +797,10 @@ func (this *odinService) ReGrantPermission(ctx int64, roleName string, permissio
 	}
 
 	var nIds = make([]int64, 0, len(permissionList))
-	var nPermissionMap = make(map[int64]struct{})
-	for _, role := range permissionList {
-		nIds = append(nIds, role.Id)
-		nPermissionMap[role.Id] = struct{}{}
+	var gIdm = make(map[int64]struct{})
+	for _, permission := range permissionList {
+		nIds = append(nIds, permission.Id)
+		gIdm[permission.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
@@ -763,8 +815,19 @@ func (this *odinService) ReGrantPermission(ctx int64, roleName string, permissio
 	// 查出需要取消掉权限
 	var revokeIds = make([]int64, 0, len(rolePermissions))
 	for _, p := range rolePermissions {
-		if _, ok := nPermissionMap[p.Id]; ok == false {
+		if _, ok := gIdm[p.Id]; ok == false {
 			revokeIds = append(revokeIds, p.Id)
+		}
+	}
+
+	// 获取并验证所有权限所需要的权限先决条件
+	prePermissionList, err := nRepo.GetPrePermissionsWithIds(ctx, nIds)
+	if err != nil {
+		return err
+	}
+	for _, pPermission := range prePermissionList {
+		if _, ok := gIdm[pPermission.PrePermissionId]; ok == false {
+			return fmt.Errorf("授予权限 %s 时需要先授予权限 %s", pPermission.PermissionAliasName, pPermission.PrePermissionAliasName)
 		}
 	}
 
@@ -829,7 +892,7 @@ func (this *odinService) ReGrantPermissionWithId(ctx int64, roleId int64, permis
 
 		for _, pId := range permissionIds {
 			if _, ok := permissionMap[pId]; ok == false {
-				return ErrPermissionDenied
+				return ErrPermissionOutOfParent
 			}
 		}
 	}
@@ -840,10 +903,10 @@ func (this *odinService) ReGrantPermissionWithId(ctx int64, roleId int64, permis
 	}
 
 	var nIds = make([]int64, 0, len(permissions))
-	var nPermissionMap = make(map[int64]struct{})
-	for _, role := range permissions {
-		nIds = append(nIds, role.Id)
-		nPermissionMap[role.Id] = struct{}{}
+	var gIdm = make(map[int64]struct{})
+	for _, permission := range permissions {
+		nIds = append(nIds, permission.Id)
+		gIdm[permission.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
@@ -858,8 +921,19 @@ func (this *odinService) ReGrantPermissionWithId(ctx int64, roleId int64, permis
 	// 查出需要取消掉权限
 	var revokeIds = make([]int64, 0, len(rolePermissions))
 	for _, p := range rolePermissions {
-		if _, ok := nPermissionMap[p.Id]; ok == false {
+		if _, ok := gIdm[p.Id]; ok == false {
 			revokeIds = append(revokeIds, p.Id)
+		}
+	}
+
+	// 获取并验证所有权限所需要的权限先决条件
+	prePermissionList, err := nRepo.GetPrePermissionsWithIds(ctx, nIds)
+	if err != nil {
+		return err
+	}
+	for _, pPermission := range prePermissionList {
+		if _, ok := gIdm[pPermission.PrePermissionId]; ok == false {
+			return fmt.Errorf("授予权限 %s 时需要先授予权限 %s", pPermission.PermissionAliasName, pPermission.PrePermissionAliasName)
 		}
 	}
 
@@ -901,21 +975,47 @@ func (this *odinService) RevokePermission(ctx int64, roleName string, permission
 		return ErrRoleNotExist
 	}
 
-	permissionList, err := nRepo.GetPermissionsWithNames(ctx, permissionNames...)
+	rPermissionList, err := nRepo.GetPermissionsWithNames(ctx, permissionNames...)
 	if err != nil {
 		return err
 	}
 
-	var nIds = make([]int64, 0, len(permissionList))
-	for _, permission := range permissionList {
-		nIds = append(nIds, permission.Id)
+	var rIds = make([]int64, 0, len(rPermissionList))
+	for _, permission := range rPermissionList {
+		rIds = append(rIds, permission.Id)
 	}
-	if len(nIds) == 0 {
+	if len(rIds) == 0 {
 		return ErrRevokeFailed
 	}
 
-	if err = nRepo.RevokePermissionWithIds(ctx, role.Id, nIds); err != nil {
+	if err = nRepo.RevokePermissionWithIds(ctx, role.Id, rIds); err != nil {
 		return err
+	}
+
+	// 查询出已授予给角色的权限
+	grantedPermissionList, err := nRepo.GetPermissionsWithRoleId(ctx, role.Id)
+	if err != nil {
+		return err
+	}
+	var gIds = make([]int64, 0, len(grantedPermissionList))
+	var gIdm = make(map[int64]struct{})
+
+	for _, permission := range grantedPermissionList {
+		gIds = append(gIds, permission.Id)
+		gIdm[permission.Id] = struct{}{}
+	}
+
+	// 获取并验证所有权限所需要的权限先决条件
+	if len(gIds) > 0 {
+		prePermissionList, err := nRepo.GetPrePermissionsWithIds(ctx, gIds)
+		if err != nil {
+			return err
+		}
+		for _, pPermission := range prePermissionList {
+			if _, ok := gIdm[pPermission.PrePermissionId]; ok == false {
+				return fmt.Errorf("权限 %s 依赖于权限 %s", pPermission.PermissionAliasName, pPermission.PrePermissionAliasName)
+			}
+		}
 	}
 
 	tx.Commit()
@@ -923,6 +1023,14 @@ func (this *odinService) RevokePermission(ctx int64, roleName string, permission
 }
 
 func (this *odinService) RevokePermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error) {
+	if len(permissionIds) == 0 {
+		return ErrPermissionNotExist
+	}
+
+	if roleId <= 0 {
+		return ErrRoleNotExist
+	}
+
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -930,9 +1038,57 @@ func (this *odinService) RevokePermissionWithId(ctx int64, roleId int64, permiss
 		}
 	}()
 
-	if err = nRepo.RevokePermissionWithIds(ctx, roleId, permissionIds); err != nil {
+	role, err := nRepo.GetRoleWithId(ctx, roleId)
+	if err != nil {
 		return err
 	}
+	if role == nil {
+		return ErrRoleNotExist
+	}
+
+	rPermissionList, err := nRepo.GetPermissionsWithIds(ctx, permissionIds...)
+	if err != nil {
+		return err
+	}
+
+	var rIds = make([]int64, 0, len(rPermissionList))
+	for _, permission := range rPermissionList {
+		rIds = append(rIds, permission.Id)
+	}
+	if len(rIds) == 0 {
+		return ErrRevokeFailed
+	}
+
+	if err = nRepo.RevokePermissionWithIds(ctx, role.Id, rIds); err != nil {
+		return err
+	}
+
+	// 查询出已授予给角色的权限
+	grantedPermissionList, err := nRepo.GetPermissionsWithRoleId(ctx, role.Id)
+	if err != nil {
+		return err
+	}
+	var gIds = make([]int64, 0, len(grantedPermissionList))
+	var gIdm = make(map[int64]struct{})
+
+	for _, permission := range grantedPermissionList {
+		gIds = append(gIds, permission.Id)
+		gIdm[permission.Id] = struct{}{}
+	}
+
+	// 获取并验证所有权限所需要的权限先决条件
+	if len(gIds) > 0 {
+		prePermissionList, err := nRepo.GetPrePermissionsWithIds(ctx, gIds)
+		if err != nil {
+			return err
+		}
+		for _, pPermission := range prePermissionList {
+			if _, ok := gIdm[pPermission.PrePermissionId]; ok == false {
+				return fmt.Errorf("权限 %s 依赖于权限 %s", pPermission.PermissionAliasName, pPermission.PrePermissionAliasName)
+			}
+		}
+	}
+
 	tx.Commit()
 	return nil
 }

@@ -284,3 +284,22 @@ func (this *odinRepository) GetPrePermissions(ctx, permissionId int64) (result [
 	}
 	return result, nil
 }
+
+// GetPrePermissionsWithIds 获取授予权限列表的先决权限条件
+func (this *odinRepository) GetPrePermissionsWithIds(ctx int64, permissionIds []int64) (result []*odin.PrePermission, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("pp.ctx", "pp.permission_id", "pp.pre_permission_id", "pp.auto_grant", "pp.created_on")
+	sb.Selects("p.name AS permission_name", "p.alias_name AS permission_alias_name")
+	sb.Selects("ppp.name AS pre_permission_name", "ppp.alias_name AS pre_permission_alias_name")
+	sb.From(this.tblPrePermission, "AS pp")
+	sb.LeftJoin(this.tblPermission, "AS p ON p.id = pp.permission_id")
+	sb.LeftJoin(this.tblPermission, "AS ppp ON ppp.id = pp.pre_permission_id")
+	sb.Where("p.ctx = ?", ctx)
+	sb.Where(dbs.IN("pp.permission_id", permissionIds))
+	sb.Where("pp.ctx = ?", ctx)
+	sb.Where("ppp.ctx = ?", ctx)
+	if err = sb.Scan(this.db, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}

@@ -14,7 +14,7 @@ var (
 	ErrGroupNameExists       = errors.New("组名已存在")
 	ErrRevokeFailed          = errors.New("取消授权失败")
 	ErrInvalidParentRole     = errors.New("无效的父角色")
-	ErrPermissionDenied      = errors.New("没有操作权限")
+	ErrPermissionOutOfParent = errors.New("授予权限超出父角色范围")
 	ErrMutexRoleNotExist     = errors.New("互斥角色不存在")
 	ErrPreRoleNotExist       = errors.New("前置角色不存在")
 	ErrPrePermissionNotExist = errors.New("前置权限不存在")

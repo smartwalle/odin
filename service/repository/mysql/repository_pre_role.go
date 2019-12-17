@@ -80,7 +80,6 @@ func (this *odinRepository) GetPreRolesWithIds(ctx int64, roleIds []int64) (resu
 	sb.Where(dbs.IN("p.role_id", roleIds))
 	sb.Where("r.ctx = ?", ctx)
 	sb.Where("pr.ctx = ?", ctx)
-	sb.GroupBy("p.pre_role_id")
 	if err = sb.Scan(this.db, &result); err != nil {
 		return nil, err
 	}
