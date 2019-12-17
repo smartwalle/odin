@@ -99,3 +99,14 @@ const odinPreRoleSQL = "" +
 	"KEY `odin_pre_role_ctx_role_id_pre_role_id_index` (`ctx`,`role_id`,`pre_role_id`)," +
 	"KEY `odin_pre_role_ctx_role_id_index` (`ctx`,`role_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+
+const odinPrePermissionSQL = "" +
+	"CREATE TABLE IF NOT EXISTS `%s` (" +
+	"`ctx` bigint(20) NOT NULL," +
+	"`permission_id` bigint(20) NOT NULL," +
+	"`pre_permission_id` bigint(20) NOT NULL," +
+	"`created_on` datetime DEFAULT NULL," +
+	"PRIMARY KEY (`ctx`,`permission_id`,`pre_permission_id`)," +
+	"KEY `odin_pre_permission_ctx_permission_id_index` (`ctx`,`permission_id`)," +
+	"KEY `odin_pre_permission_ctx_permission_id_pre_permission_id_index` (`ctx`,`permission_id`,`pre_permission_id`)" +
+	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
