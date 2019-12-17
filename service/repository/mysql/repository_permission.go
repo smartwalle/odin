@@ -223,3 +223,64 @@ func (this *odinRepository) GetGrantedPermissions(ctx int64, target string) (res
 	}
 	return result, nil
 }
+
+// AddPrePermission 添加授予权限的先决权限条件
+func (this *odinRepository) AddPrePermission(ctx, permissionId int64, prePermissionIds []int64) (err error) {
+	var now = time.Now()
+	var ib = dbs.NewInsertBuilder()
+	ib.Options("IGNORE")
+	ib.Table(this.tblPrePermission)
+	ib.Columns("ctx", "permission_id", "pre_permission_id", "auto_grant", "created_on")
+	for _, prePermissionId := range prePermissionIds {
+		ib.Values(ctx, permissionId, prePermissionId, false, now)
+	}
+	if _, err = ib.Exec(this.db); err != nil {
+		return err
+	}
+	return nil
+}
+
+// RemovePrePermission 删除授予权限的先决权限条件
+func (this *odinRepository) RemovePrePermission(ctx, permissionId int64, prePermissionIds []int64) (err error) {
+	var rb = dbs.NewDeleteBuilder()
+	rb.Table(this.tblPrePermission)
+	rb.Where("ctx = ?", ctx)
+	rb.Where("permission_id = ?", permissionId)
+	rb.Where(dbs.IN("pre_permission_id", prePermissionIds))
+	rb.Limit(int64(len(prePermissionIds)))
+	if _, err = rb.Exec(this.db); err != nil {
+		return err
+	}
+	return nil
+}
+
+// CleanPrePermission 清除授予权限的先决权限条件
+func (this *odinRepository) CleanPrePermission(ctx, permissionId int64) (err error) {
+	var rb = dbs.NewDeleteBuilder()
+	rb.Table(this.tblPrePermission)
+	rb.Where("ctx = ?", ctx)
+	rb.Where("permission_id = ?", permissionId)
+	if _, err = rb.Exec(this.db); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetPrePermissions 获取授予权限的先决权限条件
+func (this *odinRepository) GetPrePermissions(ctx, permissionId int64) (result []*odin.PrePermission, err error) {
+	var sb = dbs.NewSelectBuilder()
+	sb.Selects("pp.ctx", "pp.permission_id", "pp.pre_permission_id", "pp.auto_grant", "pp.created_on")
+	sb.Selects("p.name AS permission_name", "p.alias_name AS permission_alias_name")
+	sb.Selects("ppp.name AS pre_permission_name", "ppp.alias_name AS pre_permission_alias_name")
+	sb.From(this.tblPrePermission, "AS pp")
+	sb.LeftJoin(this.tblPermission, "AS p ON p.id = pp.permission_id")
+	sb.LeftJoin(this.tblPermission, "AS ppp ON ppp.id = pp.pre_permission_id")
+	sb.Where("p.ctx = ?", ctx)
+	sb.Where("pp.permission_id = ?", permissionId)
+	sb.Where("pp.ctx = ?", ctx)
+	sb.Where("ppp.ctx = ?", ctx)
+	if err = sb.Scan(this.db, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
