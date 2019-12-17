@@ -1240,13 +1240,13 @@ func (this *odinService) GrantRoleWithId(ctx int64, target string, roleIds ...in
 		return err
 	}
 
-	var mIds = make([]int64, 0, len(roleList))
-	var nIds = make([]int64, 0, len(roleList))
-	var pIds = make(map[int64]struct{})
+	var gIds = make([]int64, 0, len(roleList)) // 本次新授权角色 id 列表加上原来已授权角色 id 列表
+	var nIds = make([]int64, 0, len(roleList)) // 本次新授权角色 id 列表
+	var gIdm = make(map[int64]struct{})        // 本次新授权角色 id 加上原来已授权角色 id 组成的 map
 	for _, role := range roleList {
-		mIds = append(mIds, role.Id)
+		gIds = append(gIds, role.Id)
 		nIds = append(nIds, role.Id)
-		pIds[role.Id] = struct{}{}
+		gIdm[role.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
@@ -1258,12 +1258,12 @@ func (this *odinService) GrantRoleWithId(ctx int64, target string, roleIds ...in
 		return err
 	}
 	for _, role := range grantedRoleList {
-		mIds = append(mIds, role.Id)
-		pIds[role.Id] = struct{}{}
+		gIds = append(gIds, role.Id)
+		gIdm[role.Id] = struct{}{}
 	}
 
 	// 获取并验证互斥关系
-	mutexRoleList, err := nRepo.GetMutexRolesWithIds(ctx, mIds)
+	mutexRoleList, err := nRepo.GetMutexRolesWithIds(ctx, gIds)
 	if err != nil {
 		return err
 	}
@@ -1272,12 +1272,12 @@ func (this *odinService) GrantRoleWithId(ctx int64, target string, roleIds ...in
 	}
 
 	// 获取并验证所有角色所需要的角色先决条件
-	preRoleList, err := nRepo.GetPreRolesWithIds(ctx, mIds)
+	preRoleList, err := nRepo.GetPreRolesWithIds(ctx, gIds)
 	if err != nil {
 		return err
 	}
 	for _, pRole := range preRoleList {
-		if _, ok := pIds[pRole.PreRoleId]; ok == false {
+		if _, ok := gIdm[pRole.PreRoleId]; ok == false {
 			return fmt.Errorf("授予角色 %s 时需要先授予角色 %s", pRole.RoleAliasName, pRole.PreRoleAliasName)
 		}
 	}
@@ -1311,13 +1311,13 @@ func (this *odinService) GrantRole(ctx int64, target string, roleNames ...string
 		return err
 	}
 
-	var mIds = make([]int64, 0, len(roleList))
+	var gIds = make([]int64, 0, len(roleList))
 	var nIds = make([]int64, 0, len(roleList))
-	var pIds = make(map[int64]struct{})
+	var gIdm = make(map[int64]struct{})
 	for _, role := range roleList {
-		mIds = append(mIds, role.Id)
+		gIds = append(gIds, role.Id)
 		nIds = append(nIds, role.Id)
-		pIds[role.Id] = struct{}{}
+		gIdm[role.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
@@ -1329,12 +1329,12 @@ func (this *odinService) GrantRole(ctx int64, target string, roleNames ...string
 		return err
 	}
 	for _, role := range grantedRoleList {
-		mIds = append(mIds, role.Id)
-		pIds[role.Id] = struct{}{}
+		gIds = append(gIds, role.Id)
+		gIdm[role.Id] = struct{}{}
 	}
 
 	// 获取并验证互斥关系
-	mutexRoleList, err := nRepo.GetMutexRolesWithIds(ctx, mIds)
+	mutexRoleList, err := nRepo.GetMutexRolesWithIds(ctx, gIds)
 	if err != nil {
 		return err
 	}
@@ -1343,12 +1343,12 @@ func (this *odinService) GrantRole(ctx int64, target string, roleNames ...string
 	}
 
 	// 获取并验证所有角色所需要的角色先决条件
-	preRoleList, err := nRepo.GetPreRolesWithIds(ctx, mIds)
+	preRoleList, err := nRepo.GetPreRolesWithIds(ctx, gIds)
 	if err != nil {
 		return err
 	}
 	for _, pRole := range preRoleList {
-		if _, ok := pIds[pRole.PreRoleId]; ok == false {
+		if _, ok := gIdm[pRole.PreRoleId]; ok == false {
 			return fmt.Errorf("授予角色 %s 时需要先授予角色 %s", pRole.RoleAliasName, pRole.PreRoleAliasName)
 		}
 	}
@@ -1383,10 +1383,10 @@ func (this *odinService) ReGrantRoleWithId(ctx int64, target string, roleIds ...
 	}
 
 	var nIds = make([]int64, 0, len(roleList))
-	var pIds = make(map[int64]struct{})
+	var gIdm = make(map[int64]struct{})
 	for _, role := range roleList {
 		nIds = append(nIds, role.Id)
-		pIds[role.Id] = struct{}{}
+		gIdm[role.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
@@ -1407,7 +1407,7 @@ func (this *odinService) ReGrantRoleWithId(ctx int64, target string, roleIds ...
 		return err
 	}
 	for _, pRole := range preRoleList {
-		if _, ok := pIds[pRole.PreRoleId]; ok == false {
+		if _, ok := gIdm[pRole.PreRoleId]; ok == false {
 			return fmt.Errorf("授予角色 %s 时需要先授予角色 %s", pRole.RoleAliasName, pRole.PreRoleAliasName)
 		}
 	}
@@ -1446,10 +1446,10 @@ func (this *odinService) ReGrantRole(ctx int64, target string, roleNames ...stri
 	}
 
 	var nIds = make([]int64, 0, len(roleList))
-	var pIds = make(map[int64]struct{})
+	var gIdm = make(map[int64]struct{})
 	for _, role := range roleList {
 		nIds = append(nIds, role.Id)
-		pIds[role.Id] = struct{}{}
+		gIdm[role.Id] = struct{}{}
 	}
 	if len(nIds) == 0 {
 		return ErrGrantFailed
@@ -1470,7 +1470,7 @@ func (this *odinService) ReGrantRole(ctx int64, target string, roleNames ...stri
 		return err
 	}
 	for _, pRole := range preRoleList {
-		if _, ok := pIds[pRole.PreRoleId]; ok == false {
+		if _, ok := gIdm[pRole.PreRoleId]; ok == false {
 			return fmt.Errorf("授予角色 %s 时需要先授予角色 %s", pRole.RoleAliasName, pRole.PreRoleAliasName)
 		}
 	}
