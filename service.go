@@ -1491,10 +1491,63 @@ func (this *odinService) RevokeRoleWithId(ctx int64, target string, roleIds ...i
 	if len(roleIds) == 0 {
 		return ErrRoleNotExist
 	}
+
 	if target == "" {
 		return ErrTargetNotAllowed
 	}
-	return this.repo.RevokeRoleWithIds(ctx, target, roleIds...)
+
+	var tx, nRepo = this.repo.BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	rRoleList, err := nRepo.GetRolesWithIds(ctx, roleIds...)
+	if err != nil {
+		return err
+	}
+
+	var rIds = make([]int64, 0, len(rRoleList))
+	for _, role := range rRoleList {
+		rIds = append(rIds, role.Id)
+	}
+	if len(rIds) == 0 {
+		return ErrGrantFailed
+	}
+
+	if err = nRepo.RevokeRoleWithIds(ctx, target, rIds...); err != nil {
+		return err
+	}
+
+	var gIds = make([]int64, 0, len(rRoleList))
+	var gIdm = make(map[int64]struct{})
+
+	// 查询出已授予给 target 的角色
+	grantedRoleList, err := nRepo.GetGrantedRoles(ctx, target, false)
+	if err != nil {
+		return err
+	}
+	for _, role := range grantedRoleList {
+		gIds = append(gIds, role.Id)
+		gIdm[role.Id] = struct{}{}
+	}
+
+	// 获取并验证所有角色所需要的角色先决条件
+	if len(gIds) > 0 {
+		preRoleList, err := nRepo.GetPreRolesWithIds(ctx, gIds)
+		if err != nil {
+			return err
+		}
+		for _, pRole := range preRoleList {
+			if _, ok := gIdm[pRole.PreRoleId]; ok == false {
+				return fmt.Errorf("角色 %s 依赖于角色 %s", pRole.RoleAliasName, pRole.PreRoleAliasName)
+			}
+		}
+	}
+
+	tx.Commit()
+	return nil
 }
 
 func (this *odinService) RevokeRole(ctx int64, target string, roleNames ...string) (err error) {
@@ -1513,21 +1566,47 @@ func (this *odinService) RevokeRole(ctx int64, target string, roleNames ...strin
 		}
 	}()
 
-	roleList, err := nRepo.GetRolesWithNames(ctx, roleNames...)
+	rRoleList, err := nRepo.GetRolesWithNames(ctx, roleNames...)
 	if err != nil {
 		return err
 	}
 
-	var nIds = make([]int64, 0, len(roleList))
-	for _, role := range roleList {
-		nIds = append(nIds, role.Id)
+	var rIds = make([]int64, 0, len(rRoleList))
+	for _, role := range rRoleList {
+		rIds = append(rIds, role.Id)
 	}
-	if len(nIds) == 0 {
+	if len(rIds) == 0 {
 		return ErrGrantFailed
 	}
 
-	if err = nRepo.RevokeRoleWithIds(ctx, target, nIds...); err != nil {
+	if err = nRepo.RevokeRoleWithIds(ctx, target, rIds...); err != nil {
 		return err
+	}
+
+	var gIds = make([]int64, 0, len(rRoleList))
+	var gIdm = make(map[int64]struct{})
+
+	// 查询出已授予给 target 的角色
+	grantedRoleList, err := nRepo.GetGrantedRoles(ctx, target, false)
+	if err != nil {
+		return err
+	}
+	for _, role := range grantedRoleList {
+		gIds = append(gIds, role.Id)
+		gIdm[role.Id] = struct{}{}
+	}
+
+	// 获取并验证所有角色所需要的角色先决条件
+	if len(gIds) > 0 {
+		preRoleList, err := nRepo.GetPreRolesWithIds(ctx, gIds)
+		if err != nil {
+			return err
+		}
+		for _, pRole := range preRoleList {
+			if _, ok := gIdm[pRole.PreRoleId]; ok == false {
+				return fmt.Errorf("角色 %s 依赖于角色 %s", pRole.RoleAliasName, pRole.PreRoleAliasName)
+			}
+		}
 	}
 
 	tx.Commit()
