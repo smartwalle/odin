@@ -118,33 +118,29 @@ type Service interface {
 	// 虽然此方法可以被重复调用，但是外部应该尽量控制此方法只在需要的时候调用。
 	Init() error
 
-	// 权限组
-
 	// GetPermissionGroups 获取权限组列表
 	GetPermissionGroups(ctx int64, status Status, keywords string) (result []*Group, err error)
 
-	// GetPermissionGroup 根据 groupName 获取组信息
+	// GetPermissionGroup 根据 groupName 获取权限组信息
 	GetPermissionGroup(ctx int64, groupName string) (result *Group, err error)
 
-	// GetPermissionGroupWithId 根据组 id 获取组信息
+	// GetPermissionGroupWithId 根据组 groupId 获取权限组信息
 	GetPermissionGroupWithId(ctx, groupId int64) (result *Group, err error)
 
-	// AddPermissionGroup 添加组信息
+	// AddPermissionGroup 添加权限组信息
 	AddPermissionGroup(ctx int64, groupName, aliasName string, status Status) (result int64, err error)
 
-	// UpdatePermissionGroup 根据 groupName 更新组信息
+	// UpdatePermissionGroup 根据 groupName 更新权限组信息
 	UpdatePermissionGroup(ctx int64, groupName string, aliasName string, status Status) (err error)
 
-	// UpdatePermissionGroupWithId 根据 groupId 更新组信息
+	// UpdatePermissionGroupWithId 根据 groupId 更新权限组信息
 	UpdatePermissionGroupWithId(ctx, groupId int64, aliasName string, status Status) (err error)
 
-	// UpdatePermissionGroupStatus 根据 groupName 更新组状态
+	// UpdatePermissionGroupStatus 根据 groupName 更新权限组状态
 	UpdatePermissionGroupStatus(ctx int64, groupName string, status Status) (err error)
 
-	// UpdatePermissionGroupStatusWithId 根据 groupId 更新组状态
+	// UpdatePermissionGroupStatusWithId 根据 groupId 更新权限组状态
 	UpdatePermissionGroupStatusWithId(ctx int64, groupId int64, status Status) (err error)
-
-	// 权限
 
 	// GetPermissions 获取权限列表
 	GetPermissions(ctx int64, status Status, keywords string, groupIds []int64) (result []*Permission, err error)
@@ -197,8 +193,6 @@ type Service interface {
 	// RevokeAllPermissionWithId 取消对角色的所有权限授权
 	RevokeAllPermissionWithId(ctx, roleId int64) (err error)
 
-	// 权限先决条件
-
 	// AddPrePermission 添加授予该权限时需要的先决条件
 	AddPrePermission(ctx int64, permissionName string, prePermissionNames ...string) (err error)
 
@@ -222,8 +216,6 @@ type Service interface {
 
 	// GetPrePermissionsWithId 获取授予该权限时需要的所有先决条件
 	GetPrePermissionsWithId(ctx int64, permissionId int64) (result []*PrePermission, err error)
-
-	// 角色
 
 	// GetRoles 获取角色列表
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
@@ -290,8 +282,6 @@ type Service interface {
 	// RevokeAllRole 取消对 target 的所有角色授权
 	RevokeAllRole(ctx int64, target string) (err error)
 
-	// 角色互斥
-
 	// AddRoleMutex 添加角色互斥关系
 	AddRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error)
 
@@ -322,8 +312,6 @@ type Service interface {
 	// CheckRoleMutexWithId 验证两个角色是否互斥
 	CheckRoleMutexWithId(ctx, roleId, mutexRoleId int64) bool
 
-	// 角色先决条件
-
 	// AddPreRole 添加授予该角色时需要的先决条件
 	AddPreRole(ctx int64, roleName string, preRoleNames ...string) (err error)
 
@@ -347,8 +335,6 @@ type Service interface {
 
 	// GetPreRolesWithId 获取授予该角色时需要的所有先决条件
 	GetPreRolesWithId(ctx, roleId int64) (result []*PreRole, err error)
-
-	// 其它
 
 	// GetGrantedRoles 获取已授权给 target 的角色列表
 	GetGrantedRoles(ctx int64, target string) (result []*Role, err error)
