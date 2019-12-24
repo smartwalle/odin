@@ -13,137 +13,182 @@ type Repository interface {
 	// InitTable 初始化数据库表
 	InitTable() error
 
-	// 组
+	// GetGroups 获取组列表
 	GetGroups(ctx int64, gType GroupType, status Status, keywords string) (result []*Group, err error)
 
+	// GetGroupWithId 获取组信息
 	GetGroupWithId(ctx int64, gType GroupType, groupId int64) (result *Group, err error)
 
+	// GetGroupWithName 获取组信息
 	GetGroupWithName(ctx int64, gType GroupType, name string) (result *Group, err error)
 
+	// AddGroup 添加组信息
 	AddGroup(ctx int64, gType GroupType, name, aliasName string, status Status) (result int64, err error)
 
+	// UpdateGroup 更新组信息
 	UpdateGroup(ctx int64, gType GroupType, groupId int64, aliasName string, status Status) (err error)
 
+	// UpdateGroupStatus 更新组状态
 	UpdateGroupStatus(ctx int64, gType GroupType, groupId int64, status Status) (err error)
-
-	// 权限
 
 	// GetPermissions 获取角色列表
 	// 如果参数 limitedInRole 的值大于 0，则返回的权限数据将限定在已授权给 limitedInRole 的权限范围之内
 	// 如果参数 isGrantedToRole 的值大于 0，则返回的权限数据中将附带该权限是否已授权给该 isGrantedToRole
 	GetPermissions(ctx int64, status Status, keywords string, groupIds []int64, limitedInRole, isGrantedToRole int64) (result []*Permission, err error)
 
+	// GetPermissionsWithIds 根据权限 id 列表获取权限信息
 	GetPermissionsWithIds(ctx int64, permissionIds ...int64) (result []*Permission, err error)
 
+	// GetPermissionsWithNames 根据权限名称列表获取权限信息
 	GetPermissionsWithNames(ctx int64, names ...string) (result []*Permission, err error)
 
+	// GetPermissionsWithRoleId 获取已授予给指定角色的权限列表
 	GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error)
 
+	// GetPermissionWithId 获取权限信息
 	GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error)
 
+	// GetPermissionWithName 获取权限信息
 	GetPermissionWithName(ctx int64, name string) (result *Permission, err error)
 
+	// AddPermission 添加权限信息
 	AddPermission(ctx, groupId int64, name, aliasName, description string, status Status) (result int64, err error)
 
+	// UpdatePermission 更新权限信息
 	UpdatePermission(ctx, permissionId, groupId int64, aliasName, description string, status Status) (err error)
 
+	// UpdatePermissionStatus 更新权限状态
 	UpdatePermissionStatus(ctx, permissionId int64, status Status) (err error)
 
+	// GrantPermissionWithIds 授予权限给角色
 	GrantPermissionWithIds(ctx, roleId int64, permissionIds []int64) (err error)
 
+	// RevokePermissionWithIds 取消对角色的权限授权
 	RevokePermissionWithIds(ctx, roleId int64, permissionIds []int64) (err error)
 
+	// RevokeAllPermission 权限对角色的所有权限授权
 	RevokeAllPermission(ctx, roleId int64) (err error)
 
+	// GetGrantedPermissions 获取指定 target 拥有的权限信息
 	GetGrantedPermissions(ctx int64, target string) (result []*Permission, err error)
 
-	// 权限先决条件
-
+	// AddPrePermission 添加权限先决条件
 	AddPrePermission(ctx, permissionId int64, prePermissionIds []int64) (err error)
 
+	// RemovePrePermission 移除权限先决条件
 	RemovePrePermission(ctx, permissionId int64, prePermissionIds []int64) (err error)
 
+	// CleanPrePermission 清除权限先决条件，即移除该权限的所有先决条件
 	CleanPrePermission(ctx, permissionId int64) (err error)
 
+	// GetPrePermissions 获取指定权限的所有先决条件
 	GetPrePermissions(ctx, permissionId int64) (result []*PrePermission, err error)
 
+	// GetPrePermissionsWithIds 获取指定权限列表的所有先决条件
 	GetPrePermissionsWithIds(ctx int64, permissionIds []int64) (result []*PrePermission, err error)
-
-	// 角色
 
 	// GetRoles 获取角色列表
 	// 如果参数 parentId 的值大于等于 0，则表示查询 parentId 的子角色列表
 	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
 	GetRoles(ctx int64, parentId int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
 
+	// GetRolesInTarget 获取角色列表
+	// 如果参数 limitedInTarget 的值不为空字符串， 则返回的角色数据将限定在 limitedInTarget 已拥有的角色及其子角色范围内
+	// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
 	GetRolesInTarget(ctx int64, limitedInTarget string, status Status, keywords, isGrantedToTarget string) (result []*Role, err error)
 
+	// GetRolesWithIds 根据角色 id 列表获取角色列表信息
 	GetRolesWithIds(ctx int64, roleIds ...int64) (result []*Role, err error)
 
+	// GetRolesWithNames 根据角色名称列表获取角色列表信息
 	GetRolesWithNames(ctx int64, names ...string) (result []*Role, err error)
 
+	// GetRoleWithId 获取角色信息
 	GetRoleWithId(ctx, roleId int64) (result *Role, err error)
 
+	// GetRoleWithName 获取角色信息
 	GetRoleWithName(ctx int64, name string) (result *Role, err error)
 
+	// AddRole 添加角色
 	AddRole(ctx int64, parent *Role, name, aliasName, description string, status Status) (result int64, err error)
 
+	// UpdateRole 更新角色
 	UpdateRole(ctx, roleId int64, aliasName, description string, status Status) (err error)
 
+	// UpdateRoleStatus 更新角色状态
 	UpdateRoleStatus(ctx, roleId int64, status Status) (err error)
 
-	// 角色互斥
-
+	// AddRoleMutex 添加角色互斥关系
 	AddRoleMutex(ctx, roleId int64, mutexRoleIds []int64) (err error)
 
+	// RemoveRoleMutex 移除角色互斥关系
 	RemoveRoleMutex(ctx, roleId int64, mutexRoleIds []int64) (err error)
 
+	// CleanRoleMutex 清除角色互斥关系，即移除该角色的所有互斥角色
 	CleanRoleMutex(ctx, roleId int64) (err error)
 
+	// GetMutexRoles 获取指定角色的所有互斥角色
 	GetMutexRoles(ctx, roleId int64) (result []*RoleMutex, err error)
 
+	// GetMutexRolesWithIds 获取指定角色列表的所有互斥角色
 	GetMutexRolesWithIds(ctx int64, roleIds []int64) (result []*RoleMutex, err error)
 
+	// CheckRoleMutex 验证角色是否是互斥关系
 	CheckRoleMutex(ctx, roleId, mutexRoleId int64) bool
 
-	// 角色先决条件
-
+	// AddPreRole 添加角色先决条件
 	AddPreRole(ctx, roleId int64, preRoleIds []int64) (err error)
 
+	// RemovePreRole 移除角色先决条件
 	RemovePreRole(ctx, roleId int64, preRoleIds []int64) (err error)
 
+	// CleanPreRole 清除角色先决条件，即移除该角色的所有先决条件
 	CleanPreRole(ctx, roleId int64) (err error)
 
+	// GetPreRoles 获取角色的先决条件
 	GetPreRoles(ctx, roleId int64) (result []*PreRole, err error)
 
+	// GetPreRolesWithIds 获取指定角色列表的所有先决条件
 	GetPreRolesWithIds(ctx int64, roleIds []int64) (result []*PreRole, err error)
 
 	// GetGrantedRoles 获取已授权给 target 的角色列表
 	// 如果参数 withChildren 的值为 true，则返回的角色数据中将包含该角色的子角色列表（子角色列表不一定授权给 target）
 	GetGrantedRoles(ctx int64, target string, withChildren bool) (result []*Role, err error)
 
+	// GrantRoleWithIds 授予角色给 target
 	GrantRoleWithIds(ctx int64, target string, roleIds ...int64) (err error)
 
+	// RevokeRoleWithIds 取消对 target 的角色授权
 	RevokeRoleWithIds(ctx int64, target string, roleIds ...int64) (err error)
 
+	// RevokeAllRole 取消对 target 的所有角色授权
 	RevokeAllRole(ctx int64, target string) (err error)
 
+	// CheckPermission 验证 target 是否拥有指定权限
 	CheckPermission(ctx int64, target string, permissionName string) bool
 
+	// CheckPermissionWithId 验证 target 是否拥有指定权限
 	CheckPermissionWithId(ctx int64, target string, permissionId int64) bool
 
+	// CheckRole 验证 target 是否拥有指定角色
 	CheckRole(ctx int64, target string, roleName string) bool
 
+	// CheckRoleWithId 验证 target 是否拥有指定角色
 	CheckRoleWithId(ctx int64, target string, roleId int64) bool
 
+	// CheckRoleAccessible 验证 target 是否拥有指定角色的操作权限
 	CheckRoleAccessible(ctx int64, target string, roleName string) bool
 
+	// CheckRoleAccessibleWithId 验证 target 是否拥有指定角色的操作权限
 	CheckRoleAccessibleWithId(ctx int64, target string, roleId int64) bool
 
+	// CheckRolePermission 验证角色是否拥有指定权限
 	CheckRolePermission(ctx int64, roleName, permissionName string) bool
 
+	// CheckRolePermissionWithId 验证角色是否拥有指定权限
 	CheckRolePermissionWithId(ctx, roleId, permissionId int64) bool
 
+	// CleanCache 清除缓存
 	CleanCache(ctx int64, target string)
 }
 
