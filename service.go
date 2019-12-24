@@ -166,8 +166,6 @@ func (this *odinService) Init() error {
 	return nil
 }
 
-// 组
-
 func (this *odinService) GetPermissionGroups(ctx int64, status Status, keywords string) (result []*Group, err error) {
 	return this.repo.GetGroups(ctx, GroupPermission, status, keywords)
 }
