@@ -35,11 +35,11 @@ func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
 }
 
 func (this *odinRepository) buildGrantListKey(ctx int64) (result string) {
-	return fmt.Sprintf("%s:odin:grant:%d:list", this.tPrefix, ctx)
+	return fmt.Sprintf("%s:odin:grant:ctx-%d:list", this.tPrefix, ctx)
 }
 
 func (this *odinRepository) buildTargetKey(ctx int64, target string) (result string) {
-	return fmt.Sprintf("%s:odin:grant:%d:%s", this.tPrefix, ctx, target)
+	return fmt.Sprintf("%s:odin:grant:ctx-%d:t-%s", this.tPrefix, ctx, target)
 }
 
 func (this *odinRepository) CheckPermission(ctx int64, target string, permissionName string) bool {
@@ -89,7 +89,7 @@ func (this *odinRepository) grantPermissions(ctx int64, key string, permissionNa
 
 	rSess.Send("DEL", key)
 	rSess.Send("SADD", ps...)
-	rSess.Send("SADD", this.buildGrantListKey(ctx), key)
+	rSess.Send("SADD", this.buildGrantListKey(ctx), key) // 记录角色授予给了那些对象
 	rSess.Send("EXPIRE", key, 3600)
 	rSess.Do("EXEC")
 }
