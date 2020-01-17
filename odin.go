@@ -10,8 +10,7 @@ const (
 	Disable Status = 2 // 禁用
 )
 
-// GroupType 组的类型，目前分为权限组和角色组，组没有实质的意义，主要是对权限数据或者角色数据进行分类。
-// 目前只实现了权限组的管理。
+// GroupType 组的类型，目前分为权限组和角色组，组没有实质的意义，主要是对权限数据或者角色数据进行分类， 目前只实现了权限组的管理。
 type GroupType int
 
 const (
@@ -93,6 +92,7 @@ type RoleMutex struct {
 
 // PreRole 角色先决条件数据结构。
 // 主要应用于更新（授予）某一 target 的角色时，判断该 target 是否已经拥有某一角色。
+//
 // 比如：角色A是角色B的先决条件，则向 target 授予角色B时，需要 target 已经拥有角色A。
 type PreRole struct {
 	Ctx              int64      `json:"ctx"                       sql:"ctx"`
@@ -107,6 +107,7 @@ type PreRole struct {
 
 // PrePermission 权限先决条件数据结构。
 // 主要应用于更新（授予）某一角色的权限时，判断该角色是否已经拥有某一权限。
+//
 // 比如：权限A是权限B的先决条件，则向角色A授予权限B时，需要角色A已经拥有权限A。
 type PrePermission struct {
 	Ctx                    int64      `json:"ctx"                           sql:"ctx"`
@@ -122,8 +123,11 @@ type PrePermission struct {
 
 // Grant 角色授权数据结构。
 // 有三种应用场景：
+//
 // 一、用于描述角色与 target 之间的授予关系；
+//
 // 二、用于描述权限与角色之间的授予关系；
+//
 // 三、用于描述权限与 target 之间的授予关系；
 type Grant struct {
 	Ctx            int64  `json:"ctx"                sql:"ctx"`
