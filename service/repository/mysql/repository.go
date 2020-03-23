@@ -58,49 +58,49 @@ func (this *odinRepository) InitTable() error {
 	var rb *dbs.RawBuilder
 
 	rb = dbs.NewBuilder("")
-	rb.Format(odinGroupSQL, this.tblGroup)
+	rb.Format(initMySQLGroupSQL, this.tblGroup)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
 	rb = dbs.NewBuilder("")
-	rb.Format(odinPermissionSQL, this.tblPermission)
+	rb.Format(initMySQLPermissionSQL, this.tblPermission)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
 	rb = dbs.NewBuilder("")
-	rb.Format(odinRoleSQL, this.tblRole)
+	rb.Format(initMySQLRoleSQL, this.tblRole)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
 	rb = dbs.NewBuilder("")
-	rb.Format(odinRolePermissionSQL, this.tblRolePermission)
+	rb.Format(initMySQLRolePermissionSQL, this.tblRolePermission)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
 	rb = dbs.NewBuilder("")
-	rb.Format(odinGrantSQL, this.tblGrant)
+	rb.Format(initMySQLGrantSQL, this.tblGrant)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
 	rb = dbs.NewBuilder("")
-	rb.Format(odinRoleMutexSQL, this.tblRoleMutex)
+	rb.Format(initMySQLRoleMutexSQL, this.tblRoleMutex)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
 	rb = dbs.NewBuilder("")
-	rb.Format(odinPreRoleSQL, this.tblPreRole)
+	rb.Format(initMySQLPreRoleSQL, this.tblPreRole)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}
 
 	rb = dbs.NewBuilder("")
-	rb.Format(odinPrePermissionSQL, this.tblPrePermission)
+	rb.Format(initMySQLPrePermissionSQL, this.tblPrePermission)
 	if _, err := rb.Exec(this.db); err != nil {
 		return err
 	}

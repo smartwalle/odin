@@ -1,6 +1,6 @@
 package mysql
 
-const odinGroupSQL = "" +
+const initMySQLGroupSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
 	"`ctx` bigint(20) DEFAULT NULL," +
@@ -15,7 +15,7 @@ const odinGroupSQL = "" +
 	"UNIQUE KEY `odin_group_pk` (`ctx`,`type`,`name`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
-const odinPermissionSQL = "" +
+const initMySQLPermissionSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
 	"`group_id` bigint(20) DEFAULT NULL," +
@@ -33,7 +33,7 @@ const odinPermissionSQL = "" +
 	"KEY `odin_permission_ctx_group_id_index` (`ctx`,`group_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
-const odinRoleSQL = "" +
+const initMySQLRoleSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
 	"`ctx` bigint(20) DEFAULT NULL," +
@@ -56,7 +56,7 @@ const odinRoleSQL = "" +
 	"KEY `odin_role_ctx_right_value_index` (`ctx`,`right_value`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
-const odinRolePermissionSQL = "" +
+const initMySQLRolePermissionSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`ctx` bigint(20) DEFAULT NULL," +
 	"`role_id` bigint(20) DEFAULT NULL," +
@@ -65,7 +65,7 @@ const odinRolePermissionSQL = "" +
 	"UNIQUE KEY `odin_role_permission_pk` (`ctx`,`role_id`,`permission_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
-const odinGrantSQL = "" +
+const initMySQLGrantSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`ctx` bigint(20) DEFAULT NULL," +
 	"`role_id` bigint(20) DEFAULT NULL," +
@@ -77,7 +77,7 @@ const odinGrantSQL = "" +
 	"KEY `odin_grant_target_index` (`target`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
-const odinRoleMutexSQL = "" +
+const initMySQLRoleMutexSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`ctx` bigint(20) NOT NULL," +
 	"`role_id` bigint(20) NOT NULL," +
@@ -89,7 +89,7 @@ const odinRoleMutexSQL = "" +
 	"KEY `odin_role_mutex_ctx_mutex_role_id_role_id_index` (`ctx`,`mutex_role_id`,`role_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
-const odinPreRoleSQL = "" +
+const initMySQLPreRoleSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`ctx` bigint(20) NOT NULL," +
 	"`role_id` bigint(20) NOT NULL," +
@@ -100,7 +100,7 @@ const odinPreRoleSQL = "" +
 	"KEY `odin_pre_role_ctx_role_id_index` (`ctx`,`role_id`)" +
 	") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 
-const odinPrePermissionSQL = "" +
+const initMySQLPrePermissionSQL = "" +
 	"CREATE TABLE IF NOT EXISTS `%s` (" +
 	"`ctx` bigint(20) NOT NULL," +
 	"`permission_id` bigint(20) NOT NULL," +
