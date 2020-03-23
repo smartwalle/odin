@@ -63,7 +63,7 @@ func (this *odinRepository) initMySQLTable() error {
 	var rawText = "" +
 		"CREATE TABLE IF NOT EXISTS `odin_group` (" + // odin_group
 		"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
-		"`ctx` bigint(20) DEFAULT NULL," +
+		"`ctx` int(11) DEFAULT NULL," +
 		"`type` int(2) DEFAULT NULL," +
 		"`name` varchar(64) DEFAULT NULL," +
 		"`alias_name` varchar(255) DEFAULT NULL," +
@@ -78,7 +78,7 @@ func (this *odinRepository) initMySQLTable() error {
 		"CREATE TABLE IF NOT EXISTS `odin_permission` (" + // odin_permission
 		"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
 		"`group_id` bigint(20) DEFAULT NULL," +
-		"`ctx` bigint(20) DEFAULT NULL," +
+		"`ctx` int(11) DEFAULT NULL," +
 		"`name` varchar(255) DEFAULT NULL," +
 		"`alias_name` varchar(255) DEFAULT NULL," +
 		"`status` int(2) DEFAULT '1'," +
@@ -94,7 +94,7 @@ func (this *odinRepository) initMySQLTable() error {
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_role` (" + // odin_role
 		"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
-		"`ctx` bigint(20) DEFAULT NULL," +
+		"`ctx` int(11) DEFAULT NULL," +
 		"`name` varchar(64) DEFAULT NULL," +
 		"`alias_name` varchar(255) DEFAULT NULL," +
 		"`status` int(2) DEFAULT '1'," +
@@ -115,7 +115,7 @@ func (this *odinRepository) initMySQLTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_role_permission` (" + // odin_role_permission
-		"`ctx` bigint(20) DEFAULT NULL," +
+		"`ctx` int(11) DEFAULT NULL," +
 		"`role_id` bigint(20) DEFAULT NULL," +
 		"`permission_id` bigint(20) DEFAULT NULL," +
 		"`created_on` datetime DEFAULT NULL," +
@@ -123,7 +123,7 @@ func (this *odinRepository) initMySQLTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_grant` (" + // odin_grant
-		"`ctx` bigint(20) DEFAULT NULL," +
+		"`ctx` int(11) DEFAULT NULL," +
 		"`role_id` bigint(20) DEFAULT NULL," +
 		"`target` varchar(64) DEFAULT NULL," +
 		"`created_on` datetime DEFAULT NULL," +
@@ -134,7 +134,7 @@ func (this *odinRepository) initMySQLTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_role_mutex` (" + // odin_role_mutex
-		"`ctx` bigint(20) NOT NULL," +
+		"`ctx` int(11) NOT NULL," +
 		"`role_id` bigint(20) NOT NULL," +
 		"`mutex_role_id` bigint(20) NOT NULL," +
 		"`created_on` datetime DEFAULT NULL," +
@@ -145,7 +145,7 @@ func (this *odinRepository) initMySQLTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_pre_role` (" + // odin_pre_role
-		"`ctx` bigint(20) NOT NULL," +
+		"`ctx` int(11) NOT NULL," +
 		"`role_id` bigint(20) NOT NULL," +
 		"`pre_role_id` bigint(20) NOT NULL," +
 		"`created_on` datetime DEFAULT NULL," +
@@ -155,7 +155,7 @@ func (this *odinRepository) initMySQLTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_pre_permission` (" + // odin_pre_permission
-		"`ctx` bigint(20) NOT NULL," +
+		"`ctx` int(11) NOT NULL," +
 		"`permission_id` bigint(20) NOT NULL," +
 		"`pre_permission_id` bigint(20) NOT NULL," +
 		"`auto_grant` tinyint(1) DEFAULT '0'," +
