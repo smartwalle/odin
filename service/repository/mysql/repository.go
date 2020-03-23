@@ -9,6 +9,7 @@ import (
 type odinRepository struct {
 	db dbs.DB
 
+	tblPrefix         string
 	tblGroup          string
 	tblPermission     string
 	tblRole           string
@@ -29,7 +30,7 @@ func NewRepository(db dbs.DB, tblPrefix string) odin.Repository {
 	} else {
 		tblPrefix = tblPrefix + "_odin"
 	}
-
+	r.tblPrefix = tblPrefix
 	r.tblGroup = tblPrefix + "_group"
 	r.tblPermission = tblPrefix + "_permission"
 	r.tblRole = tblPrefix + "_role"
@@ -55,56 +56,125 @@ func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
 }
 
 func (this *odinRepository) InitTable() error {
-	var rb *dbs.RawBuilder
+	return this.initMySQLTable()
+}
 
-	rb = dbs.NewBuilder("")
-	rb.Format(initMySQLGroupSQL, this.tblGroup)
-	if _, err := rb.Exec(this.db); err != nil {
-		return err
+func (this *odinRepository) initMySQLTable() error {
+	var rawText = "" +
+		"CREATE TABLE IF NOT EXISTS `odin_group` (" + // odin_group
+		"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
+		"`ctx` bigint(20) DEFAULT NULL," +
+		"`type` int(2) DEFAULT NULL," +
+		"`name` varchar(64) DEFAULT NULL," +
+		"`alias_name` varchar(255) DEFAULT NULL," +
+		"`status` int(2) DEFAULT NULL," +
+		"`created_on` datetime DEFAULT NULL," +
+		"`updated_on` datetime DEFAULT NULL," +
+		"PRIMARY KEY (`id`)," +
+		"UNIQUE KEY `odin_group_id_uindex` (`id`)," +
+		"UNIQUE KEY `odin_group_pk` (`ctx`,`type`,`name`)" +
+		") ENGINE=InnoDB;" +
+		"" +
+		"CREATE TABLE IF NOT EXISTS `odin_permission` (" + // odin_permission
+		"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
+		"`group_id` bigint(20) DEFAULT NULL," +
+		"`ctx` bigint(20) DEFAULT NULL," +
+		"`name` varchar(255) DEFAULT NULL," +
+		"`alias_name` varchar(255) DEFAULT NULL," +
+		"`status` int(2) DEFAULT '1'," +
+		"`description` varchar(1024)," +
+		"`created_on` datetime DEFAULT NULL," +
+		"`updated_on` datetime DEFAULT NULL," +
+		"PRIMARY KEY (`id`)," +
+		"UNIQUE KEY `odin_permission_id_uindex` (`id`)," +
+		"UNIQUE KEY `odin_permission_ctx_name_uindex` (`ctx`,`name`)," +
+		"KEY `odin_permission_ctx_index` (`ctx`)," +
+		"KEY `odin_permission_ctx_group_id_index` (`ctx`,`group_id`)" +
+		") ENGINE=InnoDB;" +
+		"" +
+		"CREATE TABLE IF NOT EXISTS `odin_role` (" + // odin_role
+		"`id` bigint(20) NOT NULL AUTO_INCREMENT," +
+		"`ctx` bigint(20) DEFAULT NULL," +
+		"`name` varchar(64) DEFAULT NULL," +
+		"`alias_name` varchar(255) DEFAULT NULL," +
+		"`status` int(2) DEFAULT '1'," +
+		"`description` varchar(1024) DEFAULT NULL," +
+		"`parent_id` bigint(20) DEFAULT NULL," +
+		"`left_value` int(11) DEFAULT NULL," +
+		"`right_value` int(11) DEFAULT NULL," +
+		"`depth` int(11) DEFAULT NULL," +
+		"`created_on` datetime DEFAULT NULL," +
+		"`updated_on` datetime DEFAULT NULL," +
+		"PRIMARY KEY (`id`)," +
+		"UNIQUE KEY `odin_role_id_uindex` (`id`)," +
+		"UNIQUE KEY `odin_role_ctx_name_uindex` (`ctx`,`name`)," +
+		"KEY `odin_role_ctx_index` (`ctx`)," +
+		"KEY `odin_role_ctx_parent_id_index` (`ctx`,`parent_id`)," +
+		"KEY `odin_role_ctx_left_value_index` (`ctx`,`left_value`)," +
+		"KEY `odin_role_ctx_right_value_index` (`ctx`,`right_value`)" +
+		") ENGINE=InnoDB;" +
+		"" +
+		"CREATE TABLE IF NOT EXISTS `odin_role_permission` (" + // odin_role_permission
+		"`ctx` bigint(20) DEFAULT NULL," +
+		"`role_id` bigint(20) DEFAULT NULL," +
+		"`permission_id` bigint(20) DEFAULT NULL," +
+		"`created_on` datetime DEFAULT NULL," +
+		"UNIQUE KEY `odin_role_permission_pk` (`ctx`,`role_id`,`permission_id`)" +
+		") ENGINE=InnoDB;" +
+		"" +
+		"CREATE TABLE IF NOT EXISTS `odin_grant` (" + // odin_grant
+		"`ctx` bigint(20) DEFAULT NULL," +
+		"`role_id` bigint(20) DEFAULT NULL," +
+		"`target` varchar(64) DEFAULT NULL," +
+		"`created_on` datetime DEFAULT NULL," +
+		"UNIQUE KEY `odin_grant_pk` (`ctx`,`role_id`,`target`)," +
+		"KEY `odin_grant_ctx_target_index` (`ctx`,`target`)," +
+		"KEY `odin_grant_role_id_index` (`role_id`)," +
+		"KEY `odin_grant_target_index` (`target`)" +
+		") ENGINE=InnoDB;" +
+		"" +
+		"CREATE TABLE IF NOT EXISTS `odin_role_mutex` (" + // odin_role_mutex
+		"`ctx` bigint(20) NOT NULL," +
+		"`role_id` bigint(20) NOT NULL," +
+		"`mutex_role_id` bigint(20) NOT NULL," +
+		"`created_on` datetime DEFAULT NULL," +
+		"PRIMARY KEY (`ctx`,`role_id`,`mutex_role_id`)," +
+		"KEY `odin_role_mutex_ctx_mutex_role_id_index` (`ctx`,`mutex_role_id`)," +
+		"KEY `odin_role_mutex_ctx_role_id_index` (`ctx`,`role_id`)," +
+		"KEY `odin_role_mutex_ctx_mutex_role_id_role_id_index` (`ctx`,`mutex_role_id`,`role_id`)" +
+		") ENGINE=InnoDB;" +
+		"" +
+		"CREATE TABLE IF NOT EXISTS `odin_pre_role` (" + // odin_pre_role
+		"`ctx` bigint(20) NOT NULL," +
+		"`role_id` bigint(20) NOT NULL," +
+		"`pre_role_id` bigint(20) NOT NULL," +
+		"`created_on` datetime DEFAULT NULL," +
+		"PRIMARY KEY (`ctx`,`role_id`,`pre_role_id`)," +
+		"KEY `odin_pre_role_ctx_role_id_pre_role_id_index` (`ctx`,`role_id`,`pre_role_id`)," +
+		"KEY `odin_pre_role_ctx_role_id_index` (`ctx`,`role_id`)" +
+		") ENGINE=InnoDB;" +
+		"" +
+		"CREATE TABLE IF NOT EXISTS `odin_pre_permission` (" + // odin_pre_permission
+		"`ctx` bigint(20) NOT NULL," +
+		"`permission_id` bigint(20) NOT NULL," +
+		"`pre_permission_id` bigint(20) NOT NULL," +
+		"`auto_grant` tinyint(1) DEFAULT '0'," +
+		"`created_on` datetime DEFAULT NULL," +
+		"PRIMARY KEY (`ctx`,`permission_id`,`pre_permission_id`)," +
+		"KEY `odin_pre_permission_ctx_permission_id_index` (`ctx`,`permission_id`)," +
+		"KEY `odin_pre_permission_ctx_permission_id_pre_permission_id_index` (`ctx`,`permission_id`,`pre_permission_id`)" +
+		") ENGINE=InnoDB;"
+
+	var sqlList = strings.Split(strings.ReplaceAll(rawText, "odin", this.tblPrefix), ";")
+	for _, sql := range sqlList {
+		if sql == "" {
+			continue
+		}
+		var rb = dbs.NewBuilder(sql)
+		if _, err := rb.Exec(this.db); err != nil {
+			return err
+		}
 	}
-
-	rb = dbs.NewBuilder("")
-	rb.Format(initMySQLPermissionSQL, this.tblPermission)
-	if _, err := rb.Exec(this.db); err != nil {
-		return err
-	}
-
-	rb = dbs.NewBuilder("")
-	rb.Format(initMySQLRoleSQL, this.tblRole)
-	if _, err := rb.Exec(this.db); err != nil {
-		return err
-	}
-
-	rb = dbs.NewBuilder("")
-	rb.Format(initMySQLRolePermissionSQL, this.tblRolePermission)
-	if _, err := rb.Exec(this.db); err != nil {
-		return err
-	}
-
-	rb = dbs.NewBuilder("")
-	rb.Format(initMySQLGrantSQL, this.tblGrant)
-	if _, err := rb.Exec(this.db); err != nil {
-		return err
-	}
-
-	rb = dbs.NewBuilder("")
-	rb.Format(initMySQLRoleMutexSQL, this.tblRoleMutex)
-	if _, err := rb.Exec(this.db); err != nil {
-		return err
-	}
-
-	rb = dbs.NewBuilder("")
-	rb.Format(initMySQLPreRoleSQL, this.tblPreRole)
-	if _, err := rb.Exec(this.db); err != nil {
-		return err
-	}
-
-	rb = dbs.NewBuilder("")
-	rb.Format(initMySQLPrePermissionSQL, this.tblPrePermission)
-	if _, err := rb.Exec(this.db); err != nil {
-		return err
-	}
-
 	return nil
 }
 
