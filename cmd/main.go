@@ -1,24 +1,40 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/smartwalle/dbr"
 	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
 	"github.com/smartwalle/odin/service/repository/mysql"
+	"github.com/smartwalle/odin/service/repository/postgresql"
 	"github.com/smartwalle/odin/service/repository/redis"
 )
 
 func main() {
-	var db, _ = sql.Open("mysql", "root:yangfeng@tcp(127.0.0.1:3306)/test?parseTime=true")
+	//dbs.SetLogger(nil)
+
+	testMySQL()
+	//testPostgreSQL()
+}
+
+func testMySQL() {
+	var db, _ = dbs.NewSQL("mysql", "root:yangfeng@tcp(127.0.0.1:3306)/test?parseTime=true", 10, 1)
+	var repo = mysql.NewRepository(db, "xx")
+	testRepo(repo)
+}
+
+func testPostgreSQL() {
+	var db, _ = dbs.NewSQL("postgres", "host=localhost port=5432 user=yang password=111 dbname=yang sslmode=disable", 10, 1)
+	var repo = postgresql.NewRepository(db, "xx")
+	testRepo(repo)
+}
+
+func testRepo(repo odin.Repository) {
 	var r = dbr.NewRedis("127.0.0.1:6379", 30, 10, dbr.DialDatabase(1))
+	var rRepo = redis.NewRepository(r, "xx", repo)
 
-	dbs.SetLogger(nil)
-
-	var sRepo = mysql.NewRepository(db, "v2")
-	var rRepo = redis.NewRepository(r, "v2", sRepo)
 	var s = odin.NewService(rRepo)
 
 	fmt.Println("Init", s.Init())
@@ -61,6 +77,7 @@ func main() {
 
 	fmt.Println(s.AddRoleWithParent(1, "", "admin", "管理员", "", odin.Enable))
 	fmt.Println(s.GrantPermission(1, "admin", "yf1", "yf2", "yf3", "yf4", "yf5", "yf6", "yf7", "yf8", "yf9"))
+
 	fmt.Println(s.GrantPermission(1, "admin", "yx1", "yx2", "yx3", "yx4", "yx5", "yx6", "yx7", "yx8", "yx9"))
 	fmt.Println(s.GrantPermission(1, "admin", "cw1", "cw2", "cw3", "cw4", "cw5", "cw6", "cw7", "cw8", "cw9"))
 

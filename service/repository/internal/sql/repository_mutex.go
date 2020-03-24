@@ -1,4 +1,4 @@
-package mysql
+package sql
 
 import (
 	"github.com/smartwalle/dbs"
@@ -7,11 +7,12 @@ import (
 )
 
 // AddRoleMutex 添加互斥关系
-func (this *odinRepository) AddRoleMutex(ctx, roleId int64, mutexRoleIds []int64) (err error) {
+func (this *Repository) AddRoleMutex(ctx, roleId int64, mutexRoleIds []int64) (err error) {
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
+	ib.UseDialect(this.dialect)
 	ib.Options("IGNORE")
-	ib.Table(this.tblRoleMutex)
+	ib.Table(this.tableRoleMutex)
 	ib.Columns("ctx", "role_id", "mutex_role_id", "created_on")
 	for _, mutexRoleId := range mutexRoleIds {
 		ib.Values(ctx, roleId, mutexRoleId, now)
@@ -24,9 +25,10 @@ func (this *odinRepository) AddRoleMutex(ctx, roleId int64, mutexRoleIds []int64
 }
 
 // RemoveRoleMutex 删除互斥关系
-func (this *odinRepository) RemoveRoleMutex(ctx, roleId int64, mutexRoleIds []int64) (err error) {
+func (this *Repository) RemoveRoleMutex(ctx, roleId int64, mutexRoleIds []int64) (err error) {
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.tblRoleMutex)
+	rb.UseDialect(this.dialect)
+	rb.Table(this.tableRoleMutex)
 	rb.Where("ctx = ?", ctx)
 	rb.Where("role_id = ?", roleId)
 	rb.Where(dbs.IN("mutex_role_id", mutexRoleIds))
@@ -36,7 +38,8 @@ func (this *odinRepository) RemoveRoleMutex(ctx, roleId int64, mutexRoleIds []in
 	}
 
 	rb = dbs.NewDeleteBuilder()
-	rb.Table(this.tblRoleMutex)
+	rb.UseDialect(this.dialect)
+	rb.Table(this.tableRoleMutex)
 	rb.Where("ctx = ?", ctx)
 	rb.Where("mutex_role_id = ?", roleId)
 	rb.Where(dbs.IN("role_id", mutexRoleIds))
@@ -48,9 +51,10 @@ func (this *odinRepository) RemoveRoleMutex(ctx, roleId int64, mutexRoleIds []in
 }
 
 // CleanRoleMutex 清除互斥关系
-func (this *odinRepository) CleanRoleMutex(ctx, roleId int64) (err error) {
+func (this *Repository) CleanRoleMutex(ctx, roleId int64) (err error) {
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.tblRoleMutex)
+	rb.UseDialect(this.dialect)
+	rb.Table(this.tableRoleMutex)
 	rb.Where("ctx = ?", ctx)
 	rb.Where("role_id = ?", roleId)
 	if _, err = rb.Exec(this.db); err != nil {
@@ -58,7 +62,8 @@ func (this *odinRepository) CleanRoleMutex(ctx, roleId int64) (err error) {
 	}
 
 	rb = dbs.NewDeleteBuilder()
-	rb.Table(this.tblRoleMutex)
+	rb.UseDialect(this.dialect)
+	rb.Table(this.tableRoleMutex)
 	rb.Where("ctx = ?", ctx)
 	rb.Where("mutex_role_id = ?", roleId)
 	if _, err = rb.Exec(this.db); err != nil {
@@ -68,14 +73,15 @@ func (this *odinRepository) CleanRoleMutex(ctx, roleId int64) (err error) {
 }
 
 // GetMutexRoles 获取互斥关系
-func (this *odinRepository) GetMutexRoles(ctx, roleId int64) (result []*odin.RoleMutex, err error) {
+func (this *Repository) GetMutexRoles(ctx, roleId int64) (result []*odin.RoleMutex, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("m.ctx", "m.role_id", "m.mutex_role_id", "m.created_on")
 	sb.Selects("r.name AS role_name", "r.alias_name AS role_alias_name")
 	sb.Selects("rm.name AS mutex_role_name", "rm.alias_name AS mutex_role_alias_name")
-	sb.From(this.tblRoleMutex, "AS m")
-	sb.LeftJoin(this.tblRole, "AS r ON r.id = m.role_id")
-	sb.LeftJoin(this.tblRole, "AS rm ON rm.id = m.mutex_role_id")
+	sb.From(this.tableRoleMutex, "AS m")
+	sb.LeftJoin(this.tableRole, "AS r ON r.id = m.role_id")
+	sb.LeftJoin(this.tableRole, "AS rm ON rm.id = m.mutex_role_id")
 	sb.Where("m.ctx = ?", ctx)
 	sb.Where("m.role_id = ?", roleId)
 	sb.Where("r.ctx = ?", ctx)
@@ -87,14 +93,15 @@ func (this *odinRepository) GetMutexRoles(ctx, roleId int64) (result []*odin.Rol
 }
 
 // GetMutexRolesWithIds 获取角色之间的互斥关系
-func (this *odinRepository) GetMutexRolesWithIds(ctx int64, roleIds []int64) (result []*odin.RoleMutex, err error) {
+func (this *Repository) GetMutexRolesWithIds(ctx int64, roleIds []int64) (result []*odin.RoleMutex, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("m.ctx", "m.role_id", "m.mutex_role_id", "m.created_on")
 	sb.Selects("r.name AS role_name", "r.alias_name AS role_alias_name")
 	sb.Selects("rm.name AS mutex_role_name", "rm.alias_name AS mutex_role_alias_name")
-	sb.From(this.tblRoleMutex, "AS m")
-	sb.LeftJoin(this.tblRole, "AS r ON r.id = m.role_id")
-	sb.LeftJoin(this.tblRole, "AS rm ON rm.id = m.mutex_role_id")
+	sb.From(this.tableRoleMutex, "AS m")
+	sb.LeftJoin(this.tableRole, "AS r ON r.id = m.role_id")
+	sb.LeftJoin(this.tableRole, "AS rm ON rm.id = m.mutex_role_id")
 	sb.Where("m.ctx = ?", ctx)
 	sb.Where(dbs.IN("m.role_id", roleIds))
 	sb.Where(dbs.IN("m.mutex_role_id", roleIds))
@@ -107,10 +114,11 @@ func (this *odinRepository) GetMutexRolesWithIds(ctx int64, roleIds []int64) (re
 }
 
 // CheckRoleMutex 检测两个角色是否互斥
-func (this *odinRepository) CheckRoleMutex(ctx, roleId, mutexRoleId int64) bool {
+func (this *Repository) CheckRoleMutex(ctx, roleId, mutexRoleId int64) bool {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("m.ctx", "m.role_id", "m.mutex_role_id", "m.created_on")
-	sb.From(this.tblRoleMutex, "AS m")
+	sb.From(this.tableRoleMutex, "AS m")
 	sb.Where("m.ctx = ?", ctx)
 	sb.Where("m.role_id = ?", roleId)
 	sb.Where("m.mutex_role_id = ?", mutexRoleId)

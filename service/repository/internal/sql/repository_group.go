@@ -1,4 +1,4 @@
-package mysql
+package sql
 
 import (
 	"github.com/smartwalle/dbs"
@@ -6,10 +6,11 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetGroups(ctx int64, gType odin.GroupType, status odin.Status, keywords string) (result []*odin.Group, err error) {
+func (this *Repository) GetGroups(ctx int64, gType odin.GroupType, status odin.Status, keywords string) (result []*odin.Group, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("g.id", "g.ctx", "g.type", "g.name", "g.alias_name", "g.status", "g.created_on", "g.updated_on")
-	sb.From(this.tblGroup, "AS g")
+	sb.From(this.tableGroup, "AS g")
 	sb.Where("g.ctx = ?", ctx)
 	sb.Where("g.type = ?", gType)
 	if status != 0 {
@@ -28,10 +29,11 @@ func (this *odinRepository) GetGroups(ctx int64, gType odin.GroupType, status od
 	return result, nil
 }
 
-func (this *odinRepository) getGroup(ctx int64, gType odin.GroupType, groupId int64, name string) (result *odin.Group, err error) {
+func (this *Repository) getGroup(ctx int64, gType odin.GroupType, groupId int64, name string) (result *odin.Group, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("g.id", "g.ctx", "g.type", "g.name", "g.alias_name", "g.status", "g.created_on", "g.updated_on")
-	sb.From(this.tblGroup, "AS g")
+	sb.From(this.tableGroup, "AS g")
 	sb.Where("g.ctx = ?", ctx)
 	sb.Where("g.type = ?", gType)
 	if groupId > 0 {
@@ -47,34 +49,33 @@ func (this *odinRepository) getGroup(ctx int64, gType odin.GroupType, groupId in
 	return result, nil
 }
 
-func (this *odinRepository) GetGroupWithId(ctx int64, gType odin.GroupType, groupId int64) (result *odin.Group, err error) {
+func (this *Repository) GetGroupWithId(ctx int64, gType odin.GroupType, groupId int64) (result *odin.Group, err error) {
 	return this.getGroup(ctx, gType, groupId, "")
 }
 
-func (this *odinRepository) GetGroupWithName(ctx int64, gType odin.GroupType, name string) (result *odin.Group, err error) {
+func (this *Repository) GetGroupWithName(ctx int64, gType odin.GroupType, name string) (result *odin.Group, err error) {
 	return this.getGroup(ctx, gType, 0, name)
 }
 
-func (this *odinRepository) AddGroup(ctx int64, gType odin.GroupType, name, aliasName string, status odin.Status) (result int64, err error) {
+func (this *Repository) AddGroup(ctx int64, gType odin.GroupType, name, aliasName string, status odin.Status) (result int64, err error) {
 	var now = time.Now()
+	var nId = this.idGenerator.Next()
 	var ib = dbs.NewInsertBuilder()
-	ib.Table(this.tblGroup)
-	ib.Columns("ctx", "type", "name", "alias_name", "status", "created_on", "updated_on")
-	ib.Values(ctx, gType, name, aliasName, status, now, now)
-	rResult, err := ib.Exec(this.db)
-	if err != nil {
+	ib.UseDialect(this.dialect)
+	ib.Table(this.tableGroup)
+	ib.Columns("id", "ctx", "type", "name", "alias_name", "status", "created_on", "updated_on")
+	ib.Values(nId, ctx, gType, name, aliasName, status, now, now)
+	if _, err = ib.Exec(this.db); err != nil {
 		return 0, err
 	}
-	if result, err = rResult.LastInsertId(); err != nil {
-		return 0, err
-	}
-	return result, nil
+	return nId, nil
 }
 
-func (this *odinRepository) UpdateGroup(ctx int64, gType odin.GroupType, groupId int64, aliasName string, status odin.Status) (err error) {
+func (this *Repository) UpdateGroup(ctx int64, gType odin.GroupType, groupId int64, aliasName string, status odin.Status) (err error) {
 	var now = time.Now()
 	var ub = dbs.NewUpdateBuilder()
-	ub.Table(this.tblGroup)
+	ub.UseDialect(this.dialect)
+	ub.Table(this.tableGroup)
 	ub.SET("alias_name", aliasName)
 	ub.SET("status", status)
 	ub.SET("updated_on", now)
@@ -86,10 +87,11 @@ func (this *odinRepository) UpdateGroup(ctx int64, gType odin.GroupType, groupId
 	return err
 }
 
-func (this *odinRepository) UpdateGroupStatus(ctx int64, gType odin.GroupType, groupId int64, status odin.Status) (err error) {
+func (this *Repository) UpdateGroupStatus(ctx int64, gType odin.GroupType, groupId int64, status odin.Status) (err error) {
 	var now = time.Now()
 	var ub = dbs.NewUpdateBuilder()
-	ub.Table(this.tblGroup)
+	ub.UseDialect(this.dialect)
+	ub.Table(this.tableGroup)
 	ub.SET("status", status)
 	ub.SET("updated_on", now)
 	ub.Where("id = ?", groupId)

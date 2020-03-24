@@ -1,4 +1,4 @@
-package mysql
+package sql
 
 import (
 	"fmt"
@@ -7,16 +7,17 @@ import (
 	"time"
 )
 
-func (this *odinRepository) GetRoles(ctx int64, parentId int64, status odin.Status, keywords, isGrantedToTarget string) (result []*odin.Role, err error) {
+func (this *Repository) GetRoles(ctx int64, parentId int64, status odin.Status, keywords, isGrantedToTarget string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
-	sb.From(this.tblRole, "AS r")
+	sb.From(this.tableRole, "AS r")
 	if isGrantedToTarget != "" {
-		sb.Selects("IF(rg.target IS NULL, false, true) AS granted")
-		sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = r.id AND rg.target = ?", isGrantedToTarget)
+		sb.Selects("CASE WHEN rg.target IS NULL THEN 0 ELSE 1 END) AS granted")
+		sb.LeftJoin(this.tableGrant, "AS rg ON rg.role_id = r.id AND rg.target = ?", isGrantedToTarget)
 	}
 	if parentId >= 0 {
-		sb.LeftJoin(this.tblRole, "AS rp ON rp.left_value < r.left_value AND rp.right_value > r.right_value")
+		sb.LeftJoin(this.tableRole, "AS rp ON rp.left_value < r.left_value AND rp.right_value > r.right_value")
 		sb.Where("rp.ctx = ? AND rp.id = ?", ctx, parentId)
 	}
 	sb.Where("r.ctx = ?", ctx)
@@ -38,19 +39,20 @@ func (this *odinRepository) GetRoles(ctx int64, parentId int64, status odin.Stat
 	return result, nil
 }
 
-func (this *odinRepository) GetRolesInTarget(ctx int64, limitedInTarget string, status odin.Status, keywords, isGrantedToTarget string) (result []*odin.Role, err error) {
+func (this *Repository) GetRolesInTarget(ctx int64, limitedInTarget string, status odin.Status, keywords, isGrantedToTarget string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
-	sb.From(this.tblRole, "AS r")
+	sb.From(this.tableRole, "AS r")
 
 	if isGrantedToTarget != "" {
-		sb.Selects("IF(rgg.target IS NULL, false, true) AS granted")
-		sb.LeftJoin(this.tblGrant, "AS rgg ON rgg.role_id = r.id AND rgg.target = ?", isGrantedToTarget)
+		sb.Selects("(CASE WHEN rgg.target IS NULL THEN 0 ELSE 1 END) AS granted")
+		sb.LeftJoin(this.tableGrant, "AS rgg ON rgg.role_id = r.id AND rgg.target = ?", isGrantedToTarget)
 	}
 
-	sb.Selects("MAX(IF(rg.role_id = r.id, false, true)) AS can_access")
-	sb.LeftJoin(this.tblRole, "AS rp ON rp.left_value <= r.left_value AND rp.right_value >= r.right_value")
-	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = rp.id")
+	sb.Selects("MAX(CASE WHEN rg.role_id = r.id THEN 0 ELSE 1 END) AS can_access")
+	sb.LeftJoin(this.tableRole, "AS rp ON rp.left_value <= r.left_value AND rp.right_value >= r.right_value")
+	sb.LeftJoin(this.tableGrant, "AS rg ON rg.role_id = rp.id")
 
 	sb.Where("rg.ctx = ?", ctx)
 	sb.Where("rg.target = ?", limitedInTarget)
@@ -80,10 +82,11 @@ func (this *odinRepository) GetRolesInTarget(ctx int64, limitedInTarget string, 
 	return result, err
 }
 
-func (this *odinRepository) GetRolesWithIds(ctx int64, roleIds ...int64) (result []*odin.Role, err error) {
+func (this *Repository) GetRolesWithIds(ctx int64, roleIds ...int64) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
-	sb.From(this.tblRole, "AS r")
+	sb.From(this.tableRole, "AS r")
 	sb.Where("r.ctx = ?", ctx)
 	sb.Where(dbs.IN("r.id", roleIds))
 	sb.OrderBy("r.ctx", "r.id")
@@ -94,10 +97,11 @@ func (this *odinRepository) GetRolesWithIds(ctx int64, roleIds ...int64) (result
 	return result, nil
 }
 
-func (this *odinRepository) GetRolesWithNames(ctx int64, names ...string) (result []*odin.Role, err error) {
+func (this *Repository) GetRolesWithNames(ctx int64, names ...string) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
-	sb.From(this.tblRole, "AS r")
+	sb.From(this.tableRole, "AS r")
 	sb.Where("r.ctx = ?", ctx)
 	sb.Where(dbs.IN("r.name", names))
 	sb.OrderBy("r.ctx", "r.id")
@@ -108,10 +112,11 @@ func (this *odinRepository) GetRolesWithNames(ctx int64, names ...string) (resul
 	return result, nil
 }
 
-func (this *odinRepository) getRole(ctx int64, roleId int64, name string) (result *odin.Role, err error) {
+func (this *Repository) getRole(ctx int64, roleId int64, name string) (result *odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
-	sb.From(this.tblRole, "AS r")
+	sb.From(this.tableRole, "AS r")
 	sb.Where("r.ctx = ?", ctx)
 	if roleId > 0 {
 		sb.Where("r.id = ?", roleId)
@@ -126,15 +131,15 @@ func (this *odinRepository) getRole(ctx int64, roleId int64, name string) (resul
 	return result, nil
 }
 
-func (this *odinRepository) GetRoleWithId(ctx, roleId int64) (result *odin.Role, err error) {
+func (this *Repository) GetRoleWithId(ctx, roleId int64) (result *odin.Role, err error) {
 	return this.getRole(ctx, roleId, "")
 }
 
-func (this *odinRepository) GetRoleWithName(ctx int64, name string) (result *odin.Role, err error) {
+func (this *Repository) GetRoleWithName(ctx int64, name string) (result *odin.Role, err error) {
 	return this.getRole(ctx, 0, name)
 }
 
-func (this *odinRepository) AddRole(ctx int64, parent *odin.Role, name, aliasName, description string, status odin.Status) (result int64, err error) {
+func (this *Repository) AddRole(ctx int64, parent *odin.Role, name, aliasName, description string, status odin.Status) (result int64, err error) {
 	fmt.Println(parent)
 	if parent == nil {
 		if parent, err = this.getMaxRightRole(ctx); err != nil {
@@ -153,13 +158,14 @@ func (this *odinRepository) AddRole(ctx int64, parent *odin.Role, name, aliasNam
 	return this.insertRoleToLast(parent, name, aliasName, description, status)
 }
 
-func (this *odinRepository) insertRoleToRoot(parent *odin.Role, name, aliasName, description string, status odin.Status) (result int64, err error) {
+func (this *Repository) insertRoleToRoot(parent *odin.Role, name, aliasName, description string, status odin.Status) (result int64, err error) {
 	return this.insertRole(parent.Ctx, parent.Id, parent.RightValue+1, parent.RightValue+2, parent.Depth, name, aliasName, description, status)
 }
 
-func (this *odinRepository) insertRoleToLast(parent *odin.Role, name, aliasName, description string, status odin.Status) (result int64, err error) {
+func (this *Repository) insertRoleToLast(parent *odin.Role, name, aliasName, description string, status odin.Status) (result int64, err error) {
 	var ubLeft = dbs.NewUpdateBuilder()
-	ubLeft.Table(this.tblRole)
+	ubLeft.UseDialect(this.dialect)
+	ubLeft.Table(this.tableRole)
 	ubLeft.SET("left_value", dbs.SQL("left_value + 2"))
 	ubLeft.SET("updated_on", time.Now())
 	ubLeft.Where("ctx = ? AND left_value > ?", parent.Ctx, parent.RightValue)
@@ -168,7 +174,8 @@ func (this *odinRepository) insertRoleToLast(parent *odin.Role, name, aliasName,
 	}
 
 	var ubRight = dbs.NewUpdateBuilder()
-	ubRight.Table(this.tblRole)
+	ubRight.UseDialect(this.dialect)
+	ubRight.Table(this.tableRole)
 	ubRight.SET("right_value", dbs.SQL("right_value + 2"))
 	ubRight.SET("updated_on", time.Now())
 	ubRight.Where("ctx = ? AND right_value >= ?", parent.Ctx, parent.RightValue)
@@ -178,26 +185,25 @@ func (this *odinRepository) insertRoleToLast(parent *odin.Role, name, aliasName,
 	return this.insertRole(parent.Ctx, parent.Id, parent.RightValue, parent.RightValue+1, parent.Depth+1, name, aliasName, description, status)
 }
 
-func (this *odinRepository) insertRole(ctx, parentId int64, leftValue, rightValue, depth int, name, aliasName, description string, status odin.Status) (result int64, err error) {
+func (this *Repository) insertRole(ctx, parentId int64, leftValue, rightValue, depth int, name, aliasName, description string, status odin.Status) (result int64, err error) {
 	var now = time.Now()
+	var nId = this.idGenerator.Next()
 	var ib = dbs.NewInsertBuilder()
-	ib.Table(this.tblRole)
-	ib.Columns("ctx", "name", "alias_name", "status", "description", "parent_id", "left_value", "right_value", "depth", "created_on", "updated_on")
-	ib.Values(ctx, name, aliasName, status, description, parentId, leftValue, rightValue, depth, now, now)
-	rResult, err := ib.Exec(this.db)
-	if err != nil {
+	ib.UseDialect(this.dialect)
+	ib.Table(this.tableRole)
+	ib.Columns("id", "ctx", "name", "alias_name", "status", "description", "parent_id", "left_value", "right_value", "depth", "created_on", "updated_on")
+	ib.Values(nId, ctx, name, aliasName, status, description, parentId, leftValue, rightValue, depth, now, now)
+	if _, err = ib.Exec(this.db); err != nil {
 		return 0, err
 	}
-	if result, err = rResult.LastInsertId(); err != nil {
-		return 0, err
-	}
-	return result, nil
+	return nId, nil
 }
 
-func (this *odinRepository) getMaxRightRole(ctx int64) (result *odin.Role, err error) {
+func (this *Repository) getMaxRightRole(ctx int64) (result *odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
-	sb.From(this.tblRole, "AS r")
+	sb.From(this.tableRole, "AS r")
 	sb.Where("r.ctx = ?", ctx)
 	sb.OrderBy("r.right_value DESC")
 	sb.Limit(1)
@@ -207,10 +213,11 @@ func (this *odinRepository) getMaxRightRole(ctx int64) (result *odin.Role, err e
 	return result, nil
 }
 
-func (this *odinRepository) UpdateRole(ctx, roleId int64, aliasName, description string, status odin.Status) (err error) {
+func (this *Repository) UpdateRole(ctx, roleId int64, aliasName, description string, status odin.Status) (err error) {
 	var now = time.Now()
 	var ub = dbs.NewUpdateBuilder()
-	ub.Table(this.tblRole)
+	ub.UseDialect(this.dialect)
+	ub.Table(this.tableRole)
 	ub.SET("alias_name", aliasName)
 	ub.SET("status", status)
 	ub.SET("description", description)
@@ -221,10 +228,11 @@ func (this *odinRepository) UpdateRole(ctx, roleId int64, aliasName, description
 	return err
 }
 
-func (this *odinRepository) UpdateRoleStatus(ctx, roleId int64, status odin.Status) (err error) {
+func (this *Repository) UpdateRoleStatus(ctx, roleId int64, status odin.Status) (err error) {
 	var now = time.Now()
 	var ub = dbs.NewUpdateBuilder()
-	ub.Table(this.tblRole)
+	ub.UseDialect(this.dialect)
+	ub.Table(this.tableRole)
 	ub.SET("status", status)
 	ub.SET("updated_on", now)
 	ub.Where("ctx = ? AND id = ?", ctx, roleId)
@@ -233,18 +241,19 @@ func (this *odinRepository) UpdateRoleStatus(ctx, roleId int64, status odin.Stat
 	return err
 }
 
-func (this *odinRepository) GetGrantedRoles(ctx int64, target string, withChildren bool) (result []*odin.Role, err error) {
+func (this *Repository) GetGrantedRoles(ctx int64, target string, withChildren bool) (result []*odin.Role, err error) {
 	var sb = dbs.NewSelectBuilder()
+	sb.UseDialect(this.dialect)
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
-	sb.Selects("MAX(IF(rg.role_id <> r.id, false, true)) AS granted")
-	sb.Selects("MAX(IF(rg.role_id = r.id, false, true)) AS can_access")
-	sb.From(this.tblRole, "AS r")
+	sb.Selects("MAX(CASE WHEN rg.role_id <> r.id THEN 0 ELSE 1 END) AS granted")
+	sb.Selects("MAX(CASE WHEN rg.role_id = r.id THEN 0 ELSE 1 END) AS can_access")
+	sb.From(this.tableRole, "AS r")
 	if withChildren {
-		sb.LeftJoin(this.tblRole, "AS rp ON rp.left_value <= r.left_value AND rp.right_value >= r.right_value")
+		sb.LeftJoin(this.tableRole, "AS rp ON rp.left_value <= r.left_value AND rp.right_value >= r.right_value")
 	} else {
-		sb.LeftJoin(this.tblRole, "AS rp ON rp.left_value = r.left_value AND rp.right_value = r.right_value")
+		sb.LeftJoin(this.tableRole, "AS rp ON rp.left_value = r.left_value AND rp.right_value = r.right_value")
 	}
-	sb.LeftJoin(this.tblGrant, "AS rg ON rg.role_id = rp.id")
+	sb.LeftJoin(this.tableGrant, "AS rg ON rg.role_id = rp.id")
 	sb.Where("rg.ctx = ?", ctx)
 	sb.Where("rg.target = ?", target)
 	sb.Where("rp.ctx = ?", ctx)
@@ -259,13 +268,14 @@ func (this *odinRepository) GetGrantedRoles(ctx int64, target string, withChildr
 	return result, err
 }
 
-func (this *odinRepository) GrantRoleWithIds(ctx int64, target string, roleIds ...int64) (err error) {
+func (this *Repository) GrantRoleWithIds(ctx int64, target string, roleIds ...int64) (err error) {
 	if len(roleIds) == 0 {
 		return nil
 	}
 	var now = time.Now()
 	var ib = dbs.NewInsertBuilder()
-	ib.Table(this.tblGrant)
+	ib.UseDialect(this.dialect)
+	ib.Table(this.tableGrant)
 	ib.Options("IGNORE")
 	ib.Columns("ctx", "role_id", "target", "created_on")
 	for _, rId := range roleIds {
@@ -277,12 +287,13 @@ func (this *odinRepository) GrantRoleWithIds(ctx int64, target string, roleIds .
 	return nil
 }
 
-func (this *odinRepository) RevokeRoleWithIds(ctx int64, target string, roleIds ...int64) (err error) {
+func (this *Repository) RevokeRoleWithIds(ctx int64, target string, roleIds ...int64) (err error) {
 	if len(roleIds) == 0 {
 		return nil
 	}
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.tblGrant)
+	rb.UseDialect(this.dialect)
+	rb.Table(this.tableGrant)
 	rb.Where("ctx = ?", ctx)
 	rb.Where("target = ?", target)
 	rb.Where(dbs.IN("role_id", roleIds))
@@ -293,9 +304,10 @@ func (this *odinRepository) RevokeRoleWithIds(ctx int64, target string, roleIds 
 	return nil
 }
 
-func (this *odinRepository) RevokeAllRole(ctx int64, target string) (err error) {
+func (this *Repository) RevokeAllRole(ctx int64, target string) (err error) {
 	var rb = dbs.NewDeleteBuilder()
-	rb.Table(this.tblGrant)
+	rb.UseDialect(this.dialect)
+	rb.Table(this.tableGrant)
 	rb.Where("ctx = ?", ctx)
 	rb.Where("target = ?", target)
 	if _, err = rb.Exec(this.db); err != nil {
