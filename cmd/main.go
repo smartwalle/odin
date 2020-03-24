@@ -2,21 +2,29 @@ package main
 
 import (
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
 	"github.com/smartwalle/dbr"
 	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
 	"github.com/smartwalle/odin/service/repository/mysql"
 	"github.com/smartwalle/odin/service/repository/postgresql"
 	"github.com/smartwalle/odin/service/repository/redis"
+	//_ "github.com/go-sql-driver/mysql"
+	//_ "github.com/lib/pq"
 )
 
-func main() {
-	//dbs.SetLogger(nil)
+// 如需要测试，在 mod 中添加以下依赖
+// github.com/go-sql-driver/mysql v1.4.1
+// github.com/lib/pq v1.3.0
+//
+// import 中添加以下包导入
+// _ "github.com/go-sql-driver/mysql"
+// _ "github.com/lib/pq"
 
-	testMySQL()
-	//testPostgreSQL()
+func main() {
+	dbs.SetLogger(nil)
+
+	//testMySQL()
+	testPostgreSQL()
 }
 
 func testMySQL() {
