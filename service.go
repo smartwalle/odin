@@ -10,6 +10,9 @@ type Repository interface {
 
 	WithTx(tx dbs.TX) Repository
 
+	// UseIdGenerator 设置 id 生成器，默认使用 dbs 库提供的 id 生成器
+	UseIdGenerator(g dbs.IdGenerator)
+
 	// InitTable 初始化数据库表
 	InitTable() error
 
