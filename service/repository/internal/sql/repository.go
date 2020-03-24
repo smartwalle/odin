@@ -54,14 +54,27 @@ func (this *Repository) Dialect() dbs.Dialect {
 	return this.dialect
 }
 
-func (this *Repository) BeginTx() (dbs.TX, *Repository) {
+func (this *Repository) BeginTx() (dbs.TX, odin.Repository) {
 	var tx = dbs.MustTx(this.db)
 	var nRepo = *this
 	nRepo.db = tx
 	return tx, &nRepo
 }
 
-func (this *Repository) WithTx(tx dbs.TX) *Repository {
+func (this *Repository) WithTx(tx dbs.TX) odin.Repository {
+	var nRepo = *this
+	nRepo.db = tx
+	return &nRepo
+}
+
+func (this *Repository) ExBeginTx() (dbs.TX, *Repository) {
+	var tx = dbs.MustTx(this.db)
+	var nRepo = *this
+	nRepo.db = tx
+	return tx, &nRepo
+}
+
+func (this *Repository) ExWithTx(tx dbs.TX) *Repository {
 	var nRepo = *this
 	nRepo.db = tx
 	return &nRepo
