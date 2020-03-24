@@ -13,7 +13,7 @@ func (this *Repository) GetRoles(ctx int64, parentId int64, status odin.Status, 
 	sb.Selects("r.id", "r.ctx", "r.name", "r.alias_name", "r.status", "r.description", "r.parent_id", "r.left_value", "r.right_value", "r.depth", "r.created_on", "r.updated_on")
 	sb.From(this.tableRole, "AS r")
 	if isGrantedToTarget != "" {
-		sb.Selects("CASE WHEN rg.target IS NULL THEN 0 ELSE 1 END) AS granted")
+		sb.Selects("(CASE WHEN rg.target IS NULL THEN 0 ELSE 1 END) AS granted")
 		sb.LeftJoin(this.tableGrant, "AS rg ON rg.role_id = r.id AND rg.target = ?", isGrantedToTarget)
 	}
 	if parentId >= 0 {
