@@ -194,18 +194,15 @@ create index if not exists odin_pre_permission_ctx_permission_id_index
 create or replace rule odin_role_permission_pk_rule as on insert to odin_role_permission where exists (
 select 1 from odin_role_permission where ctx = NEW.ctx and role_id = NEW.role_id and permission_id = NEW.permission_id
 ) do instead nothing;
-`
-	rawText = rawText + `
+
 create or replace rule odin_pre_permission_pk_rule as on insert to odin_pre_permission where exists (
 select 1 from odin_pre_permission where ctx = NEW.ctx and permission_id = NEW.permission_id and pre_permission_id = NEW.pre_permission_id
 ) do instead nothing;
-`
-	rawText = rawText + `
+
 create or replace rule odin_role_mutex_pk_rule as on insert to odin_role_mutex where exists (
 select 1 from odin_role_mutex where ctx = NEW.ctx and role_id = NEW.role_id and mutex_role_id = NEW.mutex_role_id
 ) do instead nothing;
-`
-	rawText = rawText + `
+
 create or replace rule odin_pre_role_pk_rule as on insert to odin_pre_role where exists (
 select 1 from odin_pre_role where ctx = NEW.ctx and role_id = NEW.role_id and pre_role_id = NEW.pre_role_id
 ) do instead nothing;
