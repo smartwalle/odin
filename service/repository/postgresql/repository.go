@@ -206,9 +206,7 @@ select 1 from odin_role_mutex where ctx = NEW.ctx and role_id = NEW.role_id and 
 create or replace rule odin_pre_role_pk_rule as on insert to odin_pre_role where exists (
 select 1 from odin_pre_role where ctx = NEW.ctx and role_id = NEW.role_id and pre_role_id = NEW.pre_role_id
 ) do instead nothing;
-`
 
-	rawText = rawText + `
 create or replace rule odin_grant_pk_rule as on insert to odin_grant where exists (
 select 1 from odin_grant where ctx = NEW.ctx and role_id = NEW.role_id and target = NEW.target
 ) do instead nothing;

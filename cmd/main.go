@@ -34,7 +34,7 @@ func testMySQL() {
 }
 
 func testPostgreSQL() {
-	var db, _ = dbs.NewSQL("postgres", "host=localhost port=5432 user=yang password=111 dbname=yang sslmode=disable", 10, 1)
+	var db, _ = dbs.NewSQL("postgres", "host=localhost port=5432 user=postgres password=yangfeng dbname=postgres sslmode=disable", 10, 1)
 	var repo = postgresql.NewRepository(db, "xx")
 	testRepo(repo)
 }
@@ -148,8 +148,5 @@ func printRoles(level int, roles []*odin.Role) {
 		}
 
 		fmt.Println("Id:", role.Id, "Alias name:", role.AliasName, "Granted:", role.Granted, "Accessible:", role.Accessible)
-		if role.Children != nil {
-			printRoles(level+1, role.Children)
-		}
 	}
 }
