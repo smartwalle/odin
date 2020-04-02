@@ -68,7 +68,7 @@ type Role struct {
 	PreRoleList    []*PreRole    `json:"pre_role_list,omitempty"         sql:"-"`
 }
 
-// RolePermission 角色-权限数据结构，用于描述角色与权限的关联情况。
+// RolePermission 角色-权限数据结构，用于描述角色与权限的关联关系。
 type RolePermission struct {
 	Ctx          int64      `json:"ctx"             sql:"ctx"`
 	RoleId       int64      `json:"role_id"         sql:"role_id"`
@@ -76,9 +76,9 @@ type RolePermission struct {
 	CreatedOn    *time.Time `json:"created_on"      sql:"created_on"`
 }
 
-// RoleMutex 角色互斥数据结构，用于描述角色与角色之间的互斥情况。
+// RoleMutex 角色互斥数据结构，用于描述角色与角色之间的互斥关系。
 // 主要应用于更新（授予）某一 target 的角色时，判断该 target 的角色是否有互斥的情况。
-// 比如：角色A与角色B互斥，则不能把角色A和角色B同时授予同一 target。
+// 比如：角色A与角色B互斥，则角色A和角色B不能同时授予同一 target。
 type RoleMutex struct {
 	Ctx                int64      `json:"ctx"                       sql:"ctx"`
 	RoleId             int64      `json:"role_id"                   sql:"role_id"`
@@ -93,7 +93,7 @@ type RoleMutex struct {
 // PreRole 角色先决条件数据结构。
 // 主要应用于更新（授予）某一 target 的角色时，判断该 target 是否已经拥有某一角色。
 //
-// 比如：角色A是角色B的先决条件，则向 target 授予角色B时，需要 target 已经拥有角色A。
+// 比如：角色A是角色B的先决条件，向 target 授予角色B时，需要 target 已经拥有角色A。
 type PreRole struct {
 	Ctx              int64      `json:"ctx"                       sql:"ctx"`
 	RoleId           int64      `json:"role_id"                   sql:"role_id"`
@@ -108,7 +108,7 @@ type PreRole struct {
 // PrePermission 权限先决条件数据结构。
 // 主要应用于更新（授予）某一角色的权限时，判断该角色是否已经拥有某一权限。
 //
-// 比如：权限A是权限B的先决条件，则向角色A授予权限B时，需要角色A已经拥有权限A。
+// 比如：权限A是权限B的先决条件，向角色A授予权限B时，需要角色A已经拥有权限A。
 type PrePermission struct {
 	Ctx                    int64      `json:"ctx"                           sql:"ctx"`
 	PermissionId           int64      `json:"permission_id"                 sql:"permission_id"`
@@ -121,14 +121,7 @@ type PrePermission struct {
 	CreatedOn              *time.Time `json:"created_on"                    sql:"created_on"`
 }
 
-// Grant 角色授权数据结构。
-// 有三种应用场景：
-//
-// 一、用于描述角色与 target 之间的授予关系；
-//
-// 二、用于描述权限与角色之间的授予关系；
-//
-// 三、用于描述权限与 target 之间的授予关系；
+// Grant 用于描述 target、角色、权限之间的关系。
 type Grant struct {
 	Ctx            int64  `json:"ctx"                sql:"ctx"`
 	Target         string `json:"target"             sql:"target"`
