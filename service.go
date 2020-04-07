@@ -371,8 +371,6 @@ func (this *odinService) UpdatePermissionGroupStatusWithId(ctx int64, groupId in
 	return this.updateGroupStatusWithId(ctx, GroupPermission, groupId, status)
 }
 
-// 权限
-
 func (this *odinService) GetPermissions(ctx int64, status Status, keywords string, groupIds []int64) (result []*Permission, err error) {
 	return this.repo.GetPermissions(ctx, status, keywords, groupIds, 0, 0)
 }
@@ -1178,8 +1176,6 @@ func (this *odinService) RevokeAllPermissionWithId(ctx, roleId int64) (err error
 	return nil
 }
 
-// 权限先决条件
-
 func (this *odinService) AddPrePermission(ctx int64, permissionName string, prePermissionNames ...string) (err error) {
 	if len(prePermissionNames) == 0 {
 		return ErrPrePermissionNotExist
@@ -1395,8 +1391,6 @@ func (this *odinService) GetPrePermissionsWithId(ctx int64, permissionId int64) 
 	}
 	return this.repo.GetPrePermissions(ctx, permission.Id)
 }
-
-// 角色
 
 func (this *odinService) GetRoles(ctx int64, status Status, keywords, isGrantedToTarget, limitedInTarget string) (result []*Role, err error) {
 	if limitedInTarget == "" {
@@ -2057,8 +2051,6 @@ func (this *odinService) RevokeAllRole(ctx int64, target string) (err error) {
 	return this.repo.RevokeAllRole(ctx, target)
 }
 
-// 角色互斥
-
 func (this *odinService) AddRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error) {
 	if len(mutexRoleNames) == 0 {
 		return ErrMutexRoleNotExist
@@ -2311,8 +2303,6 @@ func (this *odinService) CheckRoleMutexWithId(ctx, roleId, mutexRoleId int64) bo
 	return this.repo.CheckRoleMutex(ctx, roleId, mutexRoleId)
 }
 
-// 角色先决条件
-
 func (this *odinService) AddPreRole(ctx int64, roleName string, preRoleNames ...string) (err error) {
 	if len(preRoleNames) == 0 {
 		return ErrPreRoleNotExist
@@ -2528,8 +2518,6 @@ func (this *odinService) GetPreRolesWithId(ctx, roleId int64) (result []*PreRole
 	}
 	return this.repo.GetPreRoles(ctx, roleId)
 }
-
-// 其它
 
 func (this *odinService) GetGrantedRoles(ctx int64, target string) (result []*Role, err error) {
 	return this.repo.GetGrantedRoles(ctx, target, false)
