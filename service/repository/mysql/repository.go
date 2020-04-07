@@ -8,7 +8,7 @@ import (
 )
 
 type repository struct {
-	*sql.Repository
+	sql.Repository
 }
 
 func NewRepository(db dbs.DB, tablePrefix string) odin.Repository {
