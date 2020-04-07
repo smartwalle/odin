@@ -7,42 +7,42 @@ import (
 	"github.com/smartwalle/odin"
 )
 
-type odinRepository struct {
+type repository struct {
 	odin.Repository
 	rPool   dbr.Pool
 	tPrefix string
 }
 
 func NewRepository(rPool dbr.Pool, tPrefix string, repo odin.Repository) odin.Repository {
-	var r = &odinRepository{}
+	var r = &repository{}
 	r.rPool = rPool
 	r.tPrefix = tPrefix
 	r.Repository = repo
 	return r
 }
 
-func (this *odinRepository) BeginTx() (dbs.TX, odin.Repository) {
+func (this *repository) BeginTx() (dbs.TX, odin.Repository) {
 	var nRepo = *this
 	var tx dbs.TX
 	tx, nRepo.Repository = this.Repository.BeginTx()
 	return tx, &nRepo
 }
 
-func (this *odinRepository) WithTx(tx dbs.TX) odin.Repository {
+func (this *repository) WithTx(tx dbs.TX) odin.Repository {
 	var nRepo = *this
 	nRepo.Repository = this.Repository.WithTx(tx)
 	return &nRepo
 }
 
-func (this *odinRepository) buildGrantListKey(ctx int64) (result string) {
+func (this *repository) buildGrantListKey(ctx int64) (result string) {
 	return fmt.Sprintf("%s:odin:grant:ctx-%d:list", this.tPrefix, ctx)
 }
 
-func (this *odinRepository) buildTargetKey(ctx int64, target string) (result string) {
+func (this *repository) buildTargetKey(ctx int64, target string) (result string) {
 	return fmt.Sprintf("%s:odin:grant:ctx-%d:t-%s", this.tPrefix, ctx, target)
 }
 
-func (this *odinRepository) CheckPermission(ctx int64, target string, permissionName string) bool {
+func (this *repository) CheckPermission(ctx int64, target string, permissionName string) bool {
 	var rSess = this.rPool.GetSession()
 	defer rSess.Close()
 
@@ -70,7 +70,7 @@ func (this *odinRepository) CheckPermission(ctx int64, target string, permission
 	return result
 }
 
-func (this *odinRepository) grantPermissions(ctx int64, key string, permissionNames []interface{}) {
+func (this *repository) grantPermissions(ctx int64, key string, permissionNames []interface{}) {
 	var rSess = this.rPool.GetSession()
 	defer rSess.Close()
 
@@ -94,7 +94,7 @@ func (this *odinRepository) grantPermissions(ctx int64, key string, permissionNa
 	rSess.Do("EXEC")
 }
 
-func (this *odinRepository) CleanCache(ctx int64, target string) {
+func (this *repository) CleanCache(ctx int64, target string) {
 	var rSess = this.rPool.GetSession()
 	defer rSess.Close()
 

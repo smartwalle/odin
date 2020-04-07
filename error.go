@@ -18,4 +18,5 @@ var (
 	ErrMutexRoleNotExist     = errors.New("互斥角色不存在")
 	ErrPreRoleNotExist       = errors.New("前置角色不存在")
 	ErrPrePermissionNotExist = errors.New("前置权限不存在")
+	ErrNotImplemented        = errors.New("未实现")
 )
