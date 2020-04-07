@@ -1,7 +1,6 @@
 package sql
 
 import (
-	"fmt"
 	"github.com/smartwalle/dbs"
 	"github.com/smartwalle/odin"
 	"time"
@@ -140,7 +139,6 @@ func (this *Repository) GetRoleWithName(ctx int64, name string) (result *odin.Ro
 }
 
 func (this *Repository) AddRole(ctx int64, parent *odin.Role, name, aliasName, description string, status odin.Status) (result int64, err error) {
-	fmt.Println(parent)
 	if parent == nil {
 		if parent, err = this.getMaxRightRole(ctx); err != nil {
 			return 0, err
