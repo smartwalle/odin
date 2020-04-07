@@ -39,7 +39,7 @@ func (this *repository) buildGrantListKey(ctx int64) (result string) {
 }
 
 func (this *repository) buildTargetKey(ctx int64, target string) (result string) {
-	return fmt.Sprintf("%s:odin:grant:ctx-%d:t-%s", this.tPrefix, ctx, target)
+	return fmt.Sprintf("%s:odin:grant:ctx-%d:target-%s", this.tPrefix, ctx, target)
 }
 
 func (this *repository) CheckPermission(ctx int64, target string, permissionName string) bool {
