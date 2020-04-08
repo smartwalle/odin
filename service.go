@@ -195,17 +195,20 @@ type Repository interface {
 	CleanCache(ctx int64, target string)
 }
 
-type odinService struct {
+type Service struct {
 	repo Repository
 }
 
-func NewService(repo Repository) Service {
-	var s = &odinService{}
+func NewService(repo Repository) *Service {
+	var s = &Service{}
 	s.repo = repo
 	return s
 }
 
-func (this *odinService) Init() error {
+// Init 执行初始化操作，目前主要功能为初始化数据库表。
+//
+// 虽然此方法可以被重复调用，但是外部应该尽量控制此方法只在需要的时候调用。
+func (this *Service) Init() error {
 	var tx, nRepo = this.repo.BeginTx()
 	if err := nRepo.InitTable(); err != nil {
 		return err
@@ -214,19 +217,22 @@ func (this *odinService) Init() error {
 	return nil
 }
 
-func (this *odinService) GetPermissionGroups(ctx int64, status Status, keywords string) (result []*Group, err error) {
+// GetPermissionGroups 获取权限组列表
+func (this *Service) GetPermissionGroups(ctx int64, status Status, keywords string) (result []*Group, err error) {
 	return this.repo.GetGroups(ctx, GroupPermission, status, keywords)
 }
 
-func (this *odinService) GetPermissionGroup(ctx int64, groupName string) (result *Group, err error) {
+// GetPermissionGroup 根据 groupName 获取权限组信息
+func (this *Service) GetPermissionGroup(ctx int64, groupName string) (result *Group, err error) {
 	return this.repo.GetGroupWithName(ctx, GroupPermission, groupName)
 }
 
-func (this *odinService) GetPermissionGroupWithId(ctx, groupId int64) (result *Group, err error) {
+// GetPermissionGroupWithId 根据组 groupId 获取权限组信息
+func (this *Service) GetPermissionGroupWithId(ctx, groupId int64) (result *Group, err error) {
 	return this.repo.GetGroupWithId(ctx, GroupPermission, groupId)
 }
 
-func (this *odinService) addGroup(ctx int64, gType GroupType, groupName, aliasName string, status Status) (result int64, err error) {
+func (this *Service) addGroup(ctx int64, gType GroupType, groupName, aliasName string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -251,11 +257,12 @@ func (this *odinService) addGroup(ctx int64, gType GroupType, groupName, aliasNa
 	return result, nil
 }
 
-func (this *odinService) AddPermissionGroup(ctx int64, groupName, aliasName string, status Status) (result int64, err error) {
+// AddPermissionGroup 添加权限组信息
+func (this *Service) AddPermissionGroup(ctx int64, groupName, aliasName string, status Status) (result int64, err error) {
 	return this.addGroup(ctx, GroupPermission, groupName, aliasName, status)
 }
 
-func (this *odinService) updateGroup(ctx int64, gType GroupType, groupName, aliasName string, status Status) (err error) {
+func (this *Service) updateGroup(ctx int64, gType GroupType, groupName, aliasName string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -280,7 +287,7 @@ func (this *odinService) updateGroup(ctx int64, gType GroupType, groupName, alia
 	return nil
 }
 
-func (this *odinService) updateGroupWithId(ctx int64, gType GroupType, groupId int64, aliasName string, status Status) (err error) {
+func (this *Service) updateGroupWithId(ctx int64, gType GroupType, groupId int64, aliasName string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -305,15 +312,17 @@ func (this *odinService) updateGroupWithId(ctx int64, gType GroupType, groupId i
 	return nil
 }
 
-func (this *odinService) UpdatePermissionGroup(ctx int64, groupName string, aliasName string, status Status) (err error) {
+// UpdatePermissionGroup 根据 groupName 更新权限组信息
+func (this *Service) UpdatePermissionGroup(ctx int64, groupName string, aliasName string, status Status) (err error) {
 	return this.updateGroup(ctx, GroupPermission, groupName, aliasName, status)
 }
 
-func (this *odinService) UpdatePermissionGroupWithId(ctx, groupId int64, aliasName string, status Status) (err error) {
+// UpdatePermissionGroupWithId 根据 groupId 更新权限组信息
+func (this *Service) UpdatePermissionGroupWithId(ctx, groupId int64, aliasName string, status Status) (err error) {
 	return this.updateGroupWithId(ctx, GroupPermission, groupId, aliasName, status)
 }
 
-func (this *odinService) updateGroupStatusWithId(ctx int64, gType GroupType, groupId int64, status Status) (err error) {
+func (this *Service) updateGroupStatusWithId(ctx int64, gType GroupType, groupId int64, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -338,7 +347,7 @@ func (this *odinService) updateGroupStatusWithId(ctx int64, gType GroupType, gro
 	return nil
 }
 
-func (this *odinService) updateGroupStatus(ctx int64, gType GroupType, groupName string, status Status) (err error) {
+func (this *Service) updateGroupStatus(ctx int64, gType GroupType, groupName string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -363,19 +372,23 @@ func (this *odinService) updateGroupStatus(ctx int64, gType GroupType, groupName
 	return nil
 }
 
-func (this *odinService) UpdatePermissionGroupStatus(ctx int64, groupName string, status Status) (err error) {
+// UpdatePermissionGroupStatus 根据 groupName 更新权限组状态
+func (this *Service) UpdatePermissionGroupStatus(ctx int64, groupName string, status Status) (err error) {
 	return this.updateGroupStatus(ctx, GroupPermission, groupName, status)
 }
 
-func (this *odinService) UpdatePermissionGroupStatusWithId(ctx int64, groupId int64, status Status) (err error) {
+// UpdatePermissionGroupStatusWithId 根据 groupId 更新权限组状态
+func (this *Service) UpdatePermissionGroupStatusWithId(ctx int64, groupId int64, status Status) (err error) {
 	return this.updateGroupStatusWithId(ctx, GroupPermission, groupId, status)
 }
 
-func (this *odinService) GetPermissions(ctx int64, status Status, keywords string, groupIds []int64) (result []*Permission, err error) {
+// GetPermissions 获取权限列表
+func (this *Service) GetPermissions(ctx int64, status Status, keywords string, groupIds []int64) (result []*Permission, err error) {
 	return this.repo.GetPermissions(ctx, status, keywords, groupIds, 0, 0)
 }
 
-func (this *odinService) GetPermission(ctx int64, permissionName string) (result *Permission, err error) {
+// GetPermission 根据 permissionName 获取权限信息
+func (this *Service) GetPermission(ctx int64, permissionName string) (result *Permission, err error) {
 	result, err = this.repo.GetPermissionWithName(ctx, permissionName)
 	if err != nil {
 		return nil, err
@@ -388,7 +401,8 @@ func (this *odinService) GetPermission(ctx int64, permissionName string) (result
 	return result, nil
 }
 
-func (this *odinService) GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error) {
+// GetPermissionWithId 根据 permissionId 获取权限信息
+func (this *Service) GetPermissionWithId(ctx, permissionId int64) (result *Permission, err error) {
 	result, err = this.repo.GetPermissionWithId(ctx, permissionId)
 	if err != nil {
 		return nil, err
@@ -401,7 +415,8 @@ func (this *odinService) GetPermissionWithId(ctx, permissionId int64) (result *P
 	return result, nil
 }
 
-func (this *odinService) AddPermissionWithGroup(ctx int64, groupName, permissionName, aliasName, description string, status Status) (result int64, err error) {
+// AddPermissionWithGroup 添加权限
+func (this *Service) AddPermissionWithGroup(ctx int64, groupName, permissionName, aliasName, description string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -435,7 +450,8 @@ func (this *odinService) AddPermissionWithGroup(ctx int64, groupName, permission
 	return result, nil
 }
 
-func (this *odinService) AddPermissionWithGroupId(ctx, groupId int64, permissionName, aliasName, description string, status Status) (result int64, err error) {
+// AddPermissionWithGroupId 添加权限
+func (this *Service) AddPermissionWithGroupId(ctx, groupId int64, permissionName, aliasName, description string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -469,7 +485,8 @@ func (this *odinService) AddPermissionWithGroupId(ctx, groupId int64, permission
 	return result, nil
 }
 
-func (this *odinService) UpdatePermission(ctx int64, permissionName, groupName, aliasName, description string, status Status) (err error) {
+// UpdatePermission 根据 permissionName 更新权限信息
+func (this *Service) UpdatePermission(ctx int64, permissionName, groupName, aliasName, description string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -503,7 +520,8 @@ func (this *odinService) UpdatePermission(ctx int64, permissionName, groupName, 
 	return nil
 }
 
-func (this *odinService) UpdatePermissionWithId(ctx, permissionId, groupId int64, aliasName, description string, status Status) (err error) {
+// UpdatePermissionWithId 根据 permissionId 更新权限信息
+func (this *Service) UpdatePermissionWithId(ctx, permissionId, groupId int64, aliasName, description string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -537,7 +555,8 @@ func (this *odinService) UpdatePermissionWithId(ctx, permissionId, groupId int64
 	return nil
 }
 
-func (this *odinService) UpdatePermissionStatus(ctx int64, permissionName string, status Status) (err error) {
+// UpdatePermissionStatus 根据 permissionName 更新权限状态
+func (this *Service) UpdatePermissionStatus(ctx int64, permissionName string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -562,7 +581,8 @@ func (this *odinService) UpdatePermissionStatus(ctx int64, permissionName string
 	return nil
 }
 
-func (this *odinService) UpdatePermissionStatusWithId(ctx, permissionId int64, status Status) (err error) {
+// UpdatePermissionStatusWithId 根据 permissionId 更新权限状态
+func (this *Service) UpdatePermissionStatusWithId(ctx, permissionId int64, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -587,7 +607,8 @@ func (this *odinService) UpdatePermissionStatusWithId(ctx, permissionId int64, s
 	return nil
 }
 
-func (this *odinService) GrantPermission(ctx int64, roleName string, permissionNames ...string) (err error) {
+// GrantPermission 授予权限给角色
+func (this *Service) GrantPermission(ctx int64, roleName string, permissionNames ...string) (err error) {
 	if len(permissionNames) == 0 {
 		return ErrPermissionNotExist
 	}
@@ -685,7 +706,8 @@ func (this *odinService) GrantPermission(ctx int64, roleName string, permissionN
 	return nil
 }
 
-func (this *odinService) GrantPermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error) {
+// GrantPermissionWithId 授予权限给角色
+func (this *Service) GrantPermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error) {
 	if len(permissionIds) == 0 {
 		return ErrPermissionNotExist
 	}
@@ -783,7 +805,8 @@ func (this *odinService) GrantPermissionWithId(ctx int64, roleId int64, permissi
 	return nil
 }
 
-func (this *odinService) ReGrantPermission(ctx int64, roleName string, permissionNames ...string) (err error) {
+// ReGrantPermission 授予权限给角色，会将原有的权限先取消掉
+func (this *Service) ReGrantPermission(ctx int64, roleName string, permissionNames ...string) (err error) {
 	if len(permissionNames) == 0 {
 		return ErrPermissionNotExist
 	}
@@ -889,7 +912,8 @@ func (this *odinService) ReGrantPermission(ctx int64, roleName string, permissio
 	return nil
 }
 
-func (this *odinService) ReGrantPermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error) {
+// ReGrantPermissionWithId 授予权限给角色，会将原有的权限先取消掉
+func (this *Service) ReGrantPermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error) {
 	if len(permissionIds) == 0 {
 		return ErrPermissionNotExist
 	}
@@ -995,7 +1019,8 @@ func (this *odinService) ReGrantPermissionWithId(ctx int64, roleId int64, permis
 	return nil
 }
 
-func (this *odinService) RevokePermission(ctx int64, roleName string, permissionNames ...string) (err error) {
+// RevokePermission 取消对角色的指定权限授权
+func (this *Service) RevokePermission(ctx int64, roleName string, permissionNames ...string) (err error) {
 	if len(permissionNames) == 0 {
 		return ErrPermissionNotExist
 	}
@@ -1066,7 +1091,8 @@ func (this *odinService) RevokePermission(ctx int64, roleName string, permission
 	return nil
 }
 
-func (this *odinService) RevokePermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error) {
+// RevokePermissionWithId 取消对角色的指定权限授权
+func (this *Service) RevokePermissionWithId(ctx int64, roleId int64, permissionIds ...int64) (err error) {
 	if len(permissionIds) == 0 {
 		return ErrPermissionNotExist
 	}
@@ -1137,7 +1163,8 @@ func (this *odinService) RevokePermissionWithId(ctx int64, roleId int64, permiss
 	return nil
 }
 
-func (this *odinService) RevokeAllPermission(ctx int64, roleName string) (err error) {
+// RevokeAllPermission 取消对角色的所有权限授权
+func (this *Service) RevokeAllPermission(ctx int64, roleName string) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1161,7 +1188,8 @@ func (this *odinService) RevokeAllPermission(ctx int64, roleName string) (err er
 	return nil
 }
 
-func (this *odinService) RevokeAllPermissionWithId(ctx, roleId int64) (err error) {
+// RevokeAllPermissionWithId 取消对角色的所有权限授权
+func (this *Service) RevokeAllPermissionWithId(ctx, roleId int64) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1176,7 +1204,8 @@ func (this *odinService) RevokeAllPermissionWithId(ctx, roleId int64) (err error
 	return nil
 }
 
-func (this *odinService) AddPrePermission(ctx int64, permissionName string, prePermissionNames ...string) (err error) {
+// AddPrePermission 添加授予该权限时需要的先决条件
+func (this *Service) AddPrePermission(ctx int64, permissionName string, prePermissionNames ...string) (err error) {
 	if len(prePermissionNames) == 0 {
 		return ErrPrePermissionNotExist
 	}
@@ -1218,7 +1247,8 @@ func (this *odinService) AddPrePermission(ctx int64, permissionName string, preP
 	return nil
 }
 
-func (this *odinService) AddPrePermissionWithId(ctx, permissionId int64, prePermissionIds ...int64) (err error) {
+// AddPrePermissionWithId 添加授予该权限时需要的先决条件
+func (this *Service) AddPrePermissionWithId(ctx, permissionId int64, prePermissionIds ...int64) (err error) {
 	if len(prePermissionIds) == 0 {
 		return ErrPrePermissionNotExist
 	}
@@ -1260,7 +1290,8 @@ func (this *odinService) AddPrePermissionWithId(ctx, permissionId int64, prePerm
 	return nil
 }
 
-func (this *odinService) RemovePrePermission(ctx int64, permissionName string, prePermissionNames ...string) (err error) {
+// RemovePrePermission 删除授予该权限时需要的先决条件
+func (this *Service) RemovePrePermission(ctx int64, permissionName string, prePermissionNames ...string) (err error) {
 	if len(prePermissionNames) == 0 {
 		return ErrPrePermissionNotExist
 	}
@@ -1302,7 +1333,8 @@ func (this *odinService) RemovePrePermission(ctx int64, permissionName string, p
 	return nil
 }
 
-func (this *odinService) RemovePrePermissionWithId(ctx, permissionId int64, prePermissionIds ...int64) (err error) {
+// RemovePrePermissionWithId 删除授予该权限时需要的先决条件
+func (this *Service) RemovePrePermissionWithId(ctx, permissionId int64, prePermissionIds ...int64) (err error) {
 	if len(prePermissionIds) == 0 {
 		return ErrPrePermissionNotExist
 	}
@@ -1344,7 +1376,8 @@ func (this *odinService) RemovePrePermissionWithId(ctx, permissionId int64, preP
 	return nil
 }
 
-func (this *odinService) RemoveAllPrePermission(ctx int64, permissionName string) (err error) {
+// RemoveAllPrePermission 删除授予该权限时需要的所有先决条件
+func (this *Service) RemoveAllPrePermission(ctx int64, permissionName string) (err error) {
 	// 验证权限是否存在
 	permission, err := this.repo.GetPermissionWithName(ctx, permissionName)
 	if err != nil {
@@ -1356,7 +1389,8 @@ func (this *odinService) RemoveAllPrePermission(ctx int64, permissionName string
 	return this.repo.CleanPrePermission(ctx, permission.Id)
 }
 
-func (this *odinService) RemoveAllPrePermissionWithId(ctx, permissionId int64) (err error) {
+// RemoveAllPrePermissionWithId 删除授予该权限时需要的所有先决条件
+func (this *Service) RemoveAllPrePermissionWithId(ctx, permissionId int64) (err error) {
 	// 验证权限是否存在
 	permission, err := this.repo.GetPermissionWithId(ctx, permissionId)
 	if err != nil {
@@ -1368,7 +1402,8 @@ func (this *odinService) RemoveAllPrePermissionWithId(ctx, permissionId int64) (
 	return this.repo.CleanPrePermission(ctx, permission.Id)
 }
 
-func (this *odinService) GetPrePermissions(ctx int64, permissionName string) (result []*PrePermission, err error) {
+// GetPrePermissions 获取授予该权限时需要的所有先决条件
+func (this *Service) GetPrePermissions(ctx int64, permissionName string) (result []*PrePermission, err error) {
 	// 验证权限是否存在
 	permission, err := this.repo.GetPermissionWithName(ctx, permissionName)
 	if err != nil {
@@ -1380,7 +1415,8 @@ func (this *odinService) GetPrePermissions(ctx int64, permissionName string) (re
 	return this.repo.GetPrePermissions(ctx, permission.Id)
 }
 
-func (this *odinService) GetPrePermissionsWithId(ctx int64, permissionId int64) (result []*PrePermission, err error) {
+// GetPrePermissionsWithId 获取授予该权限时需要的所有先决条件
+func (this *Service) GetPrePermissionsWithId(ctx int64, permissionId int64) (result []*PrePermission, err error) {
 	// 验证权限是否存在
 	permission, err := this.repo.GetPermissionWithId(ctx, permissionId)
 	if err != nil {
@@ -1392,14 +1428,26 @@ func (this *odinService) GetPrePermissionsWithId(ctx int64, permissionId int64) 
 	return this.repo.GetPrePermissions(ctx, permission.Id)
 }
 
-func (this *odinService) GetRoles(ctx int64, status Status, keywords, isGrantedToTarget, limitedInTarget string) (result []*Role, err error) {
+// GetRoles 获取角色列表
+//
+// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
+//
+// 如果参数 limitedInTarget 的值不为空字符串， 则返回的角色数据将限定在 limitedInTarget 已拥有的角色及其子角色范围内
+//
+// 返回的角色数据的 Granted 字段参照的是 isGrantedToTarget
+//
+// 返回的角色数据的 Accessible 字段参照的是 limitedInTarget
+func (this *Service) GetRoles(ctx int64, status Status, keywords, isGrantedToTarget, limitedInTarget string) (result []*Role, err error) {
 	if limitedInTarget == "" {
 		return this.repo.GetRoles(ctx, -1, status, keywords, isGrantedToTarget)
 	}
 	return this.repo.GetRolesInTarget(ctx, limitedInTarget, status, keywords, isGrantedToTarget)
 }
 
-func (this *odinService) GetRolesWithParent(ctx int64, parentRoleName string, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {
+// GetRolesWithParent 获取角色列表
+//
+// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
+func (this *Service) GetRolesWithParent(ctx int64, parentRoleName string, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {
 	var parentRoleId int64 = 0
 	if parentRoleName != "" {
 		// 验证 parentRoleName 是否存在
@@ -1415,7 +1463,10 @@ func (this *odinService) GetRolesWithParent(ctx int64, parentRoleName string, st
 	return this.repo.GetRoles(ctx, parentRoleId, status, keywords, isGrantedToTarget)
 }
 
-func (this *odinService) GetRolesWithParentId(ctx, parentRoleId int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {
+// GetRolesWithParentId 获取角色列表
+//
+// 如果参数 isGrantedToTarget 的值不为空字符串，则返回的角色数据中将包含该角色（通过 Granted 判断）是否已授权给 isGrantedToTarget
+func (this *Service) GetRolesWithParentId(ctx, parentRoleId int64, status Status, keywords, isGrantedToTarget string) (result []*Role, err error) {
 	if parentRoleId < 0 {
 		parentRoleId = 0
 	}
@@ -1433,7 +1484,8 @@ func (this *odinService) GetRolesWithParentId(ctx, parentRoleId int64, status St
 	return this.repo.GetRoles(ctx, parentRoleId, status, keywords, isGrantedToTarget)
 }
 
-func (this *odinService) GetRole(ctx int64, name string) (result *Role, err error) {
+// GetRole 根据 roleName 获取角色信息
+func (this *Service) GetRole(ctx int64, name string) (result *Role, err error) {
 	result, err = this.repo.GetRoleWithName(ctx, name)
 	if err != nil {
 		return nil, err
@@ -1452,7 +1504,8 @@ func (this *odinService) GetRole(ctx int64, name string) (result *Role, err erro
 	return result, nil
 }
 
-func (this *odinService) GetRoleWithId(ctx, roleId int64) (result *Role, err error) {
+// GetRoleWithId 根据 roleId 获取角色信息
+func (this *Service) GetRoleWithId(ctx, roleId int64) (result *Role, err error) {
 	result, err = this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
 		return nil, err
@@ -1471,11 +1524,15 @@ func (this *odinService) GetRoleWithId(ctx, roleId int64) (result *Role, err err
 	return result, nil
 }
 
-func (this *odinService) AddRole(ctx int64, roleName, aliasName, description string, status Status) (result int64, err error) {
+// AddRole 添加角色
+func (this *Service) AddRole(ctx int64, roleName, aliasName, description string, status Status) (result int64, err error) {
 	return this.AddRoleWithParentId(ctx, 0, roleName, aliasName, description, status)
 }
 
-func (this *odinService) AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error) {
+// AddRoleWithParent 添加角色，新添加的角色将作为 parentRoleName 的子角色
+//
+// 调用时应该确认操作者是否有访问 parentRoleName 的权限，即 parentRoleName 是否为当前操作者拥有的角色及其子角色
+func (this *Service) AddRoleWithParent(ctx int64, parentRoleName, roleName, aliasName, description string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1512,7 +1569,10 @@ func (this *odinService) AddRoleWithParent(ctx int64, parentRoleName, roleName, 
 	return result, nil
 }
 
-func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
+// AddRoleWithParentId 添加角色，新添加的角色将作为 parentRoleId 的子角色
+//
+// 调用时应该确认操作者是否有访问 parentRoleId 的权限，即 parentRoleId 是否为当前操作者拥有的角色及其子角色
+func (this *Service) AddRoleWithParentId(ctx, parentRoleId int64, roleName, aliasName, description string, status Status) (result int64, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1553,7 +1613,8 @@ func (this *odinService) AddRoleWithParentId(ctx, parentRoleId int64, roleName, 
 	return result, nil
 }
 
-func (this *odinService) UpdateRole(ctx int64, roleName, aliasName, description string, status Status) (err error) {
+// UpdateRole 根据 roleName 更新角色信息
+func (this *Service) UpdateRole(ctx int64, roleName, aliasName, description string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1578,7 +1639,8 @@ func (this *odinService) UpdateRole(ctx int64, roleName, aliasName, description 
 	return nil
 }
 
-func (this *odinService) UpdateRoleWithId(ctx, roleId int64, aliasName, description string, status Status) (err error) {
+// UpdateRoleWithId 根据 roleId 更新角色信息
+func (this *Service) UpdateRoleWithId(ctx, roleId int64, aliasName, description string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1603,7 +1665,8 @@ func (this *odinService) UpdateRoleWithId(ctx, roleId int64, aliasName, descript
 	return nil
 }
 
-func (this *odinService) UpdateRoleStatus(ctx int64, roleName string, status Status) (err error) {
+// UpdateRoleStatus 根据 roleName 更新角色的状态
+func (this *Service) UpdateRoleStatus(ctx int64, roleName string, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1628,7 +1691,8 @@ func (this *odinService) UpdateRoleStatus(ctx int64, roleName string, status Sta
 	return nil
 }
 
-func (this *odinService) UpdateRoleStatusWithId(ctx, roleId int64, status Status) (err error) {
+// UpdateRoleStatusWithId 根据 roleId 更新角色的状态
+func (this *Service) UpdateRoleStatusWithId(ctx, roleId int64, status Status) (err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -1653,7 +1717,8 @@ func (this *odinService) UpdateRoleStatusWithId(ctx, roleId int64, status Status
 	return nil
 }
 
-func (this *odinService) GrantRole(ctx int64, target string, roleNames ...string) (err error) {
+// GrantRole 授权角色给 target
+func (this *Service) GrantRole(ctx int64, target string, roleNames ...string) (err error) {
 	if len(roleNames) == 0 {
 		return ErrRoleNotExist
 	}
@@ -1724,7 +1789,8 @@ func (this *odinService) GrantRole(ctx int64, target string, roleNames ...string
 	return nil
 }
 
-func (this *odinService) GrantRoleWithId(ctx int64, target string, roleIds ...int64) (err error) {
+// GrantRoleWithId 授权角色给 target
+func (this *Service) GrantRoleWithId(ctx int64, target string, roleIds ...int64) (err error) {
 	if len(roleIds) == 0 {
 		return ErrRoleNotExist
 	}
@@ -1795,7 +1861,8 @@ func (this *odinService) GrantRoleWithId(ctx int64, target string, roleIds ...in
 	return nil
 }
 
-func (this *odinService) ReGrantRole(ctx int64, target string, roleNames ...string) (err error) {
+// ReGrantRole 授权角色给 target，会将原有的角色授权先取消掉
+func (this *Service) ReGrantRole(ctx int64, target string, roleNames ...string) (err error) {
 	if len(roleNames) == 0 {
 		return ErrRoleNotExist
 	}
@@ -1858,7 +1925,8 @@ func (this *odinService) ReGrantRole(ctx int64, target string, roleNames ...stri
 	return nil
 }
 
-func (this *odinService) ReGrantRoleWithId(ctx int64, target string, roleIds ...int64) (err error) {
+// ReGrantRoleWithId 授权角色给 target，会将原有的角色授权先取消掉
+func (this *Service) ReGrantRoleWithId(ctx int64, target string, roleIds ...int64) (err error) {
 	if len(roleIds) == 0 {
 		return ErrRoleNotExist
 	}
@@ -1921,7 +1989,8 @@ func (this *odinService) ReGrantRoleWithId(ctx int64, target string, roleIds ...
 	return nil
 }
 
-func (this *odinService) RevokeRole(ctx int64, target string, roleNames ...string) (err error) {
+// RevokeRole 取消对 target 的角色授权
+func (this *Service) RevokeRole(ctx int64, target string, roleNames ...string) (err error) {
 	if len(roleNames) == 0 {
 		return ErrRoleNotExist
 	}
@@ -1984,7 +2053,8 @@ func (this *odinService) RevokeRole(ctx int64, target string, roleNames ...strin
 	return nil
 }
 
-func (this *odinService) RevokeRoleWithId(ctx int64, target string, roleIds ...int64) (err error) {
+// RevokeRoleWithId 取消对 target 的角色授权
+func (this *Service) RevokeRoleWithId(ctx int64, target string, roleIds ...int64) (err error) {
 	if len(roleIds) == 0 {
 		return ErrRoleNotExist
 	}
@@ -2047,11 +2117,13 @@ func (this *odinService) RevokeRoleWithId(ctx int64, target string, roleIds ...i
 	return nil
 }
 
-func (this *odinService) RevokeAllRole(ctx int64, target string) (err error) {
+// RevokeAllRole 取消对 target 的所有角色授权
+func (this *Service) RevokeAllRole(ctx int64, target string) (err error) {
 	return this.repo.RevokeAllRole(ctx, target)
 }
 
-func (this *odinService) AddRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error) {
+// AddRoleMutex 添加角色互斥关系
+func (this *Service) AddRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error) {
 	if len(mutexRoleNames) == 0 {
 		return ErrMutexRoleNotExist
 	}
@@ -2093,7 +2165,8 @@ func (this *odinService) AddRoleMutex(ctx int64, roleName string, mutexRoleNames
 	return nil
 }
 
-func (this *odinService) AddRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...int64) (err error) {
+// AddRoleMutexWithId 添加角色互斥关系
+func (this *Service) AddRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...int64) (err error) {
 	if len(mutexRoleIds) == 0 {
 		return ErrMutexRoleNotExist
 	}
@@ -2135,7 +2208,8 @@ func (this *odinService) AddRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...i
 	return nil
 }
 
-func (this *odinService) RemoveRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error) {
+// RemoveRoleMutex 删除角色互斥关系
+func (this *Service) RemoveRoleMutex(ctx int64, roleName string, mutexRoleNames ...string) (err error) {
 	if len(mutexRoleNames) == 0 {
 		return ErrMutexRoleNotExist
 	}
@@ -2177,7 +2251,8 @@ func (this *odinService) RemoveRoleMutex(ctx int64, roleName string, mutexRoleNa
 	return nil
 }
 
-func (this *odinService) RemoveRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...int64) (err error) {
+// RemoveRoleMutexWithId 删除角色互斥关系
+func (this *Service) RemoveRoleMutexWithId(ctx, roleId int64, mutexRoleIds ...int64) (err error) {
 	if len(mutexRoleIds) == 0 {
 		return ErrMutexRoleNotExist
 	}
@@ -2219,7 +2294,8 @@ func (this *odinService) RemoveRoleMutexWithId(ctx, roleId int64, mutexRoleIds .
 	return nil
 }
 
-func (this *odinService) RemoveAllRoleMutex(ctx int64, roleName string) (err error) {
+// RemoveAllRoleMutex 删除该角色所有的互斥关系
+func (this *Service) RemoveAllRoleMutex(ctx int64, roleName string) (err error) {
 	// 验证角色是否存在
 	role, err := this.repo.GetRoleWithName(ctx, roleName)
 	if err != nil {
@@ -2231,7 +2307,8 @@ func (this *odinService) RemoveAllRoleMutex(ctx int64, roleName string) (err err
 	return this.repo.CleanRoleMutex(ctx, role.Id)
 }
 
-func (this *odinService) RemoveAllRoleMutexWithId(ctx, roleId int64) (err error) {
+// RemoveAllRoleMutexWithId 删除该角色所有的互斥关系
+func (this *Service) RemoveAllRoleMutexWithId(ctx, roleId int64) (err error) {
 	// 验证角色是否存在
 	role, err := this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
@@ -2243,7 +2320,8 @@ func (this *odinService) RemoveAllRoleMutexWithId(ctx, roleId int64) (err error)
 	return this.repo.CleanRoleMutex(ctx, role.Id)
 }
 
-func (this *odinService) GetMutexRoles(ctx int64, roleName string) (result []*RoleMutex, err error) {
+// GetMutexRoles 获取与该角色互斥的角色列表
+func (this *Service) GetMutexRoles(ctx int64, roleName string) (result []*RoleMutex, err error) {
 	// 验证角色是否存在
 	role, err := this.repo.GetRoleWithName(ctx, roleName)
 	if err != nil {
@@ -2255,7 +2333,8 @@ func (this *odinService) GetMutexRoles(ctx int64, roleName string) (result []*Ro
 	return this.repo.GetMutexRoles(ctx, role.Id)
 }
 
-func (this *odinService) GetMutexRolesWithId(ctx, roleId int64) (result []*RoleMutex, err error) {
+// GetMutexRolesWithId 获取与该角色互斥的角色列表
+func (this *Service) GetMutexRolesWithId(ctx, roleId int64) (result []*RoleMutex, err error) {
 	// 验证角色是否存在
 	role, err := this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
@@ -2267,7 +2346,8 @@ func (this *odinService) GetMutexRolesWithId(ctx, roleId int64) (result []*RoleM
 	return this.repo.GetMutexRoles(ctx, role.Id)
 }
 
-func (this *odinService) CheckRoleMutex(ctx int64, roleName, mutexRoleName string) bool {
+// CheckRoleMutex 验证两个角色是否互斥
+func (this *Service) CheckRoleMutex(ctx int64, roleName, mutexRoleName string) bool {
 	var tx, nRepo = this.repo.BeginTx()
 	var err error
 	defer func() {
@@ -2299,11 +2379,13 @@ func (this *odinService) CheckRoleMutex(ctx int64, roleName, mutexRoleName strin
 	return ok
 }
 
-func (this *odinService) CheckRoleMutexWithId(ctx, roleId, mutexRoleId int64) bool {
+// CheckRoleMutexWithId 验证两个角色是否互斥
+func (this *Service) CheckRoleMutexWithId(ctx, roleId, mutexRoleId int64) bool {
 	return this.repo.CheckRoleMutex(ctx, roleId, mutexRoleId)
 }
 
-func (this *odinService) AddPreRole(ctx int64, roleName string, preRoleNames ...string) (err error) {
+// AddPreRole 添加授予该角色时需要的先决条件
+func (this *Service) AddPreRole(ctx int64, roleName string, preRoleNames ...string) (err error) {
 	if len(preRoleNames) == 0 {
 		return ErrPreRoleNotExist
 	}
@@ -2345,7 +2427,8 @@ func (this *odinService) AddPreRole(ctx int64, roleName string, preRoleNames ...
 	return nil
 }
 
-func (this *odinService) AddPreRoleWithId(ctx, roleId int64, preRoleIds ...int64) (err error) {
+// AddPreRoleWithId 添加授予该角色时需要的先决条件
+func (this *Service) AddPreRoleWithId(ctx, roleId int64, preRoleIds ...int64) (err error) {
 	if len(preRoleIds) == 0 {
 		return ErrPreRoleNotExist
 	}
@@ -2387,7 +2470,8 @@ func (this *odinService) AddPreRoleWithId(ctx, roleId int64, preRoleIds ...int64
 	return nil
 }
 
-func (this *odinService) RemovePreRole(ctx int64, roleName string, preRoleNames ...string) (err error) {
+// RemovePreRole 删除授予该角色时需要的先决条件
+func (this *Service) RemovePreRole(ctx int64, roleName string, preRoleNames ...string) (err error) {
 	if len(preRoleNames) == 0 {
 		return ErrPreRoleNotExist
 	}
@@ -2429,7 +2513,8 @@ func (this *odinService) RemovePreRole(ctx int64, roleName string, preRoleNames 
 	return nil
 }
 
-func (this *odinService) RemovePreRoleWithId(ctx, roleId int64, preRoleIds ...int64) (err error) {
+// RemovePreRoleWithId 删除授予该角色时需要的先决条件
+func (this *Service) RemovePreRoleWithId(ctx, roleId int64, preRoleIds ...int64) (err error) {
 	if len(preRoleIds) == 0 {
 		return ErrPreRoleNotExist
 	}
@@ -2471,7 +2556,8 @@ func (this *odinService) RemovePreRoleWithId(ctx, roleId int64, preRoleIds ...in
 	return nil
 }
 
-func (this *odinService) RemoveAllPreRole(ctx int64, roleName string) (err error) {
+// RemoveAllPreRole 删除授予该角色时需要的所有先决条件
+func (this *Service) RemoveAllPreRole(ctx int64, roleName string) (err error) {
 	// 验证角色是否存在
 	role, err := this.repo.GetRoleWithName(ctx, roleName)
 	if err != nil {
@@ -2483,7 +2569,8 @@ func (this *odinService) RemoveAllPreRole(ctx int64, roleName string) (err error
 	return this.repo.CleanPreRole(ctx, role.Id)
 }
 
-func (this *odinService) RemoveAllPreRoleWithId(ctx, roleId int64) (err error) {
+// RemoveAllPreRoleWithId 删除授予该角色时需要的所有先决条件
+func (this *Service) RemoveAllPreRoleWithId(ctx, roleId int64) (err error) {
 	// 验证角色是否存在
 	role, err := this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
@@ -2495,7 +2582,8 @@ func (this *odinService) RemoveAllPreRoleWithId(ctx, roleId int64) (err error) {
 	return this.repo.CleanPreRole(ctx, role.Id)
 }
 
-func (this *odinService) GetPreRoles(ctx int64, roleName string) (result []*PreRole, err error) {
+// GetPreRoles 获取授予该角色时需要的所有先决条件
+func (this *Service) GetPreRoles(ctx int64, roleName string) (result []*PreRole, err error) {
 	// 验证角色是否存在
 	role, err := this.repo.GetRoleWithName(ctx, roleName)
 	if err != nil {
@@ -2507,7 +2595,8 @@ func (this *odinService) GetPreRoles(ctx int64, roleName string) (result []*PreR
 	return this.repo.GetPreRoles(ctx, role.Id)
 }
 
-func (this *odinService) GetPreRolesWithId(ctx, roleId int64) (result []*PreRole, err error) {
+// GetPreRolesWithId 获取授予该角色时需要的所有先决条件
+func (this *Service) GetPreRolesWithId(ctx, roleId int64) (result []*PreRole, err error) {
 	// 验证角色是否存在
 	role, err := this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
@@ -2519,11 +2608,13 @@ func (this *odinService) GetPreRolesWithId(ctx, roleId int64) (result []*PreRole
 	return this.repo.GetPreRoles(ctx, roleId)
 }
 
-func (this *odinService) GetGrantedRoles(ctx int64, target string) (result []*Role, err error) {
+// GetGrantedRoles 获取已授权给 target 的角色列表
+func (this *Service) GetGrantedRoles(ctx int64, target string) (result []*Role, err error) {
 	return this.repo.GetGrantedRoles(ctx, target, false)
 }
 
-func (this *odinService) GetRolesWithTarget(ctx int64, target string) (result []*Role, err error) {
+// GetRolesWithTarget 获取已授权给 target 的角色，及其角色的子角色
+func (this *Service) GetRolesWithTarget(ctx int64, target string) (result []*Role, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -2540,23 +2631,28 @@ func (this *odinService) GetRolesWithTarget(ctx int64, target string) (result []
 	return result, nil
 }
 
-func (this *odinService) CheckRole(ctx int64, target string, roleName string) bool {
+// CheckRole 验证 target 是否拥有指定角色
+func (this *Service) CheckRole(ctx int64, target string, roleName string) bool {
 	return this.repo.CheckRole(ctx, target, roleName)
 }
 
-func (this *odinService) CheckRoleWithId(ctx int64, target string, roleId int64) bool {
+// CheckRoleWithId 验证 target 是否拥有指定角色
+func (this *Service) CheckRoleWithId(ctx int64, target string, roleId int64) bool {
 	return this.repo.CheckRoleWithId(ctx, target, roleId)
 }
 
-func (this *odinService) CheckRoleAccessible(ctx int64, target string, roleName string) bool {
+// CheckRoleAccessible 验证 target 是否拥有操作访问 roleName 的权限
+func (this *Service) CheckRoleAccessible(ctx int64, target string, roleName string) bool {
 	return this.repo.CheckRoleAccessible(ctx, target, roleName)
 }
 
-func (this *odinService) CheckRoleAccessibleWithId(ctx int64, target string, roleId int64) bool {
+// CheckRoleAccessibleWithId 验证 target 是否拥有操作访问 roleId 的权限
+func (this *Service) CheckRoleAccessibleWithId(ctx int64, target string, roleId int64) bool {
 	return this.repo.CheckRoleAccessibleWithId(ctx, target, roleId)
 }
 
-func (this *odinService) GetPermissionsWithRole(ctx int64, roleName string) (result []*Permission, err error) {
+// GetPermissionsWithRole 获取已授权给 roleName 的权限列表
+func (this *Service) GetPermissionsWithRole(ctx int64, roleName string) (result []*Permission, err error) {
 	role, err := this.repo.GetRoleWithName(ctx, roleName)
 	if err != nil {
 		return nil, err
@@ -2567,7 +2663,8 @@ func (this *odinService) GetPermissionsWithRole(ctx int64, roleName string) (res
 	return this.repo.GetPermissionsWithRoleId(ctx, role.Id)
 }
 
-func (this *odinService) GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error) {
+// GetPermissionsWithRoleId 获取已授权给 roleId 的权限列表
+func (this *Service) GetPermissionsWithRoleId(ctx int64, roleId int64) (result []*Permission, err error) {
 	role, err := this.repo.GetRoleWithId(ctx, roleId)
 	if err != nil {
 		return nil, err
@@ -2578,11 +2675,17 @@ func (this *odinService) GetPermissionsWithRoleId(ctx int64, roleId int64) (resu
 	return this.repo.GetPermissionsWithRoleId(ctx, role.Id)
 }
 
-func (this *odinService) GetGrantedPermissions(ctx int64, target string) (result []*Permission, err error) {
+// GetGrantedPermissions 获取已授权给 target 的权限列表
+func (this *Service) GetGrantedPermissions(ctx int64, target string) (result []*Permission, err error) {
 	return this.repo.GetGrantedPermissions(ctx, target)
 }
 
-func (this *odinService) GetPermissionsTreeWithRole(ctx int64, roleName string, status Status, limitedInParentRole bool) (result []*Group, err error) {
+// GetPermissionsTreeWithRole 获取权限组列表，组中包含该组所有的权限信息
+//
+// 如果参数 roleName 的值不为空字符串，则返回的权限数据中将附带该权限是否已授权给该 roleName
+//
+// 如果参数 limitedInParentRole 的值为 true，并且 roleName 的值不为空字符串，则返回的权限数据将限定在 roleName 的父角色拥有的权限范围内.
+func (this *Service) GetPermissionsTreeWithRole(ctx int64, roleName string, status Status, limitedInParentRole bool) (result []*Group, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -2640,7 +2743,12 @@ func (this *odinService) GetPermissionsTreeWithRole(ctx int64, roleName string, 
 	return result, nil
 }
 
-func (this *odinService) GetPermissionsTreeWithRoleId(ctx, roleId int64, status Status, limitedInParentRole bool) (result []*Group, err error) {
+// GetPermissionsTreeWithRoleId 获取权限组列表，组中包含该组所有的权限信息
+//
+// 如果参数 roleId 的值大于 0，则返回的权限数据中将附带该权限是否已授权给该 roleId
+//
+// 如果参数 limitedInParentRole 的值为 true，并且 roleId 的值大于 0，则返回的权限数据将限定在 roleId 的父角色拥有的权限范围内
+func (this *Service) GetPermissionsTreeWithRoleId(ctx, roleId int64, status Status, limitedInParentRole bool) (result []*Group, err error) {
 	var tx, nRepo = this.repo.BeginTx()
 	defer func() {
 		if err != nil {
@@ -2697,22 +2805,27 @@ func (this *odinService) GetPermissionsTreeWithRoleId(ctx, roleId int64, status 
 	return result, nil
 }
 
-func (this *odinService) CheckPermission(ctx int64, target string, permissionName string) bool {
+// CheckPermission 验证 target 是否拥有指定权限
+func (this *Service) CheckPermission(ctx int64, target string, permissionName string) bool {
 	return this.repo.CheckPermission(ctx, target, permissionName)
 }
 
-func (this *odinService) CheckPermissionWithId(ctx int64, target string, permissionId int64) bool {
+// CheckPermissionWithId 验证 target 是否拥有指定权限
+func (this *Service) CheckPermissionWithId(ctx int64, target string, permissionId int64) bool {
 	return this.repo.CheckPermissionWithId(ctx, target, permissionId)
 }
 
-func (this *odinService) CheckRolePermission(ctx int64, roleName, permissionName string) bool {
+// CheckRolePermission 验证角色是否拥有指定权限
+func (this *Service) CheckRolePermission(ctx int64, roleName, permissionName string) bool {
 	return this.repo.CheckRolePermission(ctx, roleName, permissionName)
 }
 
-func (this *odinService) CheckRolePermissionWithId(ctx, roleId, permissionId int64) bool {
+// CheckRolePermissionWithId 验证角色是否拥有指定权限
+func (this *Service) CheckRolePermissionWithId(ctx, roleId, permissionId int64) bool {
 	return this.repo.CheckRolePermissionWithId(ctx, roleId, permissionId)
 }
 
-func (this *odinService) CleanCache(ctx int64, target string) {
+// CleanCache 清除缓存，如果 target 为空字符串或者 target 的值为星号(*)，则会清空所有缓存
+func (this *Service) CleanCache(ctx int64, target string) {
 	this.repo.CleanCache(ctx, target)
 }
