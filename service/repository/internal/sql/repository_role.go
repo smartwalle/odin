@@ -183,7 +183,7 @@ func (this *Repository) insertRoleToLast(parent *odin.Role, name, aliasName, des
 	return this.insertRole(parent.Ctx, parent.Id, parent.RightValue, parent.RightValue+1, parent.Depth+1, name, aliasName, description, status)
 }
 
-func (this *Repository) insertRole(ctx, parentId int64, leftValue, rightValue, depth int, name, aliasName, description string, status odin.Status) (result int64, err error) {
+func (this *Repository) insertRole(ctx, parentId int64, leftValue, rightValue int64, depth int, name, aliasName, description string, status odin.Status) (result int64, err error) {
 	var now = time.Now()
 	var nId = this.idGenerator.Next()
 	var ib = dbs.NewInsertBuilder()

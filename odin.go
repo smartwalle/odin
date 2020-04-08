@@ -57,8 +57,8 @@ type Role struct {
 	Granted        bool          `json:"granted"                         sql:"granted"`    // 角色是否授予给指定 target
 	Accessible     bool          `json:"accessible"                      sql:"can_access"` // 角色是否能够被指定 target 操作访问
 	ParentId       int64         `json:"parent_id"                       sql:"parent_id"`
-	LeftValue      int           `json:"left_value"                      sql:"left_value"`
-	RightValue     int           `json:"right_value"                     sql:"right_value"`
+	LeftValue      int64         `json:"left_value"                      sql:"left_value"`
+	RightValue     int64         `json:"right_value"                     sql:"right_value"`
 	Depth          int           `json:"depth"                           sql:"depth"`
 	CreatedOn      *time.Time    `json:"created_on"                      sql:"created_on"`
 	UpdatedOn      *time.Time    `json:"updated_on"                      sql:"updated_on"`

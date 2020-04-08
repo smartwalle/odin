@@ -36,7 +36,7 @@ func (this *repository) InitTable() error {
 create table if not exists odin_group
 (
 	id         bigint not null,
-	ctx        integer,
+	ctx        bigint,
 	type       integer,
 	name       varchar(64),
 	alias_name varchar(255),
@@ -53,7 +53,7 @@ create table if not exists odin_permission
 (
 	id          bigint not null,
 	group_id    bigint,
-	ctx         integer,
+	ctx         bigint,
 	name        varchar(255),
 	alias_name  varchar(255),
 	status      integer default 1,
@@ -81,14 +81,14 @@ create unique index if not exists odin_permission_ctx_name_uindex
 create table if not exists odin_role
 (
 	id          bigint not null,
-	ctx         integer,
+	ctx         bigint,
 	name        varchar(64),
 	alias_name  varchar(255),
 	status      integer default 1,
 	description varchar(1024),
 	parent_id   bigint,
-	left_value  integer,
-	right_value integer,
+	left_value  bigint,
+	right_value bigint,
 	depth       integer,
 	created_on  timestamp with time zone,
 	updated_on  timestamp with time zone,
@@ -118,7 +118,7 @@ create index if not exists odin_role_ctx_right_value_index
 
 create table if not exists odin_grant
 (
-	ctx        integer     not null,
+	ctx        bigint      not null,
 	role_id    bigint      not null,
 	target     varchar(64) not null,
 	created_on timestamp with time zone,
@@ -137,7 +137,7 @@ create index if not exists odin_grant_ctx_target_index
 
 create table if not exists odin_role_permission
 (
-	ctx           integer not null,
+	ctx           bigint  not null,
 	role_id       bigint  not null,
 	permission_id bigint  not null,
 	created_on    timestamp with time zone,
@@ -147,7 +147,7 @@ create table if not exists odin_role_permission
 
 create table if not exists odin_role_mutex
 (
-	ctx           integer not null,
+	ctx           bigint  not null,
 	role_id       bigint  not null,
 	mutex_role_id bigint  not null,
 	created_on    timestamp with time zone,
@@ -163,7 +163,7 @@ create index if not exists odin_role_mutex_ctx_role_id_index
 
 create table if not exists odin_pre_role
 (
-	ctx         integer not null,
+	ctx         bigint  not null,
 	role_id     bigint  not null,
 	pre_role_id bigint  not null,
 	created_on  timestamp with time zone,
@@ -176,7 +176,7 @@ create index if not exists odin_pre_role_ctx_role_id_index
 
 create table if not exists odin_pre_permission
 (
-	ctx               integer not null,
+	ctx               bigint  not null,
 	permission_id     bigint  not null,
 	pre_permission_id bigint  not null,
 	auto_grant        boolean default false,

@@ -33,7 +33,7 @@ func (this *repository) WithTx(tx dbs.TX) odin.Repository {
 func (this *repository) InitTable() error {
 	var rawText = "" +
 		"CREATE TABLE IF NOT EXISTS `odin_grant` (" +
-		"  `ctx` int(11) DEFAULT NULL," +
+		"  `ctx` bigint(20) DEFAULT NULL," +
 		"  `role_id` bigint(20) DEFAULT NULL," +
 		"  `target` varchar(64) DEFAULT NULL," +
 		"  `created_on` datetime DEFAULT NULL," +
@@ -45,7 +45,7 @@ func (this *repository) InitTable() error {
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_group` (" +
 		"  `id` bigint(20) NOT NULL AUTO_INCREMENT," +
-		"  `ctx` int(11) DEFAULT NULL," +
+		"  `ctx` bigint(20) DEFAULT NULL," +
 		"  `type` int(2) DEFAULT NULL," +
 		"  `name` varchar(64) DEFAULT NULL," +
 		"  `alias_name` varchar(255) DEFAULT NULL," +
@@ -60,7 +60,7 @@ func (this *repository) InitTable() error {
 		"CREATE TABLE IF NOT EXISTS `odin_permission` (" +
 		"  `id` bigint(20) NOT NULL AUTO_INCREMENT," +
 		"  `group_id` bigint(20) DEFAULT NULL," +
-		"  `ctx` int(11) DEFAULT NULL," +
+		"  `ctx` bigint(20) DEFAULT NULL," +
 		"  `name` varchar(255) DEFAULT NULL," +
 		"  `alias_name` varchar(255) DEFAULT NULL," +
 		"  `status` int(2) DEFAULT '1'," +
@@ -75,7 +75,7 @@ func (this *repository) InitTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_pre_permission` (" +
-		"  `ctx` int(11) NOT NULL," +
+		"  `ctx` bigint(20) NOT NULL," +
 		"  `permission_id` bigint(20) NOT NULL," +
 		"  `pre_permission_id` bigint(20) NOT NULL," +
 		"  `auto_grant` tinyint(1) DEFAULT '0'," +
@@ -86,7 +86,7 @@ func (this *repository) InitTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_pre_role` (" +
-		"  `ctx` int(11) NOT NULL," +
+		"  `ctx` bigint(20) NOT NULL," +
 		"  `role_id` bigint(20) NOT NULL," +
 		"  `pre_role_id` bigint(20) NOT NULL," +
 		"  `created_on` datetime DEFAULT NULL," +
@@ -97,14 +97,14 @@ func (this *repository) InitTable() error {
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_role` (" +
 		"  `id` bigint(20) NOT NULL AUTO_INCREMENT," +
-		"  `ctx` int(11) DEFAULT NULL," +
+		"  `ctx` bigint(20) DEFAULT NULL," +
 		"  `name` varchar(64) DEFAULT NULL," +
 		"  `alias_name` varchar(255) DEFAULT NULL," +
 		"  `status` int(2) DEFAULT '1'," +
 		"  `description` varchar(1024) DEFAULT NULL," +
 		"  `parent_id` bigint(20) DEFAULT NULL," +
-		"  `left_value` int(11) DEFAULT NULL," +
-		"  `right_value` int(11) DEFAULT NULL," +
+		"  `left_value` bigint(20) DEFAULT NULL," +
+		"  `right_value` bigint(20) DEFAULT NULL," +
 		"  `depth` int(11) DEFAULT NULL," +
 		"  `created_on` datetime DEFAULT NULL," +
 		"  `updated_on` datetime DEFAULT NULL," +
@@ -118,7 +118,7 @@ func (this *repository) InitTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_role_mutex` (" +
-		"  `ctx` int(11) NOT NULL," +
+		"  `ctx` bigint(20) NOT NULL," +
 		"  `role_id` bigint(20) NOT NULL," +
 		"  `mutex_role_id` bigint(20) NOT NULL," +
 		"  `created_on` datetime DEFAULT NULL," +
@@ -129,7 +129,7 @@ func (this *repository) InitTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_role_permission` (" +
-		"  `ctx` int(11) DEFAULT NULL," +
+		"  `ctx` bigint(20) DEFAULT NULL," +
 		"  `role_id` bigint(20) DEFAULT NULL," +
 		"  `permission_id` bigint(20) DEFAULT NULL," +
 		"  `created_on` datetime DEFAULT NULL," +
