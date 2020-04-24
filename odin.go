@@ -20,8 +20,8 @@ const (
 
 // Group 组数据结构，用于描述组信息。
 type Group struct {
-	Id             int64         `json:"id"                              sql:"id"`
-	Ctx            int64         `json:"ctx"                             sql:"ctx"`
+	Id             int64         `json:"id,string"                       sql:"id"`
+	Ctx            int64         `json:"ctx,string"                      sql:"ctx"`
 	Type           GroupType     `json:"type"                            sql:"type"`
 	Name           string        `json:"name"                            sql:"name"`
 	AliasName      string        `json:"alias_name"                      sql:"alias_name"`
@@ -33,9 +33,9 @@ type Group struct {
 
 // Permission 权限数据结构，用于描述权限信息。
 type Permission struct {
-	Id                int64            `json:"id"                               sql:"id"`
-	GroupId           int64            `json:"group_id"                         sql:"group_id"`
-	Ctx               int64            `json:"ctx"                              sql:"ctx"`
+	Id                int64            `json:"id,string"                        sql:"id"`
+	GroupId           int64            `json:"group_id,string"                  sql:"group_id"`
+	Ctx               int64            `json:"ctx,string"                       sql:"ctx"`
 	Name              string           `json:"name"                             sql:"name"`
 	AliasName         string           `json:"alias_name"                       sql:"alias_name"`
 	Status            Status           `json:"status"                           sql:"status"`
@@ -48,17 +48,17 @@ type Permission struct {
 
 // Role 角色数据结构，用于描述角色信息。
 type Role struct {
-	Id             int64         `json:"id"                              sql:"id"`
-	Ctx            int64         `json:"ctx"                             sql:"ctx"`
+	Id             int64         `json:"id,string"                       sql:"id"`
+	Ctx            int64         `json:"ctx,string"                      sql:"ctx"`
 	Name           string        `json:"name"                            sql:"name"`
 	AliasName      string        `json:"alias_name"                      sql:"alias_name"`
 	Status         Status        `json:"status"                          sql:"status"`
 	Description    string        `json:"description"                     sql:"description"`
 	Granted        bool          `json:"granted"                         sql:"granted"`    // 角色是否授予给指定 target
 	Accessible     bool          `json:"accessible"                      sql:"can_access"` // 角色是否能够被指定 target 操作访问
-	ParentId       int64         `json:"parent_id"                       sql:"parent_id"`
-	LeftValue      int64         `json:"left_value"                      sql:"left_value"`
-	RightValue     int64         `json:"right_value"                     sql:"right_value"`
+	ParentId       int64         `json:"parent_id,string"                sql:"parent_id"`
+	LeftValue      int64         `json:"left_value,string"               sql:"left_value"`
+	RightValue     int64         `json:"right_value,string"              sql:"right_value"`
 	Depth          int           `json:"depth"                           sql:"depth"`
 	CreatedOn      *time.Time    `json:"created_on"                      sql:"created_on"`
 	UpdatedOn      *time.Time    `json:"updated_on"                      sql:"updated_on"`
@@ -69,21 +69,21 @@ type Role struct {
 
 // RolePermission 角色-权限数据结构，用于描述角色与权限的关联关系。
 type RolePermission struct {
-	Ctx          int64      `json:"ctx"             sql:"ctx"`
-	RoleId       int64      `json:"role_id"         sql:"role_id"`
-	PermissionId int64      `json:"permission_id"   sql:"permission_id"`
-	CreatedOn    *time.Time `json:"created_on"      sql:"created_on"`
+	Ctx          int64      `json:"ctx,string"             sql:"ctx"`
+	RoleId       int64      `json:"role_id,string"         sql:"role_id"`
+	PermissionId int64      `json:"permission_id,string"   sql:"permission_id"`
+	CreatedOn    *time.Time `json:"created_on"             sql:"created_on"`
 }
 
 // RoleMutex 角色互斥数据结构，用于描述角色与角色之间的互斥关系。
 // 主要应用于更新（授予）某一 target 的角色时，判断该 target 的角色是否有互斥的情况。
 // 比如：角色A与角色B互斥，则角色A和角色B不能同时授予同一 target。
 type RoleMutex struct {
-	Ctx                int64      `json:"ctx"                       sql:"ctx"`
-	RoleId             int64      `json:"role_id"                   sql:"role_id"`
+	Ctx                int64      `json:"ctx,string"                sql:"ctx"`
+	RoleId             int64      `json:"role_id,string"            sql:"role_id"`
 	RoleName           string     `json:"role_name"                 sql:"role_name"`
 	RoleAliasName      string     `json:"role_alias_name"           sql:"role_alias_name"`
-	MutexRoleId        int64      `json:"mutex_role_id"             sql:"mutex_role_id"`
+	MutexRoleId        int64      `json:"mutex_role_id,string"      sql:"mutex_role_id"`
 	MutexRoleName      string     `json:"mutex_role_name"           sql:"mutex_role_name"`
 	MutexRoleAliasName string     `json:"mutex_role_alias_name"     sql:"mutex_role_alias_name"`
 	CreatedOn          *time.Time `json:"created_on"                sql:"created_on"`
@@ -94,11 +94,11 @@ type RoleMutex struct {
 //
 // 比如：角色A是角色B的先决条件，向 target 授予角色B时，需要 target 已经拥有角色A。
 type PreRole struct {
-	Ctx              int64      `json:"ctx"                       sql:"ctx"`
-	RoleId           int64      `json:"role_id"                   sql:"role_id"`
+	Ctx              int64      `json:"ctx,string"                sql:"ctx"`
+	RoleId           int64      `json:"role_id,string"            sql:"role_id"`
 	RoleName         string     `json:"role_name"                 sql:"role_name"`
 	RoleAliasName    string     `json:"role_alias_name"           sql:"role_alias_name"`
-	PreRoleId        int64      `json:"pre_role_id"               sql:"pre_role_id"`
+	PreRoleId        int64      `json:"pre_role_id,string"        sql:"pre_role_id"`
 	PreRoleName      string     `json:"pre_role_name"             sql:"pre_role_name"`
 	PreRoleAliasName string     `json:"pre_role_alias_name"       sql:"pre_role_alias_name"`
 	CreatedOn        *time.Time `json:"created_on"                sql:"created_on"`
@@ -109,11 +109,11 @@ type PreRole struct {
 //
 // 比如：权限A是权限B的先决条件，向角色A授予权限B时，需要角色A已经拥有权限A。
 type PrePermission struct {
-	Ctx                    int64      `json:"ctx"                           sql:"ctx"`
-	PermissionId           int64      `json:"permission_id"                 sql:"permission_id"`
+	Ctx                    int64      `json:"ctx,string"                    sql:"ctx"`
+	PermissionId           int64      `json:"permission_id,string"          sql:"permission_id"`
 	PermissionName         string     `json:"permission_name"               sql:"permission_name"`
 	PermissionAliasName    string     `json:"permission_alias_name"         sql:"permission_alias_name"`
-	PrePermissionId        int64      `json:"pre_permission_id"             sql:"pre_permission_id"`
+	PrePermissionId        int64      `json:"pre_permission_id,string"      sql:"pre_permission_id"`
 	PrePermissionName      string     `json:"pre_permission_name"           sql:"pre_permission_name"`
 	PrePermissionAliasName string     `json:"pre_permission_alias_name"     sql:"pre_permission_alias_name"`
 	AutoGrant              bool       `json:"auto_grant"                    sql:"auto_grant"`
@@ -122,10 +122,10 @@ type PrePermission struct {
 
 // Grant 用于描述 target、角色、权限之间的关系。
 type Grant struct {
-	Ctx            int64  `json:"ctx"                sql:"ctx"`
-	Target         string `json:"target"             sql:"target"`
-	RoleId         int64  `json:"role_id"            sql:"role_id"`
-	RoleName       string `json:"role_name"          sql:"role_name"`
-	PermissionId   int64  `json:"permission_id"      sql:"permission_id"`
-	PermissionName string `json:"permission_name"    sql:"permission_name"`
+	Ctx            int64  `json:"ctx,string"                sql:"ctx"`
+	Target         string `json:"target"                    sql:"target"`
+	RoleId         int64  `json:"role_id,string"            sql:"role_id"`
+	RoleName       string `json:"role_name"                 sql:"role_name"`
+	PermissionId   int64  `json:"permission_id,string"      sql:"permission_id"`
+	PermissionName string `json:"permission_name"           sql:"permission_name"`
 }
