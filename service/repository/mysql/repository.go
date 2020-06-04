@@ -61,7 +61,7 @@ func (this *repository) InitTable() error {
 		"  `id` bigint(20) NOT NULL," +
 		"  `group_id` bigint(20) DEFAULT NULL," +
 		"  `ctx` bigint(20) DEFAULT NULL," +
-		"  `name` varchar(255) DEFAULT NULL," +
+		"  `name` varchar(128) DEFAULT NULL," +
 		"  `alias_name` varchar(255) DEFAULT NULL," +
 		"  `status` int(2) DEFAULT '1'," +
 		"  `description` varchar(1024) DEFAULT NULL," +

@@ -54,7 +54,7 @@ create table if not exists odin_permission
 	id          bigint not null,
 	group_id    bigint,
 	ctx         bigint,
-	name        varchar(255),
+	name        varchar(128),
 	alias_name  varchar(255),
 	status      integer default 1,
 	description varchar(1024),
