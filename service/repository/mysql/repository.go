@@ -44,7 +44,7 @@ func (this *repository) InitTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_group` (" +
-		"  `id` bigint(20) NOT NULL AUTO_INCREMENT," +
+		"  `id` bigint(20) NOT NULL," +
 		"  `ctx` bigint(20) DEFAULT NULL," +
 		"  `type` int(2) DEFAULT NULL," +
 		"  `name` varchar(64) DEFAULT NULL," +
@@ -58,7 +58,7 @@ func (this *repository) InitTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_permission` (" +
-		"  `id` bigint(20) NOT NULL AUTO_INCREMENT," +
+		"  `id` bigint(20) NOT NULL," +
 		"  `group_id` bigint(20) DEFAULT NULL," +
 		"  `ctx` bigint(20) DEFAULT NULL," +
 		"  `name` varchar(255) DEFAULT NULL," +
@@ -96,7 +96,7 @@ func (this *repository) InitTable() error {
 		") ENGINE=InnoDB;" +
 		"" +
 		"CREATE TABLE IF NOT EXISTS `odin_role` (" +
-		"  `id` bigint(20) NOT NULL AUTO_INCREMENT," +
+		"  `id` bigint(20) NOT NULL," +
 		"  `ctx` bigint(20) DEFAULT NULL," +
 		"  `name` varchar(64) DEFAULT NULL," +
 		"  `alias_name` varchar(255) DEFAULT NULL," +
